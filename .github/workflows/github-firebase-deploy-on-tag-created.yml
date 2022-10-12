@@ -1,0 +1,80 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+
+name: On tag created - Firebase deploy PROD
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  SYS_ADMIN_EMAIL: 'abdalamichel@gmail.com'
+  GMAIL_EMAIL: 'info@superorigen.com.ar'
+  GMAIL_EMAIL_BCC: 'abdalamichel@gmail.com'
+  GMAIL_APP_PASSWORD: 'awwmxopzqjdderyi'
+  NEW_USERS_TEMP_PASSWORD: '@Temp1234'
+
+  TEST_ENV_KEY: 'TEST_ENV_VALUE'
+  ENVIRONMENT: prod
+
+  FIREB_PROJECT_ID: 'tryaconcagua'
+  FIREB_API_KEY: 'AIzaSyCEl3byGNKD6--ZgR20UcxYsdHDl3BDcWA'
+  FIREB_AUTH_DOMAIN: 'tryaconcagua.firebaseapp.com'
+  FIREB_STORAGE_BUCKET: 'tryaconcagua.appspot.com'
+  FIREB_MESSAGING_SENDER_ID: 1005046819730
+  FIREB_APP_ID: '1:1005046819730:web:60faf41207cb1046a9ef4b'
+  FIREB_MEASURAMENT_ID: 'G-YXDKCL6F3R'
+
+  AIRTABLE_API_KEY: '??'
+
+  GOOGLE_OAUTH_CLIENT_ID: ${{secrets.GOOGLE_OAUTH_CLIENT_ID_PROD}}
+  GOOGLE_OAUTH_CLIENT_SECRET: ${{secrets.GOOGLE_OAUTH_CLIENT_SECRET_PROD}}
+  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-himaia.cloudfunctions.net/googleOAuth/oauth2callback'
+  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-himaia.cloudfunctions.net/userCalendarEvents/google-event-webhook'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16.17.1
+          registry-url: https://npm.pkg.github.com/
+      - run: npm ci --force --legacy-peer-deps
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
+          # NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}} este no tiee permisos en otro repo
+          VS_GITHUB_NPM_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
+      - run: npm run prettier-ci
+      - run: npm run lint-ci
+      - run: npm run test-ci
+
+      # ya lo hace el firebase.json
+      # - run: npm run build
+
+      - run: npm run deploy-ci
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
+          VS_GITHUB_NPM_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
+          FIREBASE_TOKEN: ${{secrets.FIREBASE_TOKEN}}
+
+  # publish-gpr:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 14
+  #         registry-url: https://npm.pkg.github.com/
+  #     - run: npm ci
+
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

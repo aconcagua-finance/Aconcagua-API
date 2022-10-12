@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "source": ".",
+    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+  },
+  "firestore": {
+    "rules": "fire-config/firestore.rules"
+  },
+  "storage": {
+    "rules": "fire-config/storage.rules"
+  }
+}

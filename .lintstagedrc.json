@@ -1,0 +1,4 @@
+{
+  "*.{json,css,md}": ["npm run prettier-staged"],
+  "*.{js,jsx,ts,tsx}": ["npm run lint-staged"]
+}

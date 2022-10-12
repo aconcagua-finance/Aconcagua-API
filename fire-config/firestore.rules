@@ -1,0 +1,301 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Core methods
+    // -----------------------------
+
+    function has(prop, data) {
+      return data.keys().hasAll([ prop ])
+    }
+
+    function includes(value, list) {
+      return list.hasAll([ value ])
+    }
+
+    function isBoolean(value) {
+      return value is bool
+    }
+
+    function isBytes(value) {
+      return value is bytes
+    }
+
+    function isConstraint(value) {
+      return value is constraint
+    }
+
+    function isDuration(value) {
+      return value is duration
+    }
+
+    function isFloat(value) {
+      return value is float
+    }
+
+    function isHex(value) {
+      return isString(value) &&
+        value.matches('^[a-z0-9]+$')
+    }
+
+    function isImageContentType(value) {
+      return isString(value) &&
+        (
+          value == 'image/jpg' ||
+          value == 'image/jpeg' ||
+          value == 'image/png'
+        )
+    }
+
+    function isIndex(value) {
+      return isInteger(value) && value >= 0
+    }
+
+    function isInteger(value) {
+      return value is int
+    }
+
+    function isLatLng(value) {
+      return value is latlng
+    }
+
+    function isList(value) {
+      return value is list
+    }
+
+    function isMap(value) {
+      return value is map
+    }
+
+    function isNull(value) {
+      return value == null
+    }
+
+    function isNumber(value) {
+      return value is number
+    }
+
+    function isPath(value) {
+      return value is path
+    }
+
+    function isPhrase(value) {
+      return isString(value) &&
+        value.size() <= 40 &&
+        value.size() >= 1 &&
+        value.upper() == value;
+    }
+
+    function isString(value) {
+      return value is string
+    }
+
+    function isTimestamp(value) {
+      return value is timestamp
+    }
+
+    function propsWithSize(properties, propsSize, obj) {
+      // Use modulous in order to avoid going out of bounds on selecting from an array
+      return slice(0, propsSize, [
+        obj.get(properties[0], null),
+        obj.get(properties[1 % propsSize], null),
+        obj.get(properties[2 % propsSize], null)
+      ])
+    }
+
+    function props(properties, obj) {
+      return propsWithSize(properties, size(properties), obj)
+    }
+
+    function size(value) {
+      return value.size()
+    }
+
+    function slice(start, end, list) {
+      return list[start:end]
+    }
+
+    function split(char, value) {
+      return value.split(char)
+    }
+
+    function tail(list) {
+      return list[1:list.size()]
+    }
+
+    function databasePath() {
+      return /databases/$(database)/documents
+    }
+
+    function matchesNumeric(value) {
+      return value.matches('^[0-9]+$')
+    }
+
+    function matchesRFC3339Timestamp(value) {
+      return isTimestamp(value)
+    }
+
+    function matchesStandardId(value) {
+      // return value.matches('^[a-zA-Z0-9]{20}$')
+      return isString(value)
+    }
+
+    function matchesUuidV4(value) {
+      return value.matches('^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+    }
+
+
+    // Current authenticated user methods
+    // -----------------------------
+
+    function currentUserIsAuthenticated(auth) {
+      return auth != null && auth.uid != null;
+    }
+
+    function currentUserHasRole(auth, roleName) {
+      // return auth != null && auth.appRols != null && auth.appRols.length && auth.appRols.includes(roleName);
+      return auth != null && auth.token != null && auth.token.appRols != null && includes(roleName, auth.token.appRols)
+    }
+
+    function currentUserOwnsData(auth, data) {
+      return auth.uid == data.userId
+    }
+
+    function currentUserOwnsResource(auth, resource) {
+      return currentUserOwnsData(auth, resource.data)
+    }
+
+    function validateTimestampedData(data) {
+      return isTimestamp(data.createdAt) &&
+      (isTimestamp(data.updatedAt) || data.updatedAt == null) &&
+      (isTimestamp(data.removedAt) || data.removedAt == null)
+    }
+
+    function validateEntityData(data) {
+      return validateTimestampedData(data)
+    }
+
+    function validateEntity(resource) {
+      return matchesStandardId(resource.id) &&
+        validateEntityData(resource.data)
+        
+    }
+
+    function isStaffAutorized() {
+      // let doc = getAfter(/$(databasePath())/usersByStaff/$(id));
+      // let doc = getAfter(/$(databasePath())/usersByStaff);
+
+      return true;
+      // let doc =  get(/databases/$(database)/documents/user/$(request.auth.uid));
+    }
+
+    function getProviderAfter(id) {
+      return getAfter(/$(databasePath())/providers/$(id))
+    }
+
+    function validateProvider(resource) {
+      return validateEntity(resource) &&
+        isString(resource.data.name) &&
+        isString(resource.data.description)
+    }
+
+    function checkCreateProvider(auth, id) {
+      return currentUserIsAuthenticated(auth) &&
+        validateProvider(getProviderAfter(id));
+    }    
+
+    match /providers/{id} {
+      allow read: if currentUserIsAuthenticated(request.auth);
+      allow create: if checkCreateProvider(request.auth, id);
+      allow update: if checkUpdateProvider(request.auth, id);
+      allow delete: if false
+    }
+
+
+    function GET_APP_ROLE_ADMIN() {
+      return 'app-admin'
+    }
+
+    function GET_APP_ROLE_STAFF() {
+      return 'app-staff'
+    }
+
+    match /users/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      // allow read: if currentUserIsAuthenticated(request.auth) && currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN());
+      allow read: if currentUserIsAuthenticated(request.auth) && currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN());
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /levels/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && (currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || currentUserHasRole(request.auth, GET_APP_ROLE_STAFF()));
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /progressOptions/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && (currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || currentUserHasRole(request.auth, GET_APP_ROLE_STAFF()));
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /userAttributesTypes/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && (currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || currentUserHasRole(request.auth, GET_APP_ROLE_STAFF()));
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /aspects/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && (currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || currentUserHasRole(request.auth, GET_APP_ROLE_STAFF()));
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /tasks/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && (currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || currentUserHasRole(request.auth, GET_APP_ROLE_STAFF()));
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /staff/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN());
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /companies/{id} {
+      // allow read: if currentUserIsAuthenticated(request.auth) || currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN()) || (currentUserHasRole(request.auth, GET_APP_ROLE_STAFF() && isStaffAutorized(request.auth, id)));
+      allow read: if currentUserIsAuthenticated(request.auth) && currentUserHasRole(request.auth, GET_APP_ROLE_ADMIN());
+      allow create: if false
+      allow update: if false
+      allow delete: if false
+    }
+
+    match /params/{id} {
+      allow read: if currentUserIsAuthenticated(request.auth);
+    }
+
+    match /products/{id} {
+      allow read: if true;
+    }
+
+    match /{document=**} {
+      allow write: if false; // nadie escribe por ahora...
+    }
+
+  }
+}

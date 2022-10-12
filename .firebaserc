@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "tryaconcagua-qa",
+    "prod": "tryaconcagua",
+    "qa": "tryaconcagua-qa"
+  }
+}
