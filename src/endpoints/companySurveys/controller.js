@@ -22,7 +22,7 @@ const {
   MULTIPLE_RELATIONSHIP_SUFFIX,
   sanitizeData,
   find,
-  findWithUserRelationship,
+
   get,
   patch,
   remove,
@@ -33,6 +33,7 @@ const {
   updateSingleItem,
   filterItems,
   fetchItemsByIds,
+  findWithUserRelationship,
   getWithUserRelationshipById,
   listByProp,
   getByProp,

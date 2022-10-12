@@ -1,10 +1,19 @@
-const { find, get, create, patch, remove, findByUser, findByStaff } = require('./controller');
+const {
+  find,
+  get,
+  create,
+  patch,
+  remove,
+  findByUser,
+  findByStaff,
+  configure,
+} = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
 const { Auth } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 
-export function hookedEventsRoutesConfig(app) {
+exports.smartContractsRoutesConfig = function (app) {
   // busca los documentos asociados a un usuario
   app.get('/by-user/:userId', [
     Audit.logger,
@@ -58,11 +67,19 @@ export function hookedEventsRoutesConfig(app) {
     create,
   ]);
 
+  // update un documento,  solo la prop asociada al rescue wallet account
+  app.patch('/:userId/configure/:id', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
+    configure,
+  ]);
+
   // update un documento,  el userId es para validacion de permisos del staff
   app.patch('/:userId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN], allowStaffRelationship: true }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     patch,
   ]);
 
@@ -70,7 +87,7 @@ export function hookedEventsRoutesConfig(app) {
   app.delete('/:userId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN], allowStaffRelationship: true }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     remove,
   ]);
-}
+};

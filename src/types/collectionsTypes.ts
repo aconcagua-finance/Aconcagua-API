@@ -11,6 +11,7 @@ export enum Collections {
   USER_TASKS = 'userTasks',
   USER_TASKS_HISTORY = 'userTasksHistory',
   USER_TOUCHPOINTS = 'userTouchpoints',
+  USER_VAULTS = 'userVaults',
   ATTACHMENTS = 'attachments',
   USERS_BY_STAFF = 'usersByStaff',
   PROGRESS_OPTIONS = 'progressOptions',
