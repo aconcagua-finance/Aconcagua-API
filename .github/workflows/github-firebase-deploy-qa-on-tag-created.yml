@@ -30,8 +30,8 @@ env:
 
   GOOGLE_OAUTH_CLIENT_ID: ${{secrets.GOOGLE_OAUTH_CLIENT_ID_QA}}
   GOOGLE_OAUTH_CLIENT_SECRET: ${{secrets.GOOGLE_OAUTH_CLIENT_SECRET_QA}}
-  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-afeliolab.cloudfunctions.net/googleOAuth/oauth2callback'
-  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-afeliolab.cloudfunctions.net/userCalendarEvents/google-event-webhook'
+  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-tryaconcagua-qa.cloudfunctions.net/googleOAuth/oauth2callback'
+  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-tryaconcagua-qa.cloudfunctions.net/userCalendarEvents/google-event-webhook'
 
 jobs:
   build-and-publish:

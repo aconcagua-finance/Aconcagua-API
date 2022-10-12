@@ -63,5 +63,5 @@ Calendar integration:
 - Configure google calendar api
 - Create credential OAuth2 and set Authorized redirect URIs to "http://localhost:5001/\*\*\*/us-central1/googleOAuth/oauth2callback and the prod url
 - copy the credential clientId and secret and configure .env and secrets (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)
-- also configure redirect url in env, eg GOOGLE_OAUTH_REDIRECT_URL="http://localhost:5001/afeliolab/us-central1/googleOAuth/oauth2callback"
-- configure google calendar webhook url in env, eg: GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="https://us-central1-afeliolab.cloudfunctions.net/userCalendarEvents/google-event-webhook"
+- also configure redirect url in env, eg GOOGLE_OAUTH_REDIRECT_URL="http://localhost:5001/tryaconcagua-qa/us-central1/googleOAuth/oauth2callback"
+- configure google calendar webhook url in env, eg: GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="https://us-central1-tryaconcagua-qa.cloudfunctions.net/userCalendarEvents/google-event-webhook"

@@ -43,7 +43,7 @@ Configure ZOHO
 - Configure Automation >> Webhooks
 - Go to https://api-console.zoho.com/, create self client
 - Set scopes: ZohoCRM.coql.READ, ZohoCRM.modules.all
-- Post with postman to https://accounts.zoho.com/oauth/v2/token?code=1000.1fde08a41a24a5999732ebec61bba2af.4e011f61232687b916407aa147dfe2f3&grant_type=authorization_code&client_id=1000.X55856VNMFJHBW3PVF05O36I1XYSYM&client_secret=c337f4f39ab38eb26c0d2f5e5ab80729e22bff6e6b&redirect_uri=https://afeliolab.web.app/auth/zoho&response_type=code&access_type=offline
+- Post with postman to https://accounts.zoho.com/oauth/v2/token?code=1000.1fde08a41a24a5999732ebec61bba2af.4e011f61232687b916407aa147dfe2f3&grant_type=authorization_code&client_id=1000.X55856VNMFJHBW3PVF05O36I1XYSYM&client_secret=c337f4f39ab38eb26c0d2f5e5ab80729e22bff6e6b&redirect_uri=https://tryaconcagua-qa.web.app/auth/zoho&response_type=code&access_type=offline
 
 Configure Firebase
 

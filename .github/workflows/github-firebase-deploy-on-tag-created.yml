@@ -30,8 +30,8 @@ env:
 
   GOOGLE_OAUTH_CLIENT_ID: ${{secrets.GOOGLE_OAUTH_CLIENT_ID_PROD}}
   GOOGLE_OAUTH_CLIENT_SECRET: ${{secrets.GOOGLE_OAUTH_CLIENT_SECRET_PROD}}
-  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-himaia.cloudfunctions.net/googleOAuth/oauth2callback'
-  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-himaia.cloudfunctions.net/userCalendarEvents/google-event-webhook'
+  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-tryaconcagua.cloudfunctions.net/googleOAuth/oauth2callback'
+  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-try-aconcagua.cloudfunctions.net/userCalendarEvents/google-event-webhook'
 
 jobs:
   build-and-publish:
