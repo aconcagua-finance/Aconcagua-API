@@ -1,29 +1,29 @@
-import { object, string, date, any, boolean } from 'joi';
+const Joi = require('joi');
 
-const baseSchema = object({
-  userId: string(),
+const baseSchema = Joi.object({
+  userId: Joi.string(),
 
-  title: string().allow(''),
-  message: string().allow(''),
+  title: Joi.string().allow(''),
+  message: Joi.string().allow(''),
 
   // template: Joi.array().items(Joi.string()), // todo michel
-  eventType: string(), // ['completeForm', 'call', 'message', 'to-do', 'email'] >> : selectOption
-  assignedTo: string().allow(null).allow(''), // staffs ids || null si es automated
-  startDate: date(),
-  dueDate: date(), // fecha que se realiza la accion + hora que se realiza la acción (30 min dif para que el proceso corra cada 30 min)
-  reminder: string().allow(null).allow(''), // 30 min before || 1 hour before || ...
-  repeat: any(), // todo michel
-  automated: boolean(),
-  priority: string().allow(null).allow(''),
-  eventStatus: string(),
-  color: string(),
+  eventType: Joi.string(), // ['completeForm', 'call', 'message', 'to-do', 'email'] >> : selectOption
+  assignedTo: Joi.string().allow(null).allow(''), // staffs ids || null si es automated
+  startDate: Joi.date(),
+  dueDate: Joi.date(), // fecha que se realiza la accion + hora que se realiza la acción (30 min dif para que el proceso corra cada 30 min)
+  reminder: Joi.string().allow(null).allow(''), // 30 min before || 1 hour before || ...
+  repeat: Joi.any(), // todo michel
+  automated: Joi.boolean(),
+  priority: Joi.string().allow(null).allow(''),
+  eventStatus: Joi.string(),
+  color: Joi.string(),
 
   // reminderStatus: Joi.string(), // backend only
 
-  withCalendar: boolean(),
-  userCalendarEventId: string().allow(null).allow(''),
-  notes: string().allow(''),
-  attachments: any(),
+  withCalendar: Joi.boolean(),
+  userCalendarEventId: Joi.string().allow(null).allow(''),
+  notes: Joi.string().allow(''),
+  attachments: Joi.any(),
 });
 
 const requiredBaseFields = ['userId', 'title', 'eventType', 'startDate', 'dueDate'];

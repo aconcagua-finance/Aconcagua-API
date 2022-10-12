@@ -42,7 +42,7 @@ vs-core init -n newapp
 - https://docs.github.com/es/packages/working-with-a-github-packages-registry/working-with-the-npm-registry
 - npm i firebase@latest
   > VSCode utils
-- nvm alias default 16.17.1
+- nvm alias default v16.17.1
 
 - $ npm login --scope=abdalamichel --registry=https://npm.pkg.github.com
 

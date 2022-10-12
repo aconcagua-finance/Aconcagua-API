@@ -7,9 +7,9 @@ echo "Starting local firebase funcitons ..."
 
 echo "Starting firebase shell ..."
 
- firebase functions:shell
+# firebase functions:shell
 
-# firebase serve -p 5001 --only functions
+ firebase serve -p 5001 --only functions
 
 # firebase emulators:start --only functions
 
