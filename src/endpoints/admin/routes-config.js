@@ -29,8 +29,8 @@ exports.adminRoutesConfig = function (app) {
   } else {
     app.post('/set-user-claims', [
       Audit.logger,
-      Auth.isAuthenticated,
-      Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
+      // Auth.isAuthenticated,
+      // Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
       setUserClaimsByReq,
     ]);
   }
