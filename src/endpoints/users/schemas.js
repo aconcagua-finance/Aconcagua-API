@@ -6,9 +6,6 @@ const basicData = {
   nickname: Joi.string().allow(''),
   // email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'io'] } }),
 
-  weight: Joi.string().allow(''),
-  height: Joi.string().allow(''),
-
   phoneNumber: Joi.string().allow(''),
 
   gender: Joi.string().allow(null).allow(''),
@@ -25,29 +22,11 @@ const basicData = {
   // lastTouchpoint: Joi.date().allow(null, ''), // no lo recibo. Se crea en el onCreate o onUpdate
 
   appUserStatus: Joi.string(),
-  progress: Joi.string().allow(null).allow(''),
-  followUpPreferenceChannelType: Joi.string().allow(null).allow(''),
-  followUpPreferenceFrequencyType: Joi.string().allow(null).allow(''),
-  followUpPreferenceTimeSlotType: Joi.array().items(Joi.string()),
-
-  longTermGoals: Joi.string().allow(null).allow(''),
-  wellbeingScore: Joi.string().allow(null).allow(''),
-  mainConcerns: Joi.string().allow(null).allow(''),
-  interests: Joi.string().allow(null).allow(''),
-
-  aspectsOfInterest: Joi.array().items(Joi.string()).allow(null),
 };
 
 const createSchema = Joi.object({
   ...basicData,
   email: Joi.string().email({ minDomainSegments: 2 }),
-  paymentData: Joi.object({
-    type: Joi.string().allow(null).allow(''),
-    friendlyName: Joi.string().allow(null).allow(''),
-    holderIdentification: Joi.string().allow(null).allow(''),
-    holderName: Joi.string().allow(null).allow(''),
-    status: Joi.string().required(),
-  }),
 
   // products: Joi.array().items(Joi.string()).allow(null),
 
@@ -70,13 +49,6 @@ const createSchema = Joi.object({
 const updateSchema = Joi.object({
   ...basicData,
   // email: Joi.string().email({ minDomainSegments: 2 }), // no puede editar el email
-  paymentData: Joi.object({
-    type: Joi.string().allow(null).allow(''),
-    friendlyName: Joi.string().allow(null).allow(''),
-    holderIdentification: Joi.string().allow(null).allow(''),
-    holderName: Joi.string().allow(null).allow(''),
-    status: Joi.string().required(),
-  }),
 
   appRols: Joi.array().items(Joi.string()),
   // enterpriseRols: Joi.array().items(
@@ -104,7 +76,7 @@ const createByStaff = Joi.object({
   attachments: Joi.any(),
 });
 
-const requiredBaseFields = ['firstName', 'lastName', 'appUserStatus', 'paymentData', 'appRols'];
+const requiredBaseFields = ['firstName', 'lastName', 'appUserStatus', 'appRols'];
 
 const schemas = {
   create: createSchema.fork(requiredBaseFields, (field) => field.required()),
