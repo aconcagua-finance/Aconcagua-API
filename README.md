@@ -65,3 +65,34 @@ Calendar integration:
 - copy the credential clientId and secret and configure .env and secrets (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET)
 - also configure redirect url in env, eg GOOGLE_OAUTH_REDIRECT_URL="http://localhost:5001/tryaconcagua-qa/us-central1/googleOAuth/oauth2callback"
 - configure google calendar webhook url in env, eg: GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="https://us-central1-tryaconcagua-qa.cloudfunctions.net/userCalendarEvents/google-event-webhook"
+
+## Setup local
+
+- Requirements:
+
+  - nvm
+  - git bash
+  - vs code with eslint extension.
+
+- Install nodejs version:
+
+  - Open .nvmrs file to get required nodejs version (refered as \<version> down below)
+  - Install version: "nvm install \<version>" in command line.
+  - Activate nodejs in repo: "nvm use \<version>" in command line.
+
+- Install dependencies:
+
+  - Install app dependencies: "npm i" in command line.
+  - Install firebase tools: "npm i -g firebase-tools@latest" in command line.
+
+- Set .env file:
+
+  - Copy .env.template to a new file and rename it to ".env".
+  - Point to firebase env: set FIREB env vars in .env with data of firebaseConfig object from Firebase console (aconcagua-qa web application).
+
+- Set Firebase env:
+
+  - Login to Firebase: "firebase login" in command line.
+  - Set Firebase alias: "firebase use \<alias>" in command line, where \<alias> refers to "default" (catedral) or "prod" (aconcagua-fb).
+
+- Run app: "npm start" in command line.
