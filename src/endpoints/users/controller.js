@@ -402,6 +402,8 @@ exports.get = async function (req, res) {
 
     const item = await fetchSingleItem({ collectionName: COLLECTION_NAME, id: userId });
 
+    if (!item) return res.send(null);
+
     if (item.birthDate) item.birthDate = item.birthDate.toDate();
     if (item.lastTouchpoint) item.lastTouchpoint = item.lastTouchpoint.toDate();
 

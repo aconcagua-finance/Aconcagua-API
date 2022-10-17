@@ -133,6 +133,7 @@ exports.get = async function (req, res) {
     relationships: [{ collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME }],
   });
 };
+
 exports.patch = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
@@ -171,8 +172,9 @@ const parseContractDeploymentToObject = (deploymentResponse) => {
     });
   }
 
-  if (deploymentResponse.signer && deploymentResponse.signer.address)
-    {signerAddress = deploymentResponse.signer.address;}
+  if (deploymentResponse.signer && deploymentResponse.signer.address) {
+    signerAddress = deploymentResponse.signer.address;
+  }
 
   return {
     deployTransaction,
@@ -205,13 +207,14 @@ exports.create = async function (req, res) {
     const signerAddress = contractDeployment.signerAddress;
 
     // console.log('LOG RTA CONTRATO', deploymentResponse);
-    if (!contractAddress)
-      {throw new CustomError.TechnicalError(
+    if (!contractAddress) {
+      throw new CustomError.TechnicalError(
         'ERROR_CREATE_CONTRACT',
         null,
         'Empty contract address response',
         null
-      );}
+      );
+    }
 
     console.log('Contract deployment:', contractDeployment);
 
