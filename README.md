@@ -66,7 +66,7 @@ Calendar integration:
 - also configure redirect url in env, eg GOOGLE_OAUTH_REDIRECT_URL="http://localhost:5001/tryaconcagua-qa/us-central1/googleOAuth/oauth2callback"
 - configure google calendar webhook url in env, eg: GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="https://us-central1-tryaconcagua-qa.cloudfunctions.net/userCalendarEvents/google-event-webhook"
 
-## Setup local
+## Local setup
 
 - Requirements:
 
