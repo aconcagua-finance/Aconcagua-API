@@ -19,7 +19,7 @@ env:
   ENVIRONMENT: catedral-fb
 
   FIREB_PROJECT_ID: 'catedral-fb'
-  FIREB_API_KEY: ''
+  FIREB_API_KEY: 'AIzaSyDTA7zMmjRD1L95x96s4r0WM9-JrDNNe_0'
   FIREB_AUTH_DOMAIN: 'catedral-fb.firebaseapp.com'
   FIREB_STORAGE_BUCKET: 'catedral-fb.appspot.com'
   FIREB_MESSAGING_SENDER_ID: 428867726479
