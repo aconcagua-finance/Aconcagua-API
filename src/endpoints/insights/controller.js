@@ -133,13 +133,6 @@ const _find = async function (req, res) {
       indexedFilters: ['createdAt'],
     });
 
-    const userTasksHistoryItems = await fetchItems({
-      collectionName: Collections.USER_TASKS_HISTORY,
-
-      filters,
-      indexedFilters: ['createdAt'],
-    });
-
     const leadsGroupArrays = groupByMonth(
       leadItems.map((item) => {
         return { ...item, createdAtString: item.createdAt.toISOString() };
@@ -158,12 +151,6 @@ const _find = async function (req, res) {
       }),
       'createdAtString'
     );
-    const userTasksHistoryGroupArrays = groupByMonth(
-      userTasksHistoryItems.map((item) => {
-        return { ...item, createdAtString: item.createdAt.toISOString() };
-      }),
-      'createdAtString'
-    );
 
     console.log('OK - all - fetch (' + 'INSIGHTS' + '): ');
 
@@ -172,11 +159,6 @@ const _find = async function (req, res) {
       users: completeWithEmptySlots(usersGroupArrays, groupBy, new Date(filters.createdAt.$gte)),
       userTouchpoints: completeWithEmptySlots(
         touchpointsGroupArrays,
-        groupBy,
-        new Date(filters.createdAt.$gte)
-      ),
-      userTasksHistory: completeWithEmptySlots(
-        userTasksHistoryGroupArrays,
         groupBy,
         new Date(filters.createdAt.$gte)
       ),

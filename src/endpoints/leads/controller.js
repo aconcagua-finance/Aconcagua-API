@@ -21,7 +21,6 @@ const { UserStatusTypes } = require('../../types/userStatusTypes');
 const { LeadStatusTypes } = require('../../types/leadStatusTypes');
 
 const { createUser } = require('../users/controller');
-const { fetchSingleItem: fetchSinglePackage } = require('../packages/controller');
 
 const {
   find,
@@ -207,10 +206,6 @@ exports.checkout = async function (req, res) {
     if (!auditUid) auditUid = itemData.id; // si el creador es un usuario autenticado dejo ese, sino asumo que es un lead y el mismo se dio de alta
 
     const db = admin.firestore();
-
-    // TODO MICHEL
-    // Fetch package products
-    // const pkg = fetchSinglePackage(itemData.packageId);
 
     // Fetch lead
     const lead = fetchSingleItem(itemData.id);
