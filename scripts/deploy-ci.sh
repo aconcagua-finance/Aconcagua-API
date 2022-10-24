@@ -46,6 +46,7 @@ echo "GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL} >> .env
 echo "GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="${GOOGLE_CALENDAR_EVENT_WEBHOOK_URL} >> .env
 
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:admin,functions:users,functions:products,functions:leads,functions:aspects,functions:attachments,functions:levels,functions:packages,functions:practitioners,functions:tasks,functions:userTasks
-firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions
+# firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions
+firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:users,functions:admin,functions:leads,functions:products,functions:staff,functions:attachments,functions:usersByStaff,functions:userTouchpoints,functions:hookedEvents,functions:insights,functions:userProducts,functions:googleOAuth,functions:userCalendars,functions:userCalendarEvents,functions:companies,functions:companyEmployees,functions:companyClients,functions:companyProfiles,functions:companyDepartments,functions:onUserTouchpointCreate,functions:onUserTouchpointUpdate,functions:onHookedEventCreate,functions:onHookedEventUpdate,functions:onUserCalendarEventBronzeCreate
 
 echo "deploy complete!"

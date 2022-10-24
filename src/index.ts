@@ -14,29 +14,14 @@ const { adminRoutesConfig } = require('./endpoints/admin/routes-config');
 
 const { leadsRoutesConfig } = require('./endpoints/leads/routes-config');
 const { productsRoutesConfig } = require('./endpoints/products/routes-config');
-const { packagesRoutesConfig } = require('./endpoints/packages/routes-config');
+
 const { staffRoutesConfig } = require('./endpoints/staff/routes-config');
-const { aspectsRoutesConfig } = require('./endpoints/aspects/routes-config');
-const { levelsRoutesConfig } = require('./endpoints/levels/routes-config');
-const { tasksRoutesConfig } = require('./endpoints/tasks/routes-config');
-const { userTasksRoutesConfig } = require('./endpoints/userTasks/routes-config');
 const { attachmentsRoutesConfig } = require('./endpoints/attachments/routes-config');
 const { usersByStaffRoutesConfig } = require('./endpoints/usersByStaff/routes-config');
-// const { usersByCompanyRoutesConfig } = require('./endpoints/usersByCompany/routes-config');
-const { progressOptionsRoutesConfig } = require('./endpoints/progressOptions/routes-config');
 const { userTouchpointsRoutesConfig } = require('./endpoints/userTouchpoints/routes-config');
 const { hookedEventsRoutesConfig } = require('./endpoints/hookedEvents/routes-config');
 const { insightsRoutesConfig } = require('./endpoints/insights/routes-config');
-const {
-  userDynamicAttributesRoutesConfig,
-} = require('./endpoints/userDynamicAttributes/routes-config');
-const {
-  userAttributesTypesRoutesConfig,
-} = require('./endpoints/userAttributesTypes/routes-config');
 const { userProductsRoutesConfig } = require('./endpoints/userProducts/routes-config');
-const {
-  userWellBeingAttributesRoutesConfig,
-} = require('./endpoints/userWellBeingAttributes/routes-config');
 
 const { googleOAuthRoutesConfig } = require('./endpoints/googleOAuth/routes-config');
 const { userCalendarsRoutesConfig } = require('./endpoints/userCalendars/routes-config');
@@ -47,17 +32,11 @@ const { companyClientsRoutesConfig } = require('./endpoints/companyClients/route
 
 const { companyProfilesRoutesConfig } = require('./endpoints/companyProfiles/routes-config');
 const { companyDepartmentsRoutesConfig } = require('./endpoints/companyDepartments/routes-config');
-const { companySurveysRoutesConfig } = require('./endpoints/companySurveys/routes-config');
-const {
-  companySurveyQuestionsRoutesConfig,
-} = require('./endpoints/companySurveyQuestions/routes-config');
 
 const {
   onUserTouchpointCreate,
   onUserTouchpointUpdate,
 } = require('./endpoints/userTouchpoints/controller');
-
-const { onUserTaskCreate, onUserTaskUpdate } = require('./endpoints/userTasks/controller');
 
 const { onUserCalendarEventBronzeCreate } = require('./endpoints/userCalendarEvents/controller');
 
@@ -123,18 +102,6 @@ exports.admin = functions
   })
   .https.onRequest(adminApp);
 
-const packagesApp = express();
-configureApp(packagesApp);
-packagesRoutesConfig(packagesApp);
-exports.packages = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(packagesApp);
-
 const leadsApp = express();
 configureApp(leadsApp);
 leadsRoutesConfig(leadsApp);
@@ -171,54 +138,6 @@ exports.staff = functions
   })
   .https.onRequest(staffApp);
 
-const aspectsApp = express();
-configureApp(aspectsApp);
-aspectsRoutesConfig(aspectsApp);
-exports.aspects = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(aspectsApp);
-
-const levelsApp = express();
-configureApp(levelsApp);
-levelsRoutesConfig(levelsApp);
-exports.levels = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(levelsApp);
-
-const tasksApp = express();
-configureApp(tasksApp);
-tasksRoutesConfig(tasksApp);
-exports.tasks = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(tasksApp);
-
-const userTasksApp = express();
-configureApp(userTasksApp);
-userTasksRoutesConfig(userTasksApp);
-exports.userTasks = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(userTasksApp);
-
 const attachmentsApp = express();
 configureApp(attachmentsApp);
 attachmentsRoutesConfig(attachmentsApp);
@@ -242,30 +161,6 @@ exports.usersByStaff = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(usersByStaffApp);
-
-// const usersByCompanyApp = express();
-// configureApp(usersByCompanyApp);
-// usersByCompanyRoutesConfig(usersByCompanyApp);
-// exports.usersByCompany = functions
-//   .runWith({
-//     // memory: "2GB",
-//     // Keep 5 instances warm for this latency-critical function
-//     // in production only. Default to 0 for test projects.
-//     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-//   })
-//   .https.onRequest(usersByCompanyApp);
-
-const progressOptionsApp = express();
-configureApp(progressOptionsApp);
-progressOptionsRoutesConfig(progressOptionsApp);
-exports.progressOptions = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(progressOptionsApp);
 
 const userTouchpointsApp = express();
 configureApp(userTouchpointsApp);
@@ -303,30 +198,6 @@ exports.insights = functions
   })
   .https.onRequest(insightsApp);
 
-const userDynamicAttributesApp = express();
-configureApp(userDynamicAttributesApp);
-userDynamicAttributesRoutesConfig(userDynamicAttributesApp);
-exports.userDynamicAttributes = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(userDynamicAttributesApp);
-
-const userAttributesTypesApp = express();
-configureApp(userAttributesTypesApp);
-userAttributesTypesRoutesConfig(userAttributesTypesApp);
-exports.userAttributesTypes = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(userAttributesTypesApp);
-
 const userProductsApp = express();
 configureApp(userProductsApp);
 userProductsRoutesConfig(userProductsApp);
@@ -338,18 +209,6 @@ exports.userProducts = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(userProductsApp);
-
-const userWellBeingAttributesApp = express();
-configureApp(userWellBeingAttributesApp);
-userWellBeingAttributesRoutesConfig(userWellBeingAttributesApp);
-exports.userWellBeingAttributes = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(userWellBeingAttributesApp);
 
 const googleOAuthApp = express();
 configureApp(googleOAuthApp);
@@ -447,35 +306,8 @@ exports.companyDepartments = functions
   })
   .https.onRequest(companyDepartmentsApp);
 
-const companySurveysApp = express();
-configureApp(companySurveysApp);
-companySurveysRoutesConfig(companySurveysApp);
-exports.companySurveys = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(companySurveysApp);
-
-const companySurveyQuestionsApp = express();
-configureApp(companySurveyQuestionsApp);
-companySurveyQuestionsRoutesConfig(companySurveyQuestionsApp);
-exports.companySurveyQuestions = functions
-  .runWith({
-    // memory: "2GB",
-    // Keep 5 instances warm for this latency-critical function
-    // in production only. Default to 0 for test projects.
-    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-  })
-  .https.onRequest(companySurveyQuestionsApp);
-
 exports.onUserTouchpointCreate = onUserTouchpointCreate;
 exports.onUserTouchpointUpdate = onUserTouchpointUpdate;
-
-exports.onUserTaskCreate = onUserTaskCreate;
-exports.onUserTaskUpdate = onUserTaskUpdate;
 
 exports.onHookedEventCreate = onHookedEventCreate;
 exports.onHookedEventUpdate = onHookedEventUpdate;
