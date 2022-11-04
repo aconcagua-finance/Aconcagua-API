@@ -5,6 +5,7 @@ const baseSchema = Joi.object({
   userId: Joi.string(),
 
   notes: Joi.string().allow(''),
+  attachments: Joi.any(),
 });
 
 const requiredBaseFields = ['companyId', 'userId'];

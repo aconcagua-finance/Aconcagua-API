@@ -17,4 +17,5 @@ export enum Collections {
   COMPANY_PROFILES = 'companyProfiles',
   COMPANY_DEPARTMENTS = 'companyDepartments',
   VAULTS = 'vaults',
+  VAULT_INSTALLMENTS = 'vaultInstallments',
 }
