@@ -18,20 +18,20 @@ env:
   TEST_ENV_KEY: 'TEST_ENV_VALUE'
   ENVIRONMENT: prod
 
-  FIREB_PROJECT_ID: 'tryaconcagua'
-  FIREB_API_KEY: 'AIzaSyCEl3byGNKD6--ZgR20UcxYsdHDl3BDcWA'
-  FIREB_AUTH_DOMAIN: 'tryaconcagua.firebaseapp.com'
-  FIREB_STORAGE_BUCKET: 'tryaconcagua.appspot.com'
-  FIREB_MESSAGING_SENDER_ID: 1005046819730
-  FIREB_APP_ID: '1:1005046819730:web:60faf41207cb1046a9ef4b'
-  FIREB_MEASURAMENT_ID: 'G-YXDKCL6F3R'
+  FIREB_PROJECT_ID: 'aconcagua-365314'
+  FIREB_API_KEY: 'AIzaSyCVjVkwUc63D9ES6AVwPCEahJHw1ky978Q'
+  FIREB_AUTH_DOMAIN: 'aconcagua-365314.firebaseapp.com'
+  FIREB_STORAGE_BUCKET: 'aconcagua-365314.appspot.com'
+  FIREB_MESSAGING_SENDER_ID: 101110014661
+  FIREB_APP_ID: '1:101110014661:web:137167add231676d4846ac'
+  FIREB_MEASURAMENT_ID: 'G-4EP13854VS'
 
   AIRTABLE_API_KEY: '??'
 
   GOOGLE_OAUTH_CLIENT_ID: ${{secrets.GOOGLE_OAUTH_CLIENT_ID_PROD}}
   GOOGLE_OAUTH_CLIENT_SECRET: ${{secrets.GOOGLE_OAUTH_CLIENT_SECRET_PROD}}
-  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-tryaconcagua.cloudfunctions.net/googleOAuth/oauth2callback'
-  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-try-aconcagua.cloudfunctions.net/userCalendarEvents/google-event-webhook'
+  GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/googleOAuth/oauth2callback'
+  GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/userCalendarEvents/google-event-webhook'
 
 jobs:
   build-and-publish:
