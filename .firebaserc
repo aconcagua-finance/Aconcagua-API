@@ -1,6 +1,7 @@
 {
   "projects": {
     "default": "catedral-fb",
-    "prod": "aconcaguafb"
+    "prod": "aconcagua-365314",
+    "qa": "catedral-fb"
   }
 }
