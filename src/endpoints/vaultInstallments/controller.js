@@ -125,7 +125,7 @@ exports.patch = async function (req, res) {
 
     if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
 
-    console.log('Patch args (' + collectionName + '):', body);
+    console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
 
     const itemData = await sanitizeData({ data: body, validationSchema });
 
@@ -140,7 +140,7 @@ exports.patch = async function (req, res) {
 
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
 
-    console.log('Patch data: (' + collectionName + ')', itemData);
+    console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
     return res.status(204).send(doc);
   } catch (err) {
