@@ -13,12 +13,105 @@ const { Auth } = require('../../vs-core-firebase');
 const { CustomError } = require('../../vs-core');
 const { Collections } = require('../../types/collectionsTypes');
 
-const mapTofirestoreFilter = (value) => {
+const mapTofirestoreFilter = (key, value) => {
+  if (key === 'state') return parseInt(value); // fix michel por state
+  // if (value === '0' || value === '1') return value; // fix michel por state
+
   if (typeof value === 'string' && new Date(value) !== 'Invalid Date' && !isNaN(new Date(value))) {
     return new Date(value);
   }
 
   return value;
+};
+
+const buildQuerySnapshot = ({ ref, filters, filterState, indexedFilters }) => {
+  let querySnapshot = ref;
+
+  if (typeof filterState !== 'undefined' && filterState !== null) {
+    querySnapshot = querySnapshot.where('state', '==', filterState);
+  }
+  // querySnapshot = querySnapshot.orderBy('createdAt', 'asc');
+
+  // console.log('COLLECTION:' + collectionName, indexedFilters, filters);
+
+  if (filters && indexedFilters && indexedFilters.length) {
+    const filtersKeys = Object.keys(filters);
+
+    filtersKeys.forEach((key) => {
+      if (!indexedFilters.includes(key)) return;
+
+      if (filters[key].$equal) {
+        const filterValue = mapTofirestoreFilter(key, filters[key].$equal);
+
+        console.log('Filter equal: ', key, filterValue);
+
+        querySnapshot = querySnapshot.where(key, '==', filterValue);
+      }
+
+      if (filters[key].$nequal) {
+        const filterValue = mapTofirestoreFilter(key, filters[key].$nequal);
+
+        querySnapshot = querySnapshot.where(key, '!=', filterValue);
+      }
+
+      if (filters[key].$contains) {
+        // lo dejo pasar pq no existe contains en filtro de indice de firestore
+      }
+
+      if (filters[key].$in) {
+        const filterValue = mapTofirestoreFilter(key, filters[key].$in);
+
+        querySnapshot = querySnapshot.where(key, 'array-contains', filterValue);
+      }
+
+      if (filters[key].$gte) {
+        const filterValue = mapTofirestoreFilter(key, filters[key].$gte);
+
+        console.log('Filter gte: ', key, filterValue);
+
+        querySnapshot = querySnapshot.where(key, '>=', filterValue);
+      }
+    });
+  }
+
+  return querySnapshot;
+};
+
+// equal: Equals
+// nequal: Not equals
+// lt: Lower than
+// gt: Greater than
+// lte: Lower than or equal to
+// gte: Greater than or equal to
+// in: Included in an array of values
+// nin: Isn't included in an array of values
+// contains: Contains
+// ncontains: Doesn't contain
+// containss: Contains case sensitive
+// ncontainss: Doesn't contain case sensitive
+const countItems = async function ({
+  collectionName,
+
+  filterState,
+  filters,
+  indexedFilters,
+}) {
+  try {
+    const db = admin.firestore();
+    const ref = db.collection(collectionName);
+
+    console.log(
+      'Count with Filters (' + collectionName + '): ' + JSON.stringify({ filters, indexedFilters })
+    );
+
+    let querySnapshot = buildQuerySnapshot({ ref, filters, filterState, indexedFilters });
+
+    querySnapshot = await querySnapshot.get();
+
+    return querySnapshot.size;
+  } catch (err) {
+    throw new CustomError.TechnicalError('ERROR_FETCH', null, err.message, err);
+  }
 };
 
 // equal: Equals
@@ -44,51 +137,16 @@ const fetchItems = async function ({
     const db = admin.firestore();
     const ref = db.collection(collectionName);
 
-    let querySnapshot = ref.limit(limit);
-    if (typeof filterState !== 'undefined' && filterState !== null) {
-      querySnapshot = querySnapshot.where('state', '==', filterState);
-    }
-    // querySnapshot = querySnapshot.orderBy('createdAt', 'asc');
+    console.log(
+      'Find with Filters (' + collectionName + '): ' + JSON.stringify({ filters, indexedFilters })
+    );
 
-    // console.log('COLLECTION:' + collectionName, indexedFilters, filters);
-
-    if (filters && indexedFilters && indexedFilters.length) {
-      const filtersKeys = Object.keys(filters);
-
-      filtersKeys.forEach((key) => {
-        if (!indexedFilters.includes(key)) return;
-
-        console.log(key + ':' + JSON.stringify(filters[key]));
-
-        if (filters[key].$equal) {
-          const filterValue = mapTofirestoreFilter(filters[key].$equal);
-
-          querySnapshot = querySnapshot.where(key, '==', filterValue);
-        }
-
-        if (filters[key].$nequal) {
-          const filterValue = mapTofirestoreFilter(filters[key].$nequal);
-
-          querySnapshot = querySnapshot.where(key, '!=', filterValue);
-        }
-
-        if (filters[key].$contains) {
-          // lo dejo pasar pq no existe contains en filtro de indice de firestore
-        }
-
-        if (filters[key].$in) {
-          const filterValue = mapTofirestoreFilter(filters[key].$in);
-
-          querySnapshot = querySnapshot.where(key, 'array-contains', filterValue);
-        }
-
-        if (filters[key].$gte) {
-          const filterValue = mapTofirestoreFilter(filters[key].$gte);
-
-          querySnapshot = querySnapshot.where(key, '>=', filterValue);
-        }
-      });
-    }
+    let querySnapshot = buildQuerySnapshot({
+      ref: ref.limit(limit),
+      filters,
+      filterState,
+      indexedFilters,
+    });
 
     querySnapshot = await querySnapshot.get();
     if (!querySnapshot.docs) return [];
@@ -514,6 +572,8 @@ const getFirebaseUserByEmail = async function (email) {
 };
 
 exports.fetchItems = fetchItems;
+exports.countItems = countItems;
+
 exports.fetchSingleItem = fetchSingleItem;
 exports.updateSingleItem = updateSingleItem;
 exports.deleteSingleItem = deleteSingleItem;

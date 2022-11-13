@@ -24,7 +24,10 @@ import {
   fetchSingleItem,
   updateSingleItem,
   fetchItems,
+  countItems,
 } from '../baseEndpoint';
+
+const { CurrencyTypes } = require('../../types/currencyTypes');
 
 const groupByMonth = (items, propName) => {
   // this gives an object with dates as keys
@@ -50,7 +53,7 @@ const groupByMonth = (items, propName) => {
   return groupArrays;
 };
 
-const completeWithEmptySlots = (itemsGroups, groupBy, startDate) => {
+const normalizeAndCompleteWithEmptySlots = (itemsGroups, groupBy, startDate) => {
   if (!itemsGroups) return itemsGroups;
 
   // groupBy por ahora fijo por mes
@@ -61,8 +64,8 @@ const completeWithEmptySlots = (itemsGroups, groupBy, startDate) => {
 
   const currentDate = new Date(Date.now());
   const nowMonth = currentDate.getUTCMonth();
+
   let month = startDate.getUTCMonth();
-  const startDateAux = { ...startDate };
 
   let lastDate = new Date(startDate.getFullYear(), month, 1);
 
@@ -77,6 +80,7 @@ const completeWithEmptySlots = (itemsGroups, groupBy, startDate) => {
     items: itemGroup1 && itemGroup1.items ? itemGroup1.items : [],
   });
 
+  // TODO MICHEL - Si consulto por 12 meses nunca entra a este while
   while (month !== nowMonth) {
     lastDate = new Date(lastDate.setMonth(lastDate.getUTCMonth() + 1));
     month = lastDate.getUTCMonth();
@@ -89,90 +93,101 @@ const completeWithEmptySlots = (itemsGroups, groupBy, startDate) => {
 
     newGroupsList.push({
       date: lastDate.toISOString(),
-      items: itemGroup2 && itemGroup2.items ? itemGroup2.items : [],
+      items:
+        itemGroup2 && itemGroup2.items
+          ? itemGroup2.items.map((item) => {
+              return item.id;
+            })
+          : [],
     });
   }
 
   return newGroupsList;
 };
 
-const _find = async function (req, res) {
+exports.findByCompany = async function (req, res) {
   try {
     const { limit, offset, filters, state, groupBy } = req.query;
 
+    const { companyId } = req.params;
+
+    console.log('Insights find with args: ' + JSON.stringify([filters, companyId]));
+
     // filters[createdAt][$gte]: 2022-01-22T18:46:13.487Z
-    if (!filters || !filters.createdAt || !filters.createdAt.$gte) {
-      throw new CustomError.TechnicalError(
-        'ERROR_MISSING_ARGS',
-        null,
-        'createdAt filter empty',
-        null
-      );
+    if (!filters || !filters.createdAt || !filters.createdAt.$gte || !companyId) {
+      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'missing args', null);
     }
 
+    const indexedFilters = ['createdAt', 'companyId', 'state'];
+    filters['companyId'] = { $equal: companyId };
+
     // groupBy = month / week / day...
-    const leadItems = await fetchItems({
-      collectionName: Collections.LEADS,
+    const vaultsItems = await fetchItems({
+      collectionName: Collections.VAULTS,
       limit: 10000,
       filters,
-      indexedFilters: ['createdAt'],
+      indexedFilters,
     });
 
+    console.log('Insights vaults len:' + vaultsItems.length);
     // return res.send(leadItems);
-    const usersItems = await fetchItems({
-      collectionName: Collections.USERS,
+    const clientsItems = await fetchItems({
+      collectionName: Collections.COMPANY_CLIENTS,
 
       filters,
-      indexedFilters: ['createdAt'],
+      indexedFilters,
     });
 
-    const userTouchpointsItems = await fetchItems({
-      collectionName: Collections.USER_TOUCHPOINTS,
+    const vaultsGroupArrays = groupByMonth(
+      vaultsItems.map((item) => {
+        return { ...item, createdAtString: item.createdAt.toISOString() };
+      }),
+      'createdAtString'
+    );
 
-      filters,
-      indexedFilters: ['createdAt'],
+    console.log('Insights vaults vaultsGroupArrays:', vaultsGroupArrays);
+
+    const clientesGroupArrays = groupByMonth(
+      clientsItems.map((item) => {
+        return { ...item, createdAtString: item.createdAt.toISOString() };
+      }),
+      'createdAtString'
+    );
+
+    let depositsAmount = 0;
+    let creditsAmount = 0;
+
+    vaultsItems.forEach((item) => {
+      creditsAmount += item.amount;
+      if (!item || !item.balances) return;
+      const arsBalance = item.balances.find((balance) => {
+        return balance.currency === CurrencyTypes.ARS;
+      });
+
+      if (!arsBalance) return;
+
+      depositsAmount += arsBalance.value;
     });
-
-    const leadsGroupArrays = groupByMonth(
-      leadItems.map((item) => {
-        return { ...item, createdAtString: item.createdAt.toISOString() };
-      }),
-      'createdAtString'
-    );
-    const usersGroupArrays = groupByMonth(
-      usersItems.map((item) => {
-        return { ...item, createdAtString: item.createdAt.toISOString() };
-      }),
-      'createdAtString'
-    );
-    const touchpointsGroupArrays = groupByMonth(
-      userTouchpointsItems.map((item) => {
-        return { ...item, createdAtString: item.createdAt.toISOString() };
-      }),
-      'createdAtString'
-    );
-
-    console.log('OK - all - fetch (' + 'INSIGHTS' + '): ');
 
     const result = {
-      leads: completeWithEmptySlots(leadsGroupArrays, groupBy, new Date(filters.createdAt.$gte)),
-      users: completeWithEmptySlots(usersGroupArrays, groupBy, new Date(filters.createdAt.$gte)),
-      userTouchpoints: completeWithEmptySlots(
-        touchpointsGroupArrays,
+      vaults: normalizeAndCompleteWithEmptySlots(
+        vaultsGroupArrays,
         groupBy,
         new Date(filters.createdAt.$gte)
       ),
+      clients: normalizeAndCompleteWithEmptySlots(
+        clientesGroupArrays,
+        groupBy,
+        new Date(filters.createdAt.$gte)
+      ),
+      depositsAmount,
+      creditsAmount,
     };
+
+    console.log('OK - all - fetch (' + 'INSIGHTS' + '): ');
 
     return res.send(result);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
-
-const _get = async function (req, res) {
-  return res.send(null);
-};
-
-export { _find as find };
-export { _get as get };

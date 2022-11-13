@@ -136,6 +136,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 0,
     'space-before-function-paren': 0,
 
+    'operator-linebreak': 0,
     semi: ['off'],
 
     // semi: ['error', 'never'],
