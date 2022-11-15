@@ -290,7 +290,7 @@ function onlyUnique(value, index, self) {
 // containss: Contains case sensitive
 // ncontainss: Doesn't contain case sensitive
 
-const filterItems = function ({ items, limit = 100, offset = 0, filters }) {
+const filterItems = function ({ items, limit = 100, offset = 0, filters, indexedFilters }) {
   if (!items || items.length === 0) return { items: [], hasMore: false, total: 0, pageSize: limit };
 
   offset = parseInt(offset);
@@ -303,7 +303,15 @@ const filterItems = function ({ items, limit = 100, offset = 0, filters }) {
   // key, value, operator
 
   if (filters) {
-    const filtersKeys = Object.keys(filters);
+    let filtersKeys = Object.keys(filters);
+
+    if (indexedFilters) {
+      filtersKeys = filtersKeys.filter((key) => {
+        return !indexedFilters.find((item) => {
+          return item === key;
+        });
+      });
+    }
 
     filtersKeys.forEach((key) => {
       if (filters[key].$contains) {
@@ -615,7 +623,7 @@ exports.find = async function (req, res, collectionName, indexedFilters, postPro
 
     console.log('OK - all - fetch (' + collectionName + '): ' + items.length);
 
-    const filteredItems = filterItems({ items, limit, offset, filters });
+    const filteredItems = filterItems({ items, limit, offset, filters, indexedFilters });
 
     if (filteredItems.items) {
       console.log('OK - all - filter (' + collectionName + '): ' + filteredItems.items.length);
@@ -668,7 +676,7 @@ exports.findWithUserRelationshipInner = async function ({
 
   console.log('OK - all - fetch (' + collectionName + '): ' + items.length);
 
-  const filteredItems = filterItems({ items, limit, offset, filters });
+  const filteredItems = filterItems({ items, limit, offset, filters, indexedFilters });
 
   if (filteredItems.items) {
     console.log('OK - all - filter(' + collectionName + '): ' + filteredItems.items.length);
@@ -1172,7 +1180,7 @@ exports.listByPropInner = async function ({
 
   console.log('OK - all - fetch (' + listByCollectionName + '): ' + items.length);
 
-  const filteredItems = filterItems({ items, limit, offset, filters });
+  const filteredItems = filterItems({ items, limit, offset, filters, indexedFilters });
 
   if (filteredItems.items) {
     console.log('OK - all - filter(' + listByCollectionName + '): ' + filteredItems.items.length);

@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 const admin = require('firebase-admin');
+const functions = require('firebase-functions');
 
 const Fuse = require('fuse.js');
 
@@ -217,6 +218,29 @@ exports.remove = async function (req, res) {
   await remove(req, res, Collections.COMPANY_CLIENTS);
 };
 
+const createCompanyClientRelationship = async ({ auditUid, data }) => {
+  const collectionName = Collections.COMPANY_CLIENTS;
+  const validationSchema = schemas.create;
+
+  const itemData = await sanitizeData({ data, validationSchema });
+
+  if (!itemData.companyId || !itemData.userId) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE_COMPANY_CLIENT',
+      null,
+      'Error creating company client. Missing args',
+      null
+    );
+  }
+
+  const createArgs = { collectionName, itemData, auditUid };
+
+  // creo la relacion empresa-empleado
+  const dbItemData = await createFirestoreDocument(createArgs);
+
+  return dbItemData;
+};
+
 exports.create = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
@@ -229,24 +253,9 @@ exports.create = async function (req, res) {
   const collectionName = Collections.COMPANY_CLIENTS;
   const validationSchema = schemas.create;
 
+  console.log('Create args (' + collectionName + '):', body);
   try {
-    console.log('Create args (' + collectionName + '):', body);
-
-    const itemData = await sanitizeData({ data: body, validationSchema });
-
-    if (!companyId || !targetUserId) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_COMPANY_CLIENT',
-        null,
-        'Error creating company client. Missing args',
-        null
-      );
-    }
-
-    const createArgs = { collectionName, itemData, auditUid };
-
-    // creo la relacion empresa-empleado
-    const dbItemData = await createFirestoreDocument(createArgs);
+    const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
 
     console.log('Create data: (' + collectionName + ')', dbItemData);
 
@@ -255,3 +264,63 @@ exports.create = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
+// eslint-disable-next-line camelcase
+exports.onVaultCreate_ThenCreateCompanyClientRelationship = functions.firestore
+  .document(Collections.VAULTS + '/{docId}')
+  .onUpdate(async (change, context) => {
+    const { docId } = context.params;
+    const documentPath = `${Collections.VAULTS}/${docId}`;
+    const before = change.before.data();
+    const after = change.after.data();
+
+    try {
+      console.log('onVaultCreate_ThenCreateCompanyClientRelationship ' + documentPath);
+
+      const userId = after.userId;
+      const companyId = after.companyId;
+      const updatedBy = after.updatedBy;
+
+      const collectionName = Collections.COMPANY_CLIENTS;
+
+      // TODO MICHEL - validar si no existe ya la relacion
+      console.log('Obtengo si existe una relacion actualmente');
+      const db = admin.firestore();
+      const ref = db.collection(collectionName);
+
+      const querySnapshot = await ref
+        .where('userId', '==', userId)
+        .where('companyId', '==', companyId)
+        .get();
+
+      if (!querySnapshot.docs) return [];
+
+      const items = querySnapshot.docs.map((doc) => {
+        const id = doc.id;
+        const data = doc.data();
+
+        if (data.createdAt) data.createdAt = data.createdAt.toDate();
+        if (data.updatedAt) data.updatedAt = data.updatedAt.toDate();
+
+        return { ...data, id };
+      });
+
+      // ya existia la relacion
+      if (!items.length) {
+        const dbItemData = await createCompanyClientRelationship({
+          auditUid: updatedBy,
+          data: { userId, companyId },
+        });
+
+        console.log('Created relationship');
+      } else {
+        console.log('Relationship pre existent');
+      }
+
+      console.log('onVaultCreate_ThenCreateCompanyClientRelationship success ' + documentPath);
+    } catch (err) {
+      console.error('error onUpdate document', documentPath, err);
+
+      return null;
+    }
+  });
