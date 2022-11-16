@@ -64,8 +64,10 @@ const normalizeAndCompleteWithEmptySlots = (itemsGroups, groupBy, startDate) => 
 
   const currentDate = new Date(Date.now());
   const nowMonth = currentDate.getUTCMonth();
+  const nowYear = currentDate.getUTCFullYear();
 
   let month = startDate.getUTCMonth();
+  let year = startDate.getUTCFullYear();
 
   let lastDate = new Date(startDate.getFullYear(), month, 1);
 
@@ -81,25 +83,30 @@ const normalizeAndCompleteWithEmptySlots = (itemsGroups, groupBy, startDate) => 
   });
 
   // TODO MICHEL - Si consulto por 12 meses nunca entra a este while
-  while (month !== nowMonth) {
+  // while (month !== nowMonth && year !== nowYear) {
+  while (lastDate <= currentDate) {
     lastDate = new Date(lastDate.setMonth(lastDate.getUTCMonth() + 1));
     month = lastDate.getUTCMonth();
+    year = lastDate.getUTCFullYear();
 
-    const lastDateSubString2 = lastDate.toISOString().substring(0, 7);
+    // para que no agarre el mes siguiente
+    if (month <= nowMonth && year <= nowYear) {
+      const lastDateSubString2 = lastDate.toISOString().substring(0, 7);
 
-    const itemGroup2 = itemsGroups.find((ig) => {
-      return ig.date.substring(0, 7) === lastDateSubString2;
-    });
+      const itemGroup2 = itemsGroups.find((ig) => {
+        return ig.date.substring(0, 7) === lastDateSubString2;
+      });
 
-    newGroupsList.push({
-      date: lastDate.toISOString(),
-      items:
-        itemGroup2 && itemGroup2.items
-          ? itemGroup2.items.map((item) => {
-              return item.id;
-            })
-          : [],
-    });
+      newGroupsList.push({
+        date: lastDate.toISOString(),
+        items:
+          itemGroup2 && itemGroup2.items
+            ? itemGroup2.items.map((item) => {
+                return item.id;
+              })
+            : [],
+      });
+    }
   }
 
   return newGroupsList;
