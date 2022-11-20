@@ -144,7 +144,7 @@ exports.findByUser = async function (req, res) {
 };
 
 exports.get = async function (req, res) {
-  const { id } = req.params;
+  const { id, companyId, userId } = req.params;
 
   await getByProp({
     req,
@@ -157,7 +157,47 @@ exports.get = async function (req, res) {
     collectionName: Collections.COMPANY_CLIENTS,
 
     relationships: [{ collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME }],
+    postProcessor: async (item) => {
+      if (!item) return null;
+
+      // Importante para validar permisos - complementario a routes-config
+      if (userId && item.userId !== userId) throw new Error('userId missmatch');
+      if (companyId && item.companyId !== companyId) throw new Error('companyId missmatch');
+
+      return item;
+    },
   });
+};
+
+exports.getCurrentRelationship = async function (req, res) {
+  const { id, companyId, userId } = req.params;
+
+  const filters = {};
+  if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
+  filters.companyId = { $equal: companyId };
+  // filters.userId = { $equal: companyId }; // ya se filtra por el primaryEntityPropName
+
+  try {
+    const result = await listByPropInner({
+      filters,
+
+      primaryEntityPropName: USER_ENTITY_PROPERTY_NAME,
+      primaryEntityValue: userId,
+
+      listByCollectionName: Collections.COMPANY_CLIENTS,
+      indexedFilters: INDEXED_FILTERS,
+      relationships: [
+        { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
+      ],
+    });
+
+    if (!result || result.total !== 1) throw new Error('Invalid items len');
+
+    return res.send(result.items[0]);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
 };
 
 exports.patch = async function (req, res) {
