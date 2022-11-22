@@ -14,8 +14,9 @@ const basicData = {
 
   origin: Joi.string().allow(null).allow(''),
 
-  company: Joi.any(),
-
+  company: Joi.string().allow(''),
+  companyRol: Joi.string().allow(''),
+  companyIdentificationNumber: Joi.string().allow(''),
   addressResidenceCountry: Joi.string().allow(null).allow(''),
   currentJobType: Joi.string().allow(null).allow(''),
 
