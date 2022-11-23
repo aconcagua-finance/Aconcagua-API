@@ -7,7 +7,7 @@ const basicData = {
   // email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'io'] } }),
 
   phoneNumber: Joi.string().allow(''),
-
+  identificationNumber: Joi.string().allow(''),
   gender: Joi.string().allow(null).allow(''),
   maritalStatus: Joi.string().allow(null).allow(''),
   birthDate: Joi.date().allow(null, ''),
