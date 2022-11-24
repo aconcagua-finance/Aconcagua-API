@@ -1,6 +1,7 @@
 const {
   find,
   get,
+  getCurrentRelationship,
   create,
   patch,
   remove,
@@ -40,7 +41,7 @@ exports.companyClientsRoutesConfig = function (app) {
   ]);
 
   // busca una relacion
-  app.get('/:companyId/:id', [
+  app.get('/:companyId/:userId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
@@ -49,6 +50,18 @@ exports.companyClientsRoutesConfig = function (app) {
       isEnterpriseEmployee: true,
     }),
     get,
+  ]);
+
+  // busca una relacion
+  app.get('/:companyId/:userId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      // hasEnterpriseRole: enumValuesToArray(Types.EnterpriseRols),
+      isEnterpriseEmployee: true,
+    }),
+    getCurrentRelationship,
   ]);
 
   // crea un elemento relacionado a la empresa enviada y al usuario enviado

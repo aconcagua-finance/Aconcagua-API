@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable no-console */
 // import { Config } from '@abdalamichel/vs-core';
 
@@ -41,6 +42,10 @@ const {
   onUserTouchpointCreate,
   onUserTouchpointUpdate,
 } = require('./endpoints/userTouchpoints/controller');
+
+const {
+  onVaultCreate_ThenCreateCompanyClientRelationship,
+} = require('./endpoints/companyClients/controller');
 
 const { onUserCalendarEventBronzeCreate } = require('./endpoints/userCalendarEvents/controller');
 
@@ -353,3 +358,6 @@ exports.onHookedEventCreate = onHookedEventCreate;
 exports.onHookedEventUpdate = onHookedEventUpdate;
 
 exports.onUserCalendarEventBronzeCreate = onUserCalendarEventBronzeCreate;
+
+exports.onVaultCreate_ThenCreateCompanyClientRelationship =
+  onVaultCreate_ThenCreateCompanyClientRelationship;

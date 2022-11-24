@@ -23,12 +23,55 @@ const {
   create,
   fetchSingleItem,
   updateSingleItem,
+
+  fetchItemsByIds,
+  filterItems,
 } = require('../baseEndpoint');
 
 const COLLECTION_NAME = Collections.COMPANIES;
 
 exports.find = async function (req, res) {
   await find(req, res, COLLECTION_NAME);
+};
+
+exports.findGranted = async function (req, res) {
+  try {
+    const collectionName = COLLECTION_NAME;
+
+    // / movies?filters[movies]=USA&fields[]=id&fields[]=name
+    let { limit, offset, filters, state } = req.query;
+
+    if (limit) limit = parseInt(limit);
+
+    const { enterpriseRols } = res.locals;
+
+    let ids = [];
+    if (enterpriseRols) {
+      ids = enterpriseRols.map((entRol) => {
+        return entRol.companyId;
+      });
+    }
+    console.log(
+      'enterpriseRols: ' + JSON.stringify(enterpriseRols) + '. ids: ' + JSON.stringify(ids)
+    );
+    let items = [];
+
+    if (ids.length !== 0) {
+      items = await fetchItemsByIds({ collectionName, ids });
+
+      console.log('OK - all - fetch (' + collectionName + '): ' + items.length);
+    }
+
+    const filteredItems = filterItems({ items, limit, offset, filters });
+
+    if (filteredItems.items) {
+      console.log('OK - all - filter (' + collectionName + '): ' + filteredItems.items.length);
+    }
+
+    return res.send(filteredItems);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
 };
 
 exports.get = async function (req, res) {
