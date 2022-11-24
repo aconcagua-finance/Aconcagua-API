@@ -22,6 +22,7 @@ const { userTouchpointsRoutesConfig } = require('./endpoints/userTouchpoints/rou
 const { hookedEventsRoutesConfig } = require('./endpoints/hookedEvents/routes-config');
 const { insightsRoutesConfig } = require('./endpoints/insights/routes-config');
 const { userProductsRoutesConfig } = require('./endpoints/userProducts/routes-config');
+const { marketCapRoutesConfig } = require('./endpoints/marketCap/routes-config');
 
 const { googleOAuthRoutesConfig } = require('./endpoints/googleOAuth/routes-config');
 const { userCalendarsRoutesConfig } = require('./endpoints/userCalendars/routes-config');
@@ -212,6 +213,18 @@ exports.userProducts = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(userProductsApp);
+
+const marketCapApp = express();
+configureApp(marketCapApp);
+marketCapRoutesConfig(marketCapApp);
+exports.marketCap = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(marketCapApp);
 
 const googleOAuthApp = express();
 configureApp(googleOAuthApp);
