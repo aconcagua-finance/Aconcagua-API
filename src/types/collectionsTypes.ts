@@ -19,4 +19,5 @@ export enum Collections {
   VAULTS = 'vaults',
   VAULT_INSTALLMENTS = 'vaultInstallments',
   VAULT_TRANSACTIONS = 'vaultTransactions',
+  TRANSACTION_REQUESTS = 'transactionRequests',
 }

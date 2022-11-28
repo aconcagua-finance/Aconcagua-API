@@ -36,6 +36,9 @@ const { companyDepartmentsRoutesConfig } = require('./endpoints/companyDepartmen
 
 const { vaultInstallmentsRoutesConfig } = require('./endpoints/vaultInstallments/routes-config');
 const { vaultTransactionsRoutesConfig } = require('./endpoints/vaultTransactions/routes-config');
+const {
+  transactionRequestsRoutesConfig,
+} = require('./endpoints/transactionRequests/routes-config');
 
 const {
   onUserTouchpointCreate,
@@ -337,6 +340,18 @@ exports.vaultTransactions = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(vaultTransactionsApp);
+
+const transactionRequestsApp = express();
+configureApp(transactionRequestsApp);
+transactionRequestsRoutesConfig(transactionRequestsApp);
+exports.transactionRequests = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(transactionRequestsApp);
 
 exports.onUserTouchpointCreate = onUserTouchpointCreate;
 exports.onUserTouchpointUpdate = onUserTouchpointUpdate;

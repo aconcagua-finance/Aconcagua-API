@@ -1299,6 +1299,130 @@ exports.listByPropInner = async function ({
   return result;
 };
 
+exports.listWithRelationships = async function ({
+  limit,
+  offset,
+  filters,
+
+  listByCollectionName,
+  indexedFilters,
+  relationships,
+  postProcessor,
+}) {
+  if (limit) limit = parseInt(limit);
+
+  if (!filters) filters = {};
+  // { staffId: { '$equal': 'oKlebI6i03FAAZHsLWzn' } }
+
+  console.log('Query (' + listByCollectionName + ') with filters:', filters);
+
+  const items = await fetchItems({
+    collectionName: listByCollectionName,
+    // filterState,
+    filters,
+    indexedFilters,
+  });
+
+  console.log('OK - all - fetch (' + listByCollectionName + '): ' + items.length);
+
+  const filteredItems = filterItems({ items, limit, offset, filters, indexedFilters });
+
+  if (filteredItems.items) {
+    console.log('OK - all - filter(' + listByCollectionName + '): ' + filteredItems.items.length);
+  }
+
+  if (filteredItems.items && filteredItems.items.length) {
+    // obtengo las relaciones
+    if (relationships && relationships.length) {
+      const relationshipPromises = [];
+      relationships.forEach((rel) => {
+        const ids = [];
+
+        filteredItems.items.forEach((item) => {
+          if (!item[rel.propertyName]) return;
+
+          if (Array.isArray(item[rel.propertyName])) {
+            item[rel.propertyName].forEach((subitem) => {
+              ids.push(subitem);
+            });
+          } else ids.push(item[rel.propertyName]);
+        });
+
+        if (!ids.length) return;
+
+        const newRelPromise = new Promise((resolve, reject) => {
+          console.log(
+            'Quering (FIND RELATIONSHIP) by id (' + rel.collectionName + '): ' + JSON.stringify(ids)
+          );
+
+          fetchItemsByIds({
+            collectionName: rel.collectionName,
+            ids,
+          })
+            .then((targetItems) => {
+              for (let index = 0; index < filteredItems.items.length; index++) {
+                const filteredItem = filteredItems.items[index];
+
+                filteredItem[rel.propertyName + MULTIPLE_RELATIONSHIP_SUFFIX] = [];
+
+                // si no tiene la prop sigo con el siguiente item
+                if (!filteredItem[rel.propertyName]) continue;
+
+                if (Array.isArray(filteredItem[rel.propertyName])) {
+                  filteredItem[rel.propertyName].forEach((subItem) => {
+                    const targetItem = targetItems.find((element) => {
+                      return element.id === subItem;
+                    });
+
+                    if (!targetItem) return;
+
+                    filteredItem[rel.propertyName + MULTIPLE_RELATIONSHIP_SUFFIX].push(targetItem);
+                  });
+                } else {
+                  const targetItem = targetItems.find((element) => {
+                    return element.id === filteredItem[rel.propertyName];
+                  });
+
+                  if (!targetItem) continue;
+
+                  // filteredItems.items[index] = { ...targetItem, ...filteredItem };
+                  filteredItems.items[index][rel.propertyName + MULTIPLE_RELATIONSHIP_SUFFIX].push(
+                    targetItem
+                  );
+                }
+              }
+
+              console.log(
+                'OK  (FIND RELATIONSHIP) by id (' + rel.collectionName + '): ' + JSON.stringify(ids)
+              );
+
+              return resolve();
+            })
+            .catch((e) => {
+              console.log(
+                'Error (FIND RELATIONSHIP) by id (' +
+                  rel.collectionName +
+                  '): ' +
+                  JSON.stringify(ids),
+                e
+              );
+              reject(e);
+            });
+        });
+
+        relationshipPromises.push(newRelPromise);
+      });
+
+      await Promise.all(relationshipPromises);
+    }
+  }
+
+  // console.log('filteredItems:', filteredItems);
+  let result = filteredItems;
+  if (postProcessor) result = await postProcessor(result);
+  return result;
+};
+
 exports.getByProp = async function ({
   req,
   res,
