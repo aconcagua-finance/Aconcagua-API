@@ -19,7 +19,7 @@ const baseSchema = Joi.object({
   attachments: Joi.any(),
 });
 
-const requiredBaseFields = ['companyId', 'userId', 'vaultId'];
+const requiredBaseFields = ['companyId', 'userId', 'vaultId', 'installmentNumber'];
 
 const schemas = {
   create: baseSchema.fork(requiredBaseFields, (field) => field.required()),

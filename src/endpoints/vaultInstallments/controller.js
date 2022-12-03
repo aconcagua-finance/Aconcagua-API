@@ -61,7 +61,7 @@ exports.findByVault = async function (req, res) {
   if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
 
   try {
-    console.log('GET VAULTS BY VAULT ' + vaultId);
+    console.log('GET VAULT INSTALLMENTS BY VAULT ' + vaultId);
 
     const result = await listByPropInner({
       limit,
@@ -89,7 +89,7 @@ exports.findByVault = async function (req, res) {
 exports.get = async function (req, res) {
   const { id } = req.params;
 
-  console.log('GET VAULT BY ID ' + id);
+  console.log('GET VAULT INSTALLMENT BY ID ' + id);
   await getByProp({
     req,
     res,
@@ -166,6 +166,34 @@ exports.remove = async function (req, res) {
   await remove(req, res, COLLECTION_NAME);
 };
 
+const getNextInstallmentNumber = async (vaultId) => {
+  const filters = {};
+  filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
+
+  console.log('GET VAULT INSTALLMENTS BY VAULT ' + vaultId);
+
+  const result = await listByPropInner({
+    limit: 1000,
+    offset: 0,
+    filters,
+
+    primaryEntityPropName: VAULT_ENTITY_PROPERTY_NAME,
+    primaryEntityValue: vaultId,
+    // primaryEntityCollectionName: Collections.COMPANIES,
+    listByCollectionName: COLLECTION_NAME,
+    indexedFilters: INDEXED_FILTERS,
+  });
+
+  let nextInstallmentNumber = 0;
+
+  result.items.forEach((item) => {
+    if (item.installmentNumber > nextInstallmentNumber) {
+      nextInstallmentNumber = item.installmentNumber;
+    }
+  });
+  return nextInstallmentNumber++;
+};
+
 exports.create = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
@@ -175,6 +203,8 @@ exports.create = async function (req, res) {
   body.userId = targetUserId;
   body.companyId = companyId;
   body.vaultId = vaultId;
+
+  body.installmentNumber = await getNextInstallmentNumber(vaultId);
 
   const collectionName = COLLECTION_NAME;
   const validationSchema = schemas.create;
