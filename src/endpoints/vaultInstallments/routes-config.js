@@ -70,6 +70,7 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
     }),
     remove,
   ]);

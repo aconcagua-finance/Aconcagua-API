@@ -78,6 +78,17 @@ exports.findByVault = async function (req, res) {
         { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
       ],
+
+      postProcessor: async (items) => {
+        const allItems = items.items.map((item) => {
+          if (item.dueDate) item.dueDate = item.dueDate.toDate();
+          return item;
+        });
+
+        items.items = allItems;
+
+        return items;
+      },
     });
 
     return res.send(result);
@@ -87,7 +98,7 @@ exports.findByVault = async function (req, res) {
 };
 
 exports.get = async function (req, res) {
-  const { id } = req.params;
+  const { id, userId, companyId } = req.params;
 
   console.log('GET VAULT INSTALLMENT BY ID ' + id);
   await getByProp({
@@ -105,6 +116,17 @@ exports.get = async function (req, res) {
       { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
       { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
     ],
+    postProcessor: async (item) => {
+      if (!item) return null;
+
+      // Importante para validar permisos - complementario a routes-config
+      if (userId && item.userId !== userId) throw new Error('userId missmatch');
+      if (companyId && item.companyId !== companyId) throw new Error('companyId missmatch');
+
+      if (item.dueDate) item.dueDate = item.dueDate.toDate();
+
+      return item;
+    },
   });
 };
 
