@@ -138,7 +138,13 @@ exports.patch = async function (req, res) {
       );
     }
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    const doc = await updateSingleItem({
+      collectionName,
+      id,
+      auditUid,
+      data: itemData,
+      secureArgs: { companyId, userId: targetUserId },
+    });
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
@@ -163,7 +169,7 @@ exports.remove = async function (req, res) {
     );
   }
 
-  await remove(req, res, COLLECTION_NAME);
+  await remove(req, res, COLLECTION_NAME, { companyId, userId: targetUserId });
 };
 
 const getNextInstallmentNumber = async (vaultId) => {
@@ -191,7 +197,9 @@ const getNextInstallmentNumber = async (vaultId) => {
       nextInstallmentNumber = item.installmentNumber;
     }
   });
-  return nextInstallmentNumber++;
+  nextInstallmentNumber = nextInstallmentNumber + 1;
+
+  return nextInstallmentNumber;
 };
 
 exports.create = async function (req, res) {

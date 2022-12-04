@@ -1,10 +1,6 @@
 const Joi = require('joi');
 
-const baseSchema = Joi.object({
-  companyId: Joi.string(),
-  userId: Joi.string(),
-  vaultId: Joi.string(),
-
+const basicData = {
   installmentNumber: Joi.number().allow(null),
   dueDate: Joi.date().allow(null),
   paymentStatus: Joi.string().allow(null, ''),
@@ -17,13 +13,24 @@ const baseSchema = Joi.object({
 
   notes: Joi.string().allow(''),
   attachments: Joi.any(),
+};
+
+const createSchema = Joi.object({
+  ...basicData,
+
+  // datos que no se pueden modificar
+  companyId: Joi.string(),
+  userId: Joi.string(),
+  vaultId: Joi.string(),
 });
+
+const updateSchema = Joi.object({ ...basicData });
 
 const requiredBaseFields = ['companyId', 'userId', 'vaultId', 'installmentNumber'];
 
 const schemas = {
-  create: baseSchema.fork(requiredBaseFields, (field) => field.required()),
-  update: baseSchema,
+  create: createSchema.fork(requiredBaseFields, (field) => field.required()),
+  update: updateSchema,
 };
 
 module.exports = schemas;

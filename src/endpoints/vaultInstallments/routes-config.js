@@ -44,10 +44,11 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
-      hasEnterpriseRole: [
-        Types.EnterpriseRols.ENTERPRISE_ADMIN,
-        Types.EnterpriseRols.ENTERPRISE_RRHH,
-      ],
+      // hasEnterpriseRole: [
+      //   Types.EnterpriseRols.ENTERPRISE_ADMIN,
+      //   Types.EnterpriseRols.ENTERPRISE_RRHH,
+      // ],
+      isEnterpriseEmployee: true,
     }),
     create,
   ]);
@@ -58,6 +59,7 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
     }),
     patch,
   ]);

@@ -197,7 +197,28 @@ const fetchSingleItem = async function ({ collectionName, id }) {
   }
 };
 
-const updateSingleItem = async function ({ collectionName, id, auditUid, data }) {
+const updateSingleItem = async function ({ collectionName, id, auditUid, data, secureArgs }) {
+  if (secureArgs) {
+    const existentItem = await fetchSingleItem({ collectionName, id });
+
+    Object.keys(secureArgs).forEach((key) => {
+      if (existentItem[key] !== secureArgs[key]) {
+        throw new CustomError.TechnicalError(
+          'SECURITY_ERROR_DATA_MISSMATCH',
+          null,
+          'Security error data missmatch (' +
+            key +
+            ' > ' +
+            existentItem[key] +
+            ' > ' +
+            secureArgs[key] +
+            ')',
+          null
+        );
+      }
+    });
+  }
+
   try {
     const updates = { ...data, ...updateStruct(auditUid) };
 
@@ -1005,7 +1026,7 @@ exports.get = async function (req, res, collectionName, postProcessor) {
   }
 };
 
-exports.patch = async function (req, res, auditUid, collectionName, validationSchema) {
+exports.patch = async function (req, res, auditUid, collectionName, validationSchema, secureArgs) {
   const result = await exports.patchInner({
     req,
     res,
@@ -1013,6 +1034,7 @@ exports.patch = async function (req, res, auditUid, collectionName, validationSc
     auditUid,
     collectionName,
     validationSchema,
+    secureArgs,
   });
 
   return result;
@@ -1025,6 +1047,7 @@ exports.patchInner = async function ({
   auditUid,
   collectionName,
   validationSchema,
+  secureArgs,
 }) {
   try {
     const { id } = req.params;
@@ -1035,7 +1058,13 @@ exports.patchInner = async function ({
 
     const itemData = await sanitizeData({ data: body, validationSchema });
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    const doc = await updateSingleItem({
+      collectionName,
+      id,
+      auditUid,
+      data: itemData,
+      secureArgs,
+    });
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
@@ -1045,9 +1074,31 @@ exports.patchInner = async function ({
   }
 };
 
-exports.remove = async function (req, res, collectionName) {
+exports.remove = async function (req, res, collectionName, secureArgs) {
+  const { id } = req.params;
+
+  if (secureArgs) {
+    const existentItem = await fetchSingleItem({ collectionName, id });
+
+    Object.keys(secureArgs).forEach((key) => {
+      if (existentItem[key] !== secureArgs[key]) {
+        throw new CustomError.TechnicalError(
+          'SECURITY_ERROR_DATA_MISSMATCH',
+          null,
+          'Security error data missmatch (' +
+            key +
+            ' > ' +
+            existentItem[key] +
+            ' > ' +
+            secureArgs[key] +
+            ')',
+          null
+        );
+      }
+    });
+  }
+
   try {
-    const { id } = req.params;
     const { userId } = res.locals; // user id
 
     const db = admin.firestore();
