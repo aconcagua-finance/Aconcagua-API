@@ -173,7 +173,7 @@ exports.findByCompany = async function (req, res) {
 
       if (!arsBalance) return;
 
-      depositsAmount += arsBalance.value;
+      depositsAmount += arsBalance.balance;
     });
 
     const result = {
