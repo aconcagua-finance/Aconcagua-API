@@ -13,6 +13,29 @@ const { Auth } = require('../../vs-core-firebase');
 const { CustomError } = require('../../vs-core');
 const { Collections } = require('../../types/collectionsTypes');
 
+exports.secureArgsValidation = async ({ collectionName, id, secureArgs }) => {
+  if (!secureArgs) return;
+
+  const existentItem = await fetchSingleItem({ collectionName, id });
+
+  Object.keys(secureArgs).forEach((key) => {
+    if (existentItem[key] !== secureArgs[key]) {
+      throw new CustomError.TechnicalError(
+        'SECURITY_ERROR_DATA_MISSMATCH',
+        null,
+        'Security error data missmatch (' +
+          key +
+          ' > ' +
+          existentItem[key] +
+          ' > ' +
+          secureArgs[key] +
+          ')',
+        null
+      );
+    }
+  });
+};
+
 const mapTofirestoreFilter = (key, value) => {
   if (key === 'state') return parseInt(value); // fix michel por state
   // if (value === '0' || value === '1') return value; // fix michel por state
@@ -198,26 +221,7 @@ const fetchSingleItem = async function ({ collectionName, id }) {
 };
 
 const updateSingleItem = async function ({ collectionName, id, auditUid, data, secureArgs }) {
-  if (secureArgs) {
-    const existentItem = await fetchSingleItem({ collectionName, id });
-
-    Object.keys(secureArgs).forEach((key) => {
-      if (existentItem[key] !== secureArgs[key]) {
-        throw new CustomError.TechnicalError(
-          'SECURITY_ERROR_DATA_MISSMATCH',
-          null,
-          'Security error data missmatch (' +
-            key +
-            ' > ' +
-            existentItem[key] +
-            ' > ' +
-            secureArgs[key] +
-            ')',
-          null
-        );
-      }
-    });
-  }
+  await exports.secureArgsValidation({ collectionName, id, secureArgs });
 
   try {
     const updates = { ...data, ...updateStruct(auditUid) };
@@ -1077,26 +1081,7 @@ exports.patchInner = async function ({
 exports.remove = async function (req, res, collectionName, secureArgs) {
   const { id } = req.params;
 
-  if (secureArgs) {
-    const existentItem = await fetchSingleItem({ collectionName, id });
-
-    Object.keys(secureArgs).forEach((key) => {
-      if (existentItem[key] !== secureArgs[key]) {
-        throw new CustomError.TechnicalError(
-          'SECURITY_ERROR_DATA_MISSMATCH',
-          null,
-          'Security error data missmatch (' +
-            key +
-            ' > ' +
-            existentItem[key] +
-            ' > ' +
-            secureArgs[key] +
-            ')',
-          null
-        );
-      }
-    });
-  }
+  await exports.secureArgsValidation({ collectionName, id, secureArgs });
 
   try {
     const { userId } = res.locals; // user id
