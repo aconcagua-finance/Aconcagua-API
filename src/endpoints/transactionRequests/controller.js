@@ -12,6 +12,7 @@ const { Auth } = require('../../vs-core-firebase');
 const { CustomError } = require('../../vs-core');
 
 const { Collections } = require('../../types/collectionsTypes');
+const { CurrencyTypes } = require('../../types/currencyTypes');
 const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/coreHelper');
 
 const { setUserClaims } = require('../admin/controller');
@@ -244,6 +245,31 @@ exports.create = async function (req, res) {
     console.log('Create args (' + collectionName + '):', body);
 
     const itemData = await sanitizeData({ data: body, validationSchema });
+
+    const vault = await fetchSingleItem({
+      collectionName: Collections.VAULTS,
+      id: itemData.vaultId,
+    });
+
+    const arsCurrency = CurrencyTypes.ARS;
+
+    let arsDepositsAmount = 0;
+    const arsCredit = vault.amount;
+
+    const arsBalanceItem = vault.balances.find((balance) => {
+      return balance.currency === arsCurrency;
+    });
+
+    if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
+
+    if (itemData.amount > arsDepositsAmount || itemData.amount > arsCredit) {
+      throw new CustomError.TechnicalError(
+        'ERROR_CREATE_EXCEED_AMOUNT',
+        null,
+        'Excede el monto disponible para liquidar',
+        null
+      );
+    }
 
     if (!companyId) {
       throw new CustomError.TechnicalError(
