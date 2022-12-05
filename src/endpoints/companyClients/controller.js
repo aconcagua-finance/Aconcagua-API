@@ -173,7 +173,8 @@ exports.getCurrentRelationship = async function (req, res) {
   const { id, companyId, userId } = req.params;
 
   const filters = {};
-  if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
+  // no filtro por estado pq puede estar consultando por una relacion pasada
+  // if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
   filters.companyId = { $equal: companyId };
   // filters.userId = { $equal: companyId }; // ya se filtra por el primaryEntityPropName
 
@@ -192,9 +193,20 @@ exports.getCurrentRelationship = async function (req, res) {
       ],
     });
 
-    if (!result || result.total !== 1) throw new Error('Invalid items len');
+    let relationshipToReturn = null;
+    if (result && result.items && result.items.length) {
+      const activeRelationship = result.items.find((item) => {
+        return item.state === Types.StateTypes.STATE_ACTIVE;
+      });
+      if (activeRelationship) relationshipToReturn = activeRelationship;
+      else relationshipToReturn = result.items[0];
+    }
 
-    return res.send(result.items[0]);
+    // if (!result || result.total !== 1) {
+    //   throw new Error('Invalid items len: ' + result.total);
+    // }
+
+    return res.send(relationshipToReturn);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }
