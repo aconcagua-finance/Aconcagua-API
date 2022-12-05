@@ -13,27 +13,27 @@ const { Auth } = require('../../vs-core-firebase');
 const { CustomError } = require('../../vs-core');
 const { Collections } = require('../../types/collectionsTypes');
 
+exports.secureDataArgsValidation = ({ secureArgs, data }) => {
+  if (!secureArgs) return;
+
+  Object.keys(secureArgs).forEach((key) => {
+    if (data[key] !== secureArgs[key]) {
+      throw new CustomError.TechnicalError(
+        'SECURITY_ERROR_DATA_MISSMATCH',
+        null,
+        'Security error data missmatch (' + key + ' > ' + data[key] + ' > ' + secureArgs[key] + ')',
+        null
+      );
+    }
+  });
+};
+
 exports.secureArgsValidation = async ({ collectionName, id, secureArgs }) => {
   if (!secureArgs) return;
 
   const existentItem = await fetchSingleItem({ collectionName, id });
 
-  Object.keys(secureArgs).forEach((key) => {
-    if (existentItem[key] !== secureArgs[key]) {
-      throw new CustomError.TechnicalError(
-        'SECURITY_ERROR_DATA_MISSMATCH',
-        null,
-        'Security error data missmatch (' +
-          key +
-          ' > ' +
-          existentItem[key] +
-          ' > ' +
-          secureArgs[key] +
-          ')',
-        null
-      );
-    }
-  });
+  exports.secureDataArgsValidation({ secureArgs, data: existentItem });
 };
 
 const mapTofirestoreFilter = (key, value) => {
