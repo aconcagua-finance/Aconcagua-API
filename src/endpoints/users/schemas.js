@@ -77,6 +77,8 @@ const createByStaff = Joi.object({
   attachments: Joi.any(),
 });
 
+// cualquier dato que se agregue acá tiene que agregarse tmb en las creaciones de:
+// staff, companyClient, checkout
 const requiredBaseFields = [
   'firstName',
   'lastName',
