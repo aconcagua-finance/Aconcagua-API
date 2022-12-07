@@ -392,7 +392,8 @@ exports.upsertByCompany = async function (req, res) {
       userId: targetUserId,
     });
 
-    console.log('Resultado busqueda Relacion :' + JSON.stringify(currentRelationship));
+    // console.log('Resultado busqueda Relacion :' + JSON.stringify(currentRelationship));
+
     // exite la relacion pero esta inactiva
     if (currentRelationship && currentRelationship.state !== Types.StateTypes.STATE_ACTIVE) {
       console.log('Se encontro una relacion con estado inactiva, se procede a reactivarla');
@@ -427,11 +428,9 @@ exports.upsertByCompany = async function (req, res) {
 
 exports.updateByCompany = async function (req, res) {
   try {
-    // const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
+    throw new Error('Not implemented method');
 
-    // console.log('Create data: (' + collectionName + ')', dbItemData);
-
-    return res.status(201).send({});
+    // return res.status(201).send({});
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }
