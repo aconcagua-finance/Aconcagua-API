@@ -203,6 +203,8 @@ const getCurrentRelationshipInner = async ({ companyId, userId }) => {
     if (activeRelationship) relationshipToReturn = activeRelationship;
     else relationshipToReturn = result.items[0];
   }
+
+  return relationshipToReturn;
 };
 
 exports.getCurrentRelationship = async function (req, res) {
@@ -378,19 +380,29 @@ exports.upsertByCompany = async function (req, res) {
 
     const targetUserId = existentUser.id ? existentUser.id : existentUser.uid;
 
+    console.log(
+      'Se consulta la relacion existente para ver si se crea o no (' +
+        companyId +
+        '), (' +
+        targetUserId +
+        ')'
+    );
     const currentRelationship = await getCurrentRelationshipInner({
       companyId,
       userId: targetUserId,
     });
 
+    console.log('Resultado busqueda Relacion :' + JSON.stringify(currentRelationship));
     // exite la relacion pero esta inactiva
     if (currentRelationship && currentRelationship.state !== Types.StateTypes.STATE_ACTIVE) {
+      console.log('Se encontro una relacion con estado inactiva, se procede a reactivarla');
       await updateSingleItem({
         collectionName: Collections.COMPANY_CLIENTS,
         id: currentRelationship.id,
         auditUid,
         data: { state: Types.StateTypes.STATE_ACTIVE },
       });
+      console.log('Reactivacion OK');
     }
     // no existe la relacion
     else if (!currentRelationship) {
@@ -400,16 +412,12 @@ exports.upsertByCompany = async function (req, res) {
 
       const collectionName = Collections.COMPANY_CLIENTS;
 
-      console.log('Create args (' + collectionName + '):', body);
+      console.log('No existe la relacion, se creara con args (' + collectionName + '):', body);
 
       const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
+    } else {
+      console.log('La relacion ya existia !, no se hace nada');
     }
-
-    // console.log('Usuario encontrado: ', JSON.stringify(firestoreUser));
-
-    // const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
-
-    // console.log('Create data: (' + collectionName + ')', dbItemData);
 
     return res.status(201).send({});
   } catch (err) {
