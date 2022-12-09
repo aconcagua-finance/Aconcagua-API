@@ -27,9 +27,9 @@ const beautifyError = function (err) {
 };
 exports.beautifyError = beautifyError;
 
-exports.handleError = function (req, res, err) {
+exports.handleError = function (req, res, err, notifyAdmin) {
   if (err instanceof CustomError.CustomError) {
-    handleCustomError(req, res, err, err.httpCode);
+    handleCustomError(req, res, err, err.httpCode, notifyAdmin);
     return;
   }
 
@@ -47,6 +47,7 @@ exports.handleError = function (req, res, err) {
     eventType: EVENT_TYPE_NAVIGATION,
     error: newErr,
     data: getIOLoggingInfo(req, res),
+    notifyAdmin,
   });
 
   res.status(500).send({ message });
@@ -95,7 +96,7 @@ const getIOLoggingInfo = function (req, res) {
   };
 };
 
-const handleCustomError = function (req, res, err, httpCode) {
+const handleCustomError = function (req, res, err, httpCode, notifyAdmin) {
   let retHttpCode = 500;
   if (httpCode) retHttpCode = httpCode;
 
@@ -106,6 +107,7 @@ const handleCustomError = function (req, res, err, httpCode) {
     eventType: EVENT_TYPE_NAVIGATION,
     error: err,
     data: getIOLoggingInfo(req, res),
+    notifyAdmin,
   });
 
   if (err.innerException) {
@@ -114,6 +116,7 @@ const handleCustomError = function (req, res, err, httpCode) {
       eventType: EVENT_TYPE_NAVIGATION,
       error: err.innerException,
       data: getIOLoggingInfo(req, res),
+      notifyAdmin,
     });
   }
 

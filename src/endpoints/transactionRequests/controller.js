@@ -12,7 +12,7 @@ const { Auth } = require('../../vs-core-firebase');
 const { CustomError } = require('../../vs-core');
 
 const { Collections } = require('../../types/collectionsTypes');
-const { CurrencyTypes } = require('../../types/currencyTypes');
+
 const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/coreHelper');
 
 const { setUserClaims } = require('../admin/controller');
@@ -251,7 +251,7 @@ exports.create = async function (req, res) {
       id: itemData.vaultId,
     });
 
-    const arsCurrency = CurrencyTypes.ARS;
+    const arsCurrency = Types.CurrencyTypes.ARS;
 
     let arsDepositsAmount = 0;
     const arsCredit = vault.amount;

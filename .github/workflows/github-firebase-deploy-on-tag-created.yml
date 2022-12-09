@@ -10,9 +10,6 @@ on:
 
 env:
   SYS_ADMIN_EMAIL: 'abdalamichel@gmail.com'
-  GMAIL_EMAIL: 'info@superorigen.com.ar'
-  GMAIL_EMAIL_BCC: 'abdalamichel@gmail.com'
-  GMAIL_APP_PASSWORD: 'awwmxopzqjdderyi'
   NEW_USERS_TEMP_PASSWORD: '@Temp1234'
 
   TEST_ENV_KEY: 'TEST_ENV_VALUE'
@@ -32,6 +29,8 @@ env:
   GOOGLE_OAUTH_CLIENT_SECRET: ${{secrets.GOOGLE_OAUTH_CLIENT_SECRET_PROD}}
   GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/googleOAuth/oauth2callback'
   GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/userCalendarEvents/google-event-webhook'
+
+  DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar cripto'
 
 jobs:
   build-and-publish:
