@@ -9,6 +9,8 @@ const { LoggerHelper } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const { Auth } = require('../../vs-core-firebase');
 
+const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
+
 const { CustomError } = require('../../vs-core');
 
 const { Collections } = require('../../types/collectionsTypes');
@@ -18,6 +20,8 @@ const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/co
 const { setUserClaims } = require('../admin/controller');
 
 const schemas = require('./schemas');
+
+// const { EmailSender } = require('../email/emailSender');
 
 const {
   MULTIPLE_RELATIONSHIP_SUFFIX,
@@ -286,6 +290,14 @@ exports.create = async function (req, res) {
     const dbItemData = await createFirestoreDocument(createArgs);
 
     console.log('Create data: (' + collectionName + ')', dbItemData);
+
+    // const mailResponse = await EmailSender.send({
+    //   // from: '"TrendArt" <' + GMAIL_EMAIL + '>',
+    //   to: SYS_ADMIN_EMAIL,
+
+    //   // bcc: SYS_ADMIN_EMAIL,
+    //   message: { subject: 'Se creo una solicitud', text: null, html: 'Vault: ' + itemData.vaultId },
+    // });
 
     return res.status(201).send(dbItemData);
   } catch (err) {
