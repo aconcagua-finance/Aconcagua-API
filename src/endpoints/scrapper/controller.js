@@ -30,7 +30,6 @@ exports.scrappDolarHoyDolarCripto = async function (req, res) {
      */
     await page.goto(scrappUrl);
 
-    console.log('PASO 1');
     /**
      * Evaluating the page and got informations from there
      */

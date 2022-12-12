@@ -9,7 +9,7 @@ on:
       - v*
 
 env:
-  SYS_ADMIN_EMAIL: 'abdalamichel@gmail.com'
+  SYS_ADMIN_EMAIL: 'manuel@aconcagua.finance'
   NEW_USERS_TEMP_PASSWORD: '@Temp1234'
 
   TEST_ENV_KEY: 'TEST_ENV_VALUE'
