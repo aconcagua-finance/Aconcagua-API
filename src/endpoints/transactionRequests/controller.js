@@ -21,7 +21,7 @@ const { setUserClaims } = require('../admin/controller');
 
 const schemas = require('./schemas');
 
-// const { EmailSender } = require('../email/emailSender');
+const { EmailSender } = require('../email/emailSender');
 
 const {
   MULTIPLE_RELATIONSHIP_SUFFIX,
@@ -291,13 +291,13 @@ exports.create = async function (req, res) {
 
     console.log('Create data: (' + collectionName + ')', dbItemData);
 
-    // const mailResponse = await EmailSender.send({
-    //   // from: '"TrendArt" <' + GMAIL_EMAIL + '>',
-    //   to: SYS_ADMIN_EMAIL,
+    const mailResponse = await EmailSender.send({
+      // from: '"TrendArt" <' + GMAIL_EMAIL + '>',
+      to: SYS_ADMIN_EMAIL,
 
-    //   // bcc: SYS_ADMIN_EMAIL,
-    //   message: { subject: 'Se creo una solicitud', text: null, html: 'Vault: ' + itemData.vaultId },
-    // });
+      // bcc: SYS_ADMIN_EMAIL,
+      message: { subject: 'Se creo una solicitud', text: null, html: 'Vault: ' + itemData.vaultId },
+    });
 
     return res.status(201).send(dbItemData);
   } catch (err) {
