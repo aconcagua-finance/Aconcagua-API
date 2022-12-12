@@ -1,6 +1,6 @@
 {
   "name": "@aconcagua-finance/api",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "description": "API ACONCAGUA",
   "author": "Michel Abdala <abdalamichel@gmail.com>",
   "license": "Apache-2.0",
