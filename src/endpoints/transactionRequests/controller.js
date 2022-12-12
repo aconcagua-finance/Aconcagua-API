@@ -4,7 +4,7 @@ const admin = require('firebase-admin');
 const Fuse = require('fuse.js');
 
 const { creationStruct, updateStruct } = require('../../vs-core-firebase/audit');
-const { ErrorHelper } = require('../../vs-core-firebase');
+const { ErrorHelper, EmailSender } = require('../../vs-core-firebase');
 const { LoggerHelper } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const { Auth } = require('../../vs-core-firebase');
@@ -20,8 +20,6 @@ const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/co
 const { setUserClaims } = require('../admin/controller');
 
 const schemas = require('./schemas');
-
-const { EmailSender } = require('../email/emailSender');
 
 const {
   MULTIPLE_RELATIONSHIP_SUFFIX,
