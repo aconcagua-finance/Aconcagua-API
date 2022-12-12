@@ -1,6 +1,6 @@
 {
   "name": "@aconcagua-finance/api",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "API ACONCAGUA",
   "author": "Michel Abdala <abdalamichel@gmail.com>",
   "license": "Apache-2.0",
@@ -75,7 +75,8 @@
     "nodemailer": "^4.7.0",
     "npm": "^8.5.3",
     "raw-body": "^2.5.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "puppeteer": "10.4.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
@@ -102,8 +103,7 @@
     "nvm-guard": "^1.0.4",
     "prettier": "^2.3.2",
     "ts-jest": "^27.0.7",
-    "typescript": "^4.5.4",
-    "puppeteer": "10.4.0"
+    "typescript": "^4.5.4"
   },
   "private": true,
   "husky": {
