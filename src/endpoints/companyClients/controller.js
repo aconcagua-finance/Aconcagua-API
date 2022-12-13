@@ -322,6 +322,16 @@ exports.create = async function (req, res) {
   }
 };
 
+const getUserById = async (id) => {
+  try {
+    const firestoreUser = await admin.auth().getUser(id);
+    return firestoreUser;
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') return null;
+    throw e;
+  }
+};
+
 const getUserByEmail = async (email) => {
   try {
     const firestoreUser = await admin.auth().getUserByEmail(email);
@@ -426,11 +436,65 @@ exports.upsertByCompany = async function (req, res) {
   }
 };
 
+// por definicion de CTO se habilita a una empresa que tiene una relacion con un cliente a editarle sus datos personales
 exports.updateByCompany = async function (req, res) {
   try {
-    throw new Error('Not implemented method');
+    const { userId: auditUid } = res.locals;
 
-    // return res.status(201).send({});
+    const { companyId, id } = req.params;
+
+    const collectionName = Collections.COMPANY_CLIENTS;
+    const validationSchema = userSchemas.update;
+
+    if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+
+    console.log('Patch args (' + collectionName + '):', JSON.stringify(req.body));
+
+    // solo lo dejo editar estos campos, no roles ni mail nada raro
+    const { firstName, lastName, company, phoneNumber, identificationNumber } = req.body;
+
+    let itemData = await sanitizeData({
+      data: { firstName, lastName, company, phoneNumber, identificationNumber },
+      validationSchema,
+    });
+
+    itemData = { ...itemData, ...updateStruct(auditUid) };
+
+    const currentRelationship = await fetchSingleItem({
+      collectionName: Collections.COMPANY_CLIENTS,
+      id,
+    });
+
+    console.log('Resultado busqueda Relacion :' + JSON.stringify(currentRelationship));
+
+    // existe la relacion pero esta inactiva
+    if (!currentRelationship || currentRelationship.state !== Types.StateTypes.STATE_ACTIVE) {
+      throw new CustomError.TechnicalError(
+        'ERROR_BAD_RELATIONSHIP',
+        null,
+        'La relacion se encuentra inactiva o inexistente',
+        null
+      );
+    }
+
+    if (currentRelationship.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'ERROR_WRONG_COMPANY',
+        null,
+        'Se esta intentando editar una relacion de otra compañia',
+        null
+      );
+    }
+
+    const updateData = { firstName, lastName, company, phoneNumber, identificationNumber };
+    await updateSingleItem({
+      collectionName: Collections.USERS,
+      id: currentRelationship.userId,
+      auditUid,
+      data: itemData,
+    });
+
+    return res.status(201).send({});
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }

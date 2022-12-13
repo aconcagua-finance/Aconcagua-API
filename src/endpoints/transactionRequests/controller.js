@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 const admin = require('firebase-admin');
+const functions = require('firebase-functions');
 
 const Fuse = require('fuse.js');
 
@@ -9,7 +10,7 @@ const { LoggerHelper } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const { Auth } = require('../../vs-core-firebase');
 
-const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
+const { SYS_ADMIN_EMAIL, API_USD_VALUATION } = require('../../config/appConfig');
 
 const { CustomError } = require('../../vs-core');
 
@@ -18,6 +19,9 @@ const { Collections } = require('../../types/collectionsTypes');
 const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/coreHelper');
 
 const { setUserClaims } = require('../admin/controller');
+
+// eslint-disable-next-line camelcase
+const { invoke_get_api } = require('../../helpers/httpInvoker');
 
 const schemas = require('./schemas');
 
@@ -46,6 +50,7 @@ const {
   getFirebaseUserById,
   createFirestoreDocument,
 } = require('../baseEndpoint');
+const { invoke } = require('lodash');
 
 const INDEXED_FILTERS = ['vaultId', 'companyId', 'state'];
 
@@ -302,3 +307,59 @@ exports.create = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
+const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
+  const apiResponse = await invoke_get_api({ endpoint: API_USD_VALUATION });
+
+  if (!apiResponse || !apiResponse.data || !apiResponse.data.buy) {
+    throw new CustomError.TechnicalError(
+      'ERROR_USD_VALUATION_INVALID_RESPONSE',
+      null,
+      'Respuesta inválida del servicio de valuacion de USD',
+      null
+    );
+  }
+
+  const valuation = apiResponse.buy;
+
+  // consulto id de item que como currency = ARS y targetCurrency = USD
+  // update de la valuation de ese registro
+  // updateSingleItem({collectionName: Collections.MARKET_CAP, id})
+};
+
+exports.fetchAndUpdateUSDValuation = async function (req, res) {
+  const { userId: auditUid } = req.locals;
+
+  try {
+    await fetchAndUpdateUSDValuation({ auditUid });
+
+    return res.send({});
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.cronUpdateUSDValuation = functions
+  .runWith({
+    memory: '2GB',
+    // timeoutSeconds: 540,
+  })
+  .pubsub.schedule('every 60 minutes')
+  .timeZone('America/New_York') // Users can choose timezone - default is America/Los_Angeles
+  .onRun(async (context) => {
+    try {
+      await fetchAndUpdateUSDValuation({ auditUid: 'admin' });
+
+      LoggerHelper.appLogger({
+        message: 'CRON cronUpdateUSDValuation - OK',
+        data: null,
+
+        notifyAdmin: true,
+      });
+    } catch (err) {
+      ErrorHelper.handleCronError({
+        message: 'CRON cronUpdateUSDValuation - ERROR: ' + err.message,
+        error: err,
+      });
+    }
+  });

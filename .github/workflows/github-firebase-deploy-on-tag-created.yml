@@ -31,7 +31,7 @@ env:
   GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/userCalendarEvents/google-event-webhook'
 
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar cripto'
-
+  API_USD_VALUATION: 'http://us-central1-aconcagua-365314.cloudfunctions.net/scrapper/dolar-cripto'
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest

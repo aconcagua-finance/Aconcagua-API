@@ -44,6 +44,8 @@ const {
   transactionRequestsRoutesConfig,
 } = require('./endpoints/transactionRequests/routes-config');
 
+const { cronUpdateUSDValuation } = require('./endpoints/transactionRequests/controller');
+
 const {
   onUserTouchpointCreate,
   onUserTouchpointUpdate,
@@ -405,3 +407,5 @@ exports.onUserCalendarEventBronzeCreate = onUserCalendarEventBronzeCreate;
 
 exports.onVaultCreate_ThenCreateCompanyClientRelationship =
   onVaultCreate_ThenCreateCompanyClientRelationship;
+
+exports.cronUpdateUSDValuation = cronUpdateUSDValuation;
