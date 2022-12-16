@@ -39,9 +39,9 @@ exports.usersRoutesConfig = function (app) {
 
   // devuelve todos los usuarios
   app.get('/', [
-    Audit.logger,
-    Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    // Audit.logger,
+    // Auth.isAuthenticated,
+    // Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
     find,
   ]);
 
