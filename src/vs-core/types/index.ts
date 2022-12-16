@@ -5,3 +5,4 @@ export * from './userStatusTypes';
 export * from './staffUsersRelationshipTypes';
 export * from './creditTypes';
 export * from './loanStatusTypes';
+export * from './currencyTypes';

@@ -8,10 +8,12 @@ const functions = require('firebase-functions');
 
 const COLLECTION_NAME = 'logs';
 
-const { GMAIL_EMAIL, GMAIL_EMAIL_BCC, WEBSITE_DOMAIN_URL, ENVIRONMENT } = process.env;
-const { sendEmail } = require('../email/email');
+const { WEBSITE_DOMAIN_URL, ENVIRONMENT } = process.env;
+
 const { CustomError } = require('../../vs-core');
 const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
+
+const { EmailSender } = require('../email/emailSender');
 
 const SEVERITY_ERROR = 'error';
 const SEVERITY_INFO = 'info';
@@ -532,8 +534,8 @@ exports.getServiceResponseJSON = getServiceResponseJSON;
 async function notifyError(eventName, code, message, docId) {
   // console.log(eventName, code, message, docId);
 
-  const HEADER_TITLE = 'ERROR - ' + eventName;
-  const HEADER_BODY = 'Ocurrió un error - ' + code;
+  const HEADER_TITLE = eventName;
+  const HEADER_BODY = 'Ocurrió un error  <br /> (' + docId + ') <br />' + code;
   const CONTENT_TITLE = code;
   const CONTENT_BODY = message;
   const BUTTON_TEXT = 'Ir al sitio';
@@ -542,7 +544,7 @@ async function notifyError(eventName, code, message, docId) {
   const SUBJECT = HEADER_TITLE;
 
   await sendTemplateEmail(
-    'email/emailTemplates/welcome.html',
+    'src/vs-core-firebase/email/emailTemplates/error.html',
     HEADER_TITLE,
     HEADER_BODY,
     CONTENT_TITLE,
@@ -579,16 +581,15 @@ async function sendTemplateEmail(
     html = html.replace('%%BUTTON_TEXT%%', BUTTON_TEXT);
     html = html.replace('%%BUTTON_LINK%%', BUTTON_LINK);
 
-    const mailResponse = await sendEmail({
-      from: '"TrendArt" <' + GMAIL_EMAIL + '>',
+    const mailResponse = await EmailSender.send({
+      // from: '"TrendArt" <' + GMAIL_EMAIL + '>',
       to: emailTo,
-      bcc: GMAIL_EMAIL_BCC,
-      subject: SUBJECT,
-      text: null,
-      html,
+
+      // bcc: SYS_ADMIN_EMAIL,
+      message: { subject: SUBJECT, text: null, html },
     });
 
-    // console.log("Mail OK: " + JSON.stringify(mailResponse));
+    console.log('Mail sended: (' + SUBJECT + ')');
   } catch (e) {
     console.log('Mail not sended:', e.message, e.code, e.response, e.responseCode, e.command);
     throw e;
@@ -606,9 +607,9 @@ const errorToJSON = function (error) {
       };
       if (error.innerException && error.innerException.message) {
         newError.innerExceptionMessage = error.innerException.message;
-        newError.innerExceptionStack = error.innerException.stack ?
-          error.innerException.stack :
-          null;
+        newError.innerExceptionStack = error.innerException.stack
+          ? error.innerException.stack
+          : null;
       }
 
       return newError;

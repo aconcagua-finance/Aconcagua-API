@@ -1,10 +1,11 @@
 const {
-  find,
   get,
   create,
   patch,
   remove,
 
+  find,
+  findByCompany,
   findByVault,
 } = require('./controller');
 
@@ -14,9 +15,28 @@ const { Types } = require('../../vs-core');
 
 // const { enumValuesToArray } = require('../../helpers/coreHelper');
 
-exports.vaultInstallmentsRoutesConfig = function (app) {
-  // busca las relaciones asociadas
-  app.get('/by-vault/:companyId/:userId/:vaultId', [
+exports.transactionRequestsRoutesConfig = function (app) {
+  app.get('/', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+    }),
+    find,
+  ]);
+
+  // busca las relaciones asociadas a una empresa
+  app.get('/by-company/:companyId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      isEnterpriseEmployee: true,
+    }),
+    findByCompany,
+  ]);
+
+  app.get('/by-vault/:companyId/:vaultId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
@@ -27,7 +47,7 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
   ]);
 
   // busca una relacion
-  app.get('/:companyId/:userId/:id', [
+  app.get('/:companyId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
@@ -39,38 +59,33 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
   ]);
 
   // crea un elemento relacionado a la empresa enviada y al usuario enviado
-  app.post('/:companyId/:userId/:vaultId', [
+  app.post('/:companyId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
-      // hasEnterpriseRole: [
-      //   Types.EnterpriseRols.ENTERPRISE_ADMIN,
-      //   Types.EnterpriseRols.ENTERPRISE_RRHH,
-      // ],
+
       isEnterpriseEmployee: true,
     }),
     create,
   ]);
 
-  // actualiza un elemento relacionado a la empresa enviada y al usuario enviado
-  app.patch('/:companyId/:userId/:id', [
+  // actualiza un elemento relacionado a la empresa enviada
+  app.patch('/:companyId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN],
-      isEnterpriseEmployee: true,
+      hasAppRole: [Types.AppRols.APP_ADMIN], // solo el admin puede actualizar
     }),
     patch,
   ]);
 
   // elimina un elemento relacionado a la empresa enviada
-  app.delete('/:companyId/:userId/:id', [
+  app.delete('/:companyId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
-      isEnterpriseEmployee: true,
     }),
     remove,
   ]);

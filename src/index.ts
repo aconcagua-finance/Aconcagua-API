@@ -9,6 +9,10 @@ import * as cors from 'cors';
 import * as admin from 'firebase-admin';
 import { FirebaseConfig } from './config/firebaseConfig';
 
+const puppeteer = require('puppeteer');
+
+const { scrapperRoutesConfig } = require('./endpoints/scrapper/routes-config');
+
 const { usersRoutesConfig } = require('./endpoints/users/routes-config');
 const { adminRoutesConfig } = require('./endpoints/admin/routes-config');
 
@@ -36,6 +40,11 @@ const { companyDepartmentsRoutesConfig } = require('./endpoints/companyDepartmen
 
 const { vaultInstallmentsRoutesConfig } = require('./endpoints/vaultInstallments/routes-config');
 const { vaultTransactionsRoutesConfig } = require('./endpoints/vaultTransactions/routes-config');
+const {
+  transactionRequestsRoutesConfig,
+} = require('./endpoints/transactionRequests/routes-config');
+
+const { cronUpdateUSDValuation } = require('./endpoints/transactionRequests/controller');
 
 const {
   onUserTouchpointCreate,
@@ -81,6 +90,44 @@ function configureApp(app) {
   app.use(addSpanId);
   app.use(onlyLocalLoadEnv);
 }
+
+const createExpressWithPuppeteerApp = () => {
+  const app = express();
+
+  /**
+   * This function not works on Spark Plan (firebase)
+   */
+
+  /**
+   * Middleware: Get all routes and request to load browser
+   */
+  app.all('*', async (req, res, next) => {
+    // note: --no-sandbox is required in this env.
+    // Could also launch chrome and reuse the instance
+    // using puppeteer.connect();
+
+    res.locals.browser = await puppeteer.launch({
+      args: ['--no-sandbox'],
+    });
+    next();
+  });
+
+  return app;
+};
+
+const scrapperApp = createExpressWithPuppeteerApp();
+
+// const usersApp = express();
+configureApp(scrapperApp);
+scrapperRoutesConfig(scrapperApp);
+exports.scrapper = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(scrapperApp);
 
 const usersApp = express();
 configureApp(usersApp);
@@ -346,6 +393,18 @@ exports.vaultTransactions = functions
   })
   .https.onRequest(vaultTransactionsApp);
 
+const transactionRequestsApp = express();
+configureApp(transactionRequestsApp);
+transactionRequestsRoutesConfig(transactionRequestsApp);
+exports.transactionRequests = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(transactionRequestsApp);
+
 exports.onUserTouchpointCreate = onUserTouchpointCreate;
 exports.onUserTouchpointUpdate = onUserTouchpointUpdate;
 
@@ -353,3 +412,8 @@ exports.onHookedEventCreate = onHookedEventCreate;
 exports.onHookedEventUpdate = onHookedEventUpdate;
 
 exports.onUserCalendarEventBronzeCreate = onUserCalendarEventBronzeCreate;
+
+exports.onVaultCreate_ThenCreateCompanyClientRelationship =
+  onVaultCreate_ThenCreateCompanyClientRelationship;
+
+exports.cronUpdateUSDValuation = cronUpdateUSDValuation;

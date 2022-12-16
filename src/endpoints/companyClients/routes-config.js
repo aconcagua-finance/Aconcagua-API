@@ -8,6 +8,9 @@ const {
 
   findByCompany,
   findByUser,
+
+  upsertByCompany,
+  updateByCompany,
 } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
@@ -64,6 +67,17 @@ exports.companyClientsRoutesConfig = function (app) {
     getCurrentRelationship,
   ]);
 
+  // cuando el lender quiere crear un cliente (o asociarlo)
+  app.post('/upsert-by-company/:companyId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
+    }),
+    upsertByCompany,
+  ]);
+
   // crea un elemento relacionado a la empresa enviada y al usuario enviado
   app.post('/:companyId/:userId', [
     Audit.logger,
@@ -76,6 +90,17 @@ exports.companyClientsRoutesConfig = function (app) {
       ],
     }),
     create,
+  ]);
+
+  // cuando el lender quiere actualizar los datos de un cliente
+  app.patch('/update-by-company/:companyId/:id', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
+    }),
+    updateByCompany,
   ]);
 
   // actualiza un elemento relacionado a la empresa enviada y al usuario enviado

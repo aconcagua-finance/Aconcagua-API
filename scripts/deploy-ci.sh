@@ -28,9 +28,6 @@ echo "FIREB_APP_ID="${FIREB_APP_ID} >> .env
 echo "FIREB_MEASURAMENT_ID="${FIREB_MEASURAMENT_ID} >> .env
 
 echo "SYS_ADMIN_EMAIL="${SYS_ADMIN_EMAIL} >> .env
-echo "GMAIL_EMAIL="${GMAIL_EMAIL} >> .env
-echo "GMAIL_EMAIL_BCC="${GMAIL_EMAIL_BCC} >> .env
-echo "GMAIL_APP_PASSWORD="${GMAIL_APP_PASSWORD} >> .env
 echo "NEW_USERS_TEMP_PASSWORD="${NEW_USERS_TEMP_PASSWORD} >> .env
 
 echo "ZOHO_CLIENT_ID="${ZOHO_CLIENT_ID} >> .env
@@ -45,8 +42,11 @@ echo "GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET} >> .env
 echo "GOOGLE_OAUTH_REDIRECT_URL="${GOOGLE_OAUTH_REDIRECT_URL} >> .env
 echo "GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="${GOOGLE_CALENDAR_EVENT_WEBHOOK_URL} >> .env
 
+echo "DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY="${DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY} >> .env
+echo "API_USD_VALUATION="${API_USD_VALUATION} >> .env
+
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:admin,functions:users,functions:products,functions:leads,functions:aspects,functions:attachments,functions:levels,functions:packages,functions:practitioners,functions:tasks,functions:userTasks
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions
-firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:users,functions:admin,functions:leads,functions:products,functions:staff,functions:attachments,functions:usersByStaff,functions:userTouchpoints,functions:hookedEvents,functions:insights,functions:userProducts,functions:googleOAuth,functions:userCalendars,functions:userCalendarEvents,functions:companies,functions:companyEmployees,functions:companyClients,functions:companyProfiles,functions:companyDepartments,functions:onUserTouchpointCreate,functions:onUserTouchpointUpdate,functions:onHookedEventCreate,functions:onHookedEventUpdate,functions:onUserCalendarEventBronzeCreate,functions:vaultInstallments,functions:vaultTransactions,functions:onVaultCreate_ThenCreateCompanyClientRelationship
+firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:users,functions:admin,functions:leads,functions:products,functions:staff,functions:attachments,functions:usersByStaff,functions:userTouchpoints,functions:hookedEvents,functions:insights,functions:userProducts,functions:googleOAuth,functions:userCalendars,functions:userCalendarEvents,functions:companies,functions:companyEmployees,functions:companyClients,functions:companyProfiles,functions:companyDepartments,functions:onUserTouchpointCreate,functions:onUserTouchpointUpdate,functions:onHookedEventCreate,functions:onHookedEventUpdate,functions:onUserCalendarEventBronzeCreate,functions:vaultInstallments,functions:vaultTransactions,functions:onVaultCreate_ThenCreateCompanyClientRelationship,functions:scrapper,functions:transactionRequests,functions:cronUpdateUSDValuation,functions:marketCaps
 
 echo "deploy complete!"

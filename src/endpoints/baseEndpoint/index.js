@@ -13,6 +13,29 @@ const { Auth } = require('../../vs-core-firebase');
 const { CustomError } = require('../../vs-core');
 const { Collections } = require('../../types/collectionsTypes');
 
+exports.secureDataArgsValidation = ({ secureArgs, data }) => {
+  if (!secureArgs) return;
+
+  Object.keys(secureArgs).forEach((key) => {
+    if (data[key] !== secureArgs[key]) {
+      throw new CustomError.TechnicalError(
+        'SECURITY_ERROR_DATA_MISSMATCH',
+        null,
+        'Security error data missmatch (' + key + ' > ' + data[key] + ' > ' + secureArgs[key] + ')',
+        null
+      );
+    }
+  });
+};
+
+exports.secureArgsValidation = async ({ collectionName, id, secureArgs }) => {
+  if (!secureArgs) return;
+
+  const existentItem = await fetchSingleItem({ collectionName, id });
+
+  exports.secureDataArgsValidation({ secureArgs, data: existentItem });
+};
+
 const mapTofirestoreFilter = (key, value) => {
   if (key === 'state') return parseInt(value); // fix michel por state
   // if (value === '0' || value === '1') return value; // fix michel por state
@@ -197,7 +220,9 @@ const fetchSingleItem = async function ({ collectionName, id }) {
   }
 };
 
-const updateSingleItem = async function ({ collectionName, id, auditUid, data }) {
+const updateSingleItem = async function ({ collectionName, id, auditUid, data, secureArgs }) {
+  await exports.secureArgsValidation({ collectionName, id, secureArgs });
+
   try {
     const updates = { ...data, ...updateStruct(auditUid) };
 
@@ -1005,7 +1030,7 @@ exports.get = async function (req, res, collectionName, postProcessor) {
   }
 };
 
-exports.patch = async function (req, res, auditUid, collectionName, validationSchema) {
+exports.patch = async function (req, res, auditUid, collectionName, validationSchema, secureArgs) {
   const result = await exports.patchInner({
     req,
     res,
@@ -1013,6 +1038,7 @@ exports.patch = async function (req, res, auditUid, collectionName, validationSc
     auditUid,
     collectionName,
     validationSchema,
+    secureArgs,
   });
 
   return result;
@@ -1025,6 +1051,7 @@ exports.patchInner = async function ({
   auditUid,
   collectionName,
   validationSchema,
+  secureArgs,
 }) {
   try {
     const { id } = req.params;
@@ -1035,7 +1062,13 @@ exports.patchInner = async function ({
 
     const itemData = await sanitizeData({ data: body, validationSchema });
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    const doc = await updateSingleItem({
+      collectionName,
+      id,
+      auditUid,
+      data: itemData,
+      secureArgs,
+    });
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
@@ -1045,9 +1078,12 @@ exports.patchInner = async function ({
   }
 };
 
-exports.remove = async function (req, res, collectionName) {
+exports.remove = async function (req, res, collectionName, secureArgs) {
+  const { id } = req.params;
+
+  await exports.secureArgsValidation({ collectionName, id, secureArgs });
+
   try {
-    const { id } = req.params;
     const { userId } = res.locals; // user id
 
     const db = admin.firestore();
@@ -1208,6 +1244,130 @@ exports.listByPropInner = async function ({
       });
     }
 
+    // obtengo las relaciones
+    if (relationships && relationships.length) {
+      const relationshipPromises = [];
+      relationships.forEach((rel) => {
+        const ids = [];
+
+        filteredItems.items.forEach((item) => {
+          if (!item[rel.propertyName]) return;
+
+          if (Array.isArray(item[rel.propertyName])) {
+            item[rel.propertyName].forEach((subitem) => {
+              ids.push(subitem);
+            });
+          } else ids.push(item[rel.propertyName]);
+        });
+
+        if (!ids.length) return;
+
+        const newRelPromise = new Promise((resolve, reject) => {
+          console.log(
+            'Quering (FIND RELATIONSHIP) by id (' + rel.collectionName + '): ' + JSON.stringify(ids)
+          );
+
+          fetchItemsByIds({
+            collectionName: rel.collectionName,
+            ids,
+          })
+            .then((targetItems) => {
+              for (let index = 0; index < filteredItems.items.length; index++) {
+                const filteredItem = filteredItems.items[index];
+
+                filteredItem[rel.propertyName + MULTIPLE_RELATIONSHIP_SUFFIX] = [];
+
+                // si no tiene la prop sigo con el siguiente item
+                if (!filteredItem[rel.propertyName]) continue;
+
+                if (Array.isArray(filteredItem[rel.propertyName])) {
+                  filteredItem[rel.propertyName].forEach((subItem) => {
+                    const targetItem = targetItems.find((element) => {
+                      return element.id === subItem;
+                    });
+
+                    if (!targetItem) return;
+
+                    filteredItem[rel.propertyName + MULTIPLE_RELATIONSHIP_SUFFIX].push(targetItem);
+                  });
+                } else {
+                  const targetItem = targetItems.find((element) => {
+                    return element.id === filteredItem[rel.propertyName];
+                  });
+
+                  if (!targetItem) continue;
+
+                  // filteredItems.items[index] = { ...targetItem, ...filteredItem };
+                  filteredItems.items[index][rel.propertyName + MULTIPLE_RELATIONSHIP_SUFFIX].push(
+                    targetItem
+                  );
+                }
+              }
+
+              console.log(
+                'OK  (FIND RELATIONSHIP) by id (' + rel.collectionName + '): ' + JSON.stringify(ids)
+              );
+
+              return resolve();
+            })
+            .catch((e) => {
+              console.log(
+                'Error (FIND RELATIONSHIP) by id (' +
+                  rel.collectionName +
+                  '): ' +
+                  JSON.stringify(ids),
+                e
+              );
+              reject(e);
+            });
+        });
+
+        relationshipPromises.push(newRelPromise);
+      });
+
+      await Promise.all(relationshipPromises);
+    }
+  }
+
+  // console.log('filteredItems:', filteredItems);
+  let result = filteredItems;
+  if (postProcessor) result = await postProcessor(result);
+  return result;
+};
+
+exports.listWithRelationships = async function ({
+  limit,
+  offset,
+  filters,
+
+  listByCollectionName,
+  indexedFilters,
+  relationships,
+  postProcessor,
+}) {
+  if (limit) limit = parseInt(limit);
+
+  if (!filters) filters = {};
+  // { staffId: { '$equal': 'oKlebI6i03FAAZHsLWzn' } }
+
+  console.log('Query (' + listByCollectionName + ') with filters:', filters);
+
+  const items = await fetchItems({
+    collectionName: listByCollectionName,
+    // filterState,
+    filters,
+    indexedFilters,
+  });
+
+  console.log('OK - all - fetch (' + listByCollectionName + '): ' + items.length);
+
+  const filteredItems = filterItems({ items, limit, offset, filters, indexedFilters });
+
+  if (filteredItems.items) {
+    console.log('OK - all - filter(' + listByCollectionName + '): ' + filteredItems.items.length);
+  }
+
+  if (filteredItems.items && filteredItems.items.length) {
     // obtengo las relaciones
     if (relationships && relationships.length) {
       const relationshipPromises = [];

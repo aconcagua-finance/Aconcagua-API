@@ -55,6 +55,7 @@ const createUser = async function ({ auditUid, userData, appUserStatus, password
 
     try {
       console.log('Se busca usuario con id ' + userId);
+
       const firestoreUser = await admin.auth().getUser(userId);
       console.log('usuario con id ' + userId + ' encontrado con éxito');
 

@@ -12,10 +12,15 @@ const { Auth } = require('../../vs-core-firebase');
 
 const { CustomError } = require('../../vs-core');
 
+const { UserStatusTypes } = require('../../types/userStatusTypes');
+
 const { Collections } = require('../../types/collectionsTypes');
 const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/coreHelper');
 
 const { setUserClaims } = require('../admin/controller');
+
+const userSchemas = require('../users/schemas');
+const { createUser } = require('../users/controller');
 
 const schemas = require('./schemas');
 
@@ -43,7 +48,7 @@ const {
   createFirestoreDocument,
 } = require('../baseEndpoint');
 
-const INDEXED_FILTERS = ['userId', 'companyId'];
+const INDEXED_FILTERS = ['userId', 'companyId', 'state'];
 
 // La fn findWithUserRelationship pretende recibir como value de PRIMARY_ENTITY_PROPERTY_NAME el id de usuario del staff.
 // En la fn findWithUserRelationship se recibi por param 'userId' y desde el front se envia el id del staff... medio raro, TODO FIX
@@ -169,32 +174,45 @@ exports.get = async function (req, res) {
   });
 };
 
-exports.getCurrentRelationship = async function (req, res) {
-  const { id, companyId, userId } = req.params;
-
+const getCurrentRelationshipInner = async ({ companyId, userId }) => {
   const filters = {};
-  if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
+  // no filtro por estado pq puede estar consultando por una relacion pasada
+  // if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
   filters.companyId = { $equal: companyId };
   // filters.userId = { $equal: companyId }; // ya se filtra por el primaryEntityPropName
 
-  try {
-    const result = await listByPropInner({
-      filters,
+  const result = await listByPropInner({
+    filters,
 
-      primaryEntityPropName: USER_ENTITY_PROPERTY_NAME,
-      primaryEntityValue: userId,
+    primaryEntityPropName: USER_ENTITY_PROPERTY_NAME,
+    primaryEntityValue: userId,
 
-      listByCollectionName: Collections.COMPANY_CLIENTS,
-      indexedFilters: INDEXED_FILTERS,
-      relationships: [
-        { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
-        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
-      ],
+    listByCollectionName: Collections.COMPANY_CLIENTS,
+    indexedFilters: INDEXED_FILTERS,
+    relationships: [
+      { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
+      { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
+    ],
+  });
+
+  let relationshipToReturn = null;
+  if (result && result.items && result.items.length) {
+    const activeRelationship = result.items.find((item) => {
+      return item.state === Types.StateTypes.STATE_ACTIVE;
     });
+    if (activeRelationship) relationshipToReturn = activeRelationship;
+    else relationshipToReturn = result.items[0];
+  }
 
-    if (!result || result.total !== 1) throw new Error('Invalid items len');
+  return relationshipToReturn;
+};
 
-    return res.send(result.items[0]);
+exports.getCurrentRelationship = async function (req, res) {
+  const { id, companyId, userId } = req.params;
+  try {
+    const currentRelationship = await getCurrentRelationshipInner({ companyId, userId });
+
+    return res.send(currentRelationship);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }
@@ -291,7 +309,6 @@ exports.create = async function (req, res) {
   body.companyId = companyId;
 
   const collectionName = Collections.COMPANY_CLIENTS;
-  const validationSchema = schemas.create;
 
   console.log('Create args (' + collectionName + '):', body);
   try {
@@ -300,6 +317,184 @@ exports.create = async function (req, res) {
     console.log('Create data: (' + collectionName + ')', dbItemData);
 
     return res.status(201).send(dbItemData);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+const getUserById = async (id) => {
+  try {
+    const firestoreUser = await admin.auth().getUser(id);
+    return firestoreUser;
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') return null;
+    throw e;
+  }
+};
+
+const getUserByEmail = async (email) => {
+  try {
+    const firestoreUser = await admin.auth().getUserByEmail(email);
+    return firestoreUser;
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') return null;
+    throw e;
+  }
+};
+
+exports.upsertByCompany = async function (req, res) {
+  const { userId: auditUid } = res.locals;
+  const { companyId } = req.params;
+
+  console.log('UpsertByCompany args (' + Collections.COMPANY_CLIENTS + '):', req.body);
+
+  const {
+    email,
+    // firstName, lastName, company, phoneNumber
+  } = req.body;
+
+  try {
+    // 1. user exists by Email ?
+    // 1.1. Si: Creo relacion y omito el nombre demas datos recibidos
+    // 1.2. No: Creo usuario y luego creo relacion
+
+    let existentUser = await getUserByEmail(email);
+
+    // si no existe entonces creo el usuario
+    if (!existentUser) {
+      console.log('No existia el usuario, se creara. (' + email + ')');
+
+      const data = {
+        ...req.body,
+
+        appUserStatus: UserStatusTypes.ACTIVE,
+
+        appRols: [Types.AppRols.APP_STAFF],
+      };
+
+      const newUserData = await sanitizeData({
+        data,
+        validationSchema: userSchemas.create,
+      });
+
+      console.log('Se procede a crear el usuario con los datos: ' + JSON.stringify(newUserData));
+      // creo el usuario
+      existentUser = await createUser({
+        auditUid,
+        userData: newUserData,
+        appUserStatus: newUserData.appUserStatus,
+      });
+
+      console.log('Usario creado con éxito');
+    }
+
+    const targetUserId = existentUser.id ? existentUser.id : existentUser.uid;
+
+    console.log(
+      'Se consulta la relacion existente para ver si se crea o no (' +
+        companyId +
+        '), (' +
+        targetUserId +
+        ')'
+    );
+    const currentRelationship = await getCurrentRelationshipInner({
+      companyId,
+      userId: targetUserId,
+    });
+
+    // console.log('Resultado busqueda Relacion :' + JSON.stringify(currentRelationship));
+
+    // exite la relacion pero esta inactiva
+    if (currentRelationship && currentRelationship.state !== Types.StateTypes.STATE_ACTIVE) {
+      console.log('Se encontro una relacion con estado inactiva, se procede a reactivarla');
+      await updateSingleItem({
+        collectionName: Collections.COMPANY_CLIENTS,
+        id: currentRelationship.id,
+        auditUid,
+        data: { state: Types.StateTypes.STATE_ACTIVE },
+      });
+      console.log('Reactivacion OK');
+    }
+    // no existe la relacion
+    else if (!currentRelationship) {
+      const body = req.body;
+      body.userId = targetUserId;
+      body.companyId = companyId;
+
+      const collectionName = Collections.COMPANY_CLIENTS;
+
+      console.log('No existe la relacion, se creara con args (' + collectionName + '):', body);
+
+      const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
+    } else {
+      console.log('La relacion ya existia !, no se hace nada');
+    }
+
+    return res.status(201).send({});
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+// por definicion de CTO se habilita a una empresa que tiene una relacion con un cliente a editarle sus datos personales
+exports.updateByCompany = async function (req, res) {
+  try {
+    const { userId: auditUid } = res.locals;
+
+    const { companyId, id } = req.params;
+
+    const collectionName = Collections.COMPANY_CLIENTS;
+    const validationSchema = userSchemas.update;
+
+    if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+
+    console.log('Patch args (' + collectionName + '):', JSON.stringify(req.body));
+
+    // solo lo dejo editar estos campos, no roles ni mail nada raro
+    const { firstName, lastName, company, phoneNumber, identificationNumber } = req.body;
+
+    let itemData = await sanitizeData({
+      data: { firstName, lastName, company, phoneNumber, identificationNumber },
+      validationSchema,
+    });
+
+    itemData = { ...itemData, ...updateStruct(auditUid) };
+
+    const currentRelationship = await fetchSingleItem({
+      collectionName: Collections.COMPANY_CLIENTS,
+      id,
+    });
+
+    console.log('Resultado busqueda Relacion :' + JSON.stringify(currentRelationship));
+
+    // existe la relacion pero esta inactiva
+    if (!currentRelationship || currentRelationship.state !== Types.StateTypes.STATE_ACTIVE) {
+      throw new CustomError.TechnicalError(
+        'ERROR_BAD_RELATIONSHIP',
+        null,
+        'La relacion se encuentra inactiva o inexistente',
+        null
+      );
+    }
+
+    if (currentRelationship.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'ERROR_WRONG_COMPANY',
+        null,
+        'Se esta intentando editar una relacion de otra compañia',
+        null
+      );
+    }
+
+    const updateData = { firstName, lastName, company, phoneNumber, identificationNumber };
+    await updateSingleItem({
+      collectionName: Collections.USERS,
+      id: currentRelationship.userId,
+      auditUid,
+      data: itemData,
+    });
+
+    return res.status(201).send({});
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }

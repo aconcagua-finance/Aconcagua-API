@@ -27,8 +27,6 @@ import {
   countItems,
 } from '../baseEndpoint';
 
-const { CurrencyTypes } = require('../../types/currencyTypes');
-
 const groupByMonth = (items, propName) => {
   // this gives an object with dates as keys
   const groups = items.reduce((gr, item) => {
@@ -168,12 +166,12 @@ exports.findByCompany = async function (req, res) {
       creditsAmount += item.amount;
       if (!item || !item.balances) return;
       const arsBalance = item.balances.find((balance) => {
-        return balance.currency === CurrencyTypes.ARS;
+        return balance.currency === Types.CurrencyTypes.ARS;
       });
 
       if (!arsBalance) return;
 
-      depositsAmount += arsBalance.value;
+      depositsAmount += arsBalance.balance;
     });
 
     const result = {

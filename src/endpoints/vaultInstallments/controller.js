@@ -61,7 +61,7 @@ exports.findByVault = async function (req, res) {
   if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
 
   try {
-    console.log('GET VAULTS BY VAULT ' + vaultId);
+    console.log('GET VAULT INSTALLMENTS BY VAULT ' + vaultId);
 
     const result = await listByPropInner({
       limit,
@@ -78,6 +78,17 @@ exports.findByVault = async function (req, res) {
         { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
       ],
+
+      postProcessor: async (items) => {
+        const allItems = items.items.map((item) => {
+          if (item.dueDate) item.dueDate = item.dueDate.toDate();
+          return item;
+        });
+
+        items.items = allItems;
+
+        return items;
+      },
     });
 
     return res.send(result);
@@ -87,9 +98,9 @@ exports.findByVault = async function (req, res) {
 };
 
 exports.get = async function (req, res) {
-  const { id } = req.params;
+  const { id, userId, companyId } = req.params;
 
-  console.log('GET VAULT BY ID ' + id);
+  console.log('GET VAULT INSTALLMENT BY ID ' + id);
   await getByProp({
     req,
     res,
@@ -105,6 +116,17 @@ exports.get = async function (req, res) {
       { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
       { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
     ],
+    postProcessor: async (item) => {
+      if (!item) return null;
+
+      // Importante para validar permisos - complementario a routes-config
+      if (userId && item.userId !== userId) throw new Error('userId missmatch');
+      if (companyId && item.companyId !== companyId) throw new Error('companyId missmatch');
+
+      if (item.dueDate) item.dueDate = item.dueDate.toDate();
+
+      return item;
+    },
   });
 };
 
@@ -138,7 +160,13 @@ exports.patch = async function (req, res) {
       );
     }
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    const doc = await updateSingleItem({
+      collectionName,
+      id,
+      auditUid,
+      data: itemData,
+      secureArgs: { companyId, userId: targetUserId },
+    });
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
@@ -163,7 +191,37 @@ exports.remove = async function (req, res) {
     );
   }
 
-  await remove(req, res, COLLECTION_NAME);
+  await remove(req, res, COLLECTION_NAME, { companyId, userId: targetUserId });
+};
+
+const getNextInstallmentNumber = async (vaultId) => {
+  const filters = {};
+  filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
+
+  console.log('GET VAULT INSTALLMENTS BY VAULT ' + vaultId);
+
+  const result = await listByPropInner({
+    limit: 1000,
+    offset: 0,
+    filters,
+
+    primaryEntityPropName: VAULT_ENTITY_PROPERTY_NAME,
+    primaryEntityValue: vaultId,
+    // primaryEntityCollectionName: Collections.COMPANIES,
+    listByCollectionName: COLLECTION_NAME,
+    indexedFilters: INDEXED_FILTERS,
+  });
+
+  let nextInstallmentNumber = 0;
+
+  result.items.forEach((item) => {
+    if (item.installmentNumber > nextInstallmentNumber) {
+      nextInstallmentNumber = item.installmentNumber;
+    }
+  });
+  nextInstallmentNumber = nextInstallmentNumber + 1;
+
+  return nextInstallmentNumber;
 };
 
 exports.create = async function (req, res) {
@@ -175,6 +233,8 @@ exports.create = async function (req, res) {
   body.userId = targetUserId;
   body.companyId = companyId;
   body.vaultId = vaultId;
+
+  body.installmentNumber = await getNextInstallmentNumber(vaultId);
 
   const collectionName = COLLECTION_NAME;
   const validationSchema = schemas.create;
