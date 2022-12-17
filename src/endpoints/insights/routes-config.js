@@ -1,4 +1,4 @@
-const { findByCompany } = require('./controller');
+const { findByCompany, findByUser } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
 const { Auth } = require('../../vs-core-firebase');
@@ -13,5 +13,15 @@ exports.insightsRoutesConfig = function (app) {
       isEnterpriseEmployee: true,
     }),
     findByCompany,
+  ]);
+
+  app.get('/by-user/:userId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
+      allowSameUser: true,
+    }),
+    findByUser,
   ]);
 };

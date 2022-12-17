@@ -300,12 +300,18 @@ const fetchAndUpdateUserEnterpriseRols = async ({
 
   console.log('New user enterpriseRols ' + JSON.stringify(newEnterpriseRols));
 
+  // 3.1 le agrego el appRol LENDER
+  // TODO si queda desvinculado de todas las empresas sacarle el appRol
+  if (!targetUser.appRols.includes(Types.AppRols.APP_LENDER)) {
+    targetUser.appRols.push(Types.AppRols.APP_LENDER);
+  }
+
   // 4. atualizo el usuario
   updateSingleItem({
     collectionName: Collections.USERS,
     auditUid,
     id: userId,
-    data: { enterpriseRols: newEnterpriseRols },
+    data: { enterpriseRols: newEnterpriseRols, appRols: targetUser.appRols },
   });
 
   console.log('ok updating user document');

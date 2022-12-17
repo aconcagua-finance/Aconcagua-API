@@ -196,3 +196,73 @@ exports.findByCompany = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
+exports.findByUser = async function (req, res) {
+  try {
+    const { limit, offset, filters, state, groupBy } = req.query;
+
+    const { userId } = req.params;
+
+    console.log('Insights find with args: ' + JSON.stringify([filters, userId]));
+
+    // filters[createdAt][$gte]: 2022-01-22T18:46:13.487Z
+    if (!filters || !filters.createdAt || !filters.createdAt.$gte || !userId) {
+      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'missing args', null);
+    }
+
+    const indexedFilters = ['createdAt', 'userId', 'state'];
+    filters['userId'] = { $equal: userId };
+
+    // groupBy = month / week / day...
+    const vaultsItems = await fetchItems({
+      collectionName: Collections.VAULTS,
+      limit: 10000,
+      filters,
+      indexedFilters,
+    });
+
+    console.log('Insights vaults len:' + vaultsItems.length);
+    // return res.send(leadItems);
+
+    const vaultsGroupArrays = groupByMonth(
+      vaultsItems.map((item) => {
+        return { ...item, createdAtString: item.createdAt.toISOString() };
+      }),
+      'createdAtString'
+    );
+
+    console.log('Insights vaults vaultsGroupArrays:', vaultsGroupArrays);
+
+    let depositsAmount = 0;
+    let creditsAmount = 0;
+
+    vaultsItems.forEach((item) => {
+      creditsAmount += item.amount;
+      if (!item || !item.balances) return;
+      const arsBalance = item.balances.find((balance) => {
+        return balance.currency === Types.CurrencyTypes.ARS;
+      });
+
+      if (!arsBalance) return;
+
+      depositsAmount += arsBalance.balance;
+    });
+
+    const result = {
+      vaults: normalizeAndCompleteWithEmptySlots(
+        vaultsGroupArrays,
+        groupBy,
+        new Date(filters.createdAt.$gte)
+      ),
+
+      depositsAmount,
+      creditsAmount,
+    };
+
+    console.log('OK - all - fetch (' + 'INSIGHTS' + '): ');
+
+    return res.send(result);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
