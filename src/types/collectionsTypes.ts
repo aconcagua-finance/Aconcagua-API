@@ -21,4 +21,5 @@ export enum Collections {
   VAULT_TRANSACTIONS = 'vaultTransactions',
   MARKET_CAP = 'marketCap',
   TRANSACTION_REQUESTS = 'transactionRequests',
+  REMINDERS = 'reminders',
 }

@@ -45,6 +45,8 @@ const {
   transactionRequestsRoutesConfig,
 } = require('./endpoints/transactionRequests/routes-config');
 
+const { remindersRoutesConfig } = require('./endpoints/reminders/routes-config');
+
 const { cronUpdateUSDValuation } = require('./endpoints/marketCap/controller');
 
 const {
@@ -408,6 +410,18 @@ exports.transactionRequests = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(transactionRequestsApp);
+
+const remindersApp = express();
+configureApp(remindersApp);
+remindersRoutesConfig(remindersApp);
+exports.reminders = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(remindersApp);
 
 exports.onUserTouchpointCreate = onUserTouchpointCreate;
 exports.onUserTouchpointUpdate = onUserTouchpointUpdate;

@@ -157,7 +157,7 @@ exports.findByUser = async function (req, res) {
 };
 
 exports.get = async function (req, res) {
-  const { id } = req.params;
+  const { id, companyId, userId } = req.params;
 
   console.log('GET VAULT BY ID ' + id);
   await getByProp({
@@ -175,6 +175,15 @@ exports.get = async function (req, res) {
       { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
       { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
     ],
+    postProcessor: async (item) => {
+      if (!item) return null;
+
+      // Importante para validar permisos - complementario a routes-config
+      if (userId && item.userId !== userId) throw new Error('userId missmatch');
+      if (companyId && item.companyId !== companyId) throw new Error('companyId missmatch');
+
+      return item;
+    },
   });
 };
 
