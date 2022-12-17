@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable no-console */
 // import { Config } from '@abdalamichel/vs-core';
 
@@ -54,6 +55,9 @@ const {
 const { onUserCalendarEventBronzeCreate } = require('./endpoints/userCalendarEvents/controller');
 
 const { onHookedEventCreate, onHookedEventUpdate } = require('./endpoints/hookedEvents/controller');
+const {
+  onVaultCreate_ThenCreateCompanyClientRelationship,
+} = require('./endpoints/companyClients/controller');
 
 console.log('NODE_ENV:', process.env.NODE_ENV, 'ENVIRONMENT:', process.env.ENVIRONMENT);
 
