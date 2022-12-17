@@ -45,7 +45,7 @@ const {
   transactionRequestsRoutesConfig,
 } = require('./endpoints/transactionRequests/routes-config');
 
-const { cronUpdateUSDValuation } = require('./endpoints/transactionRequests/controller');
+const { cronUpdateUSDValuation } = require('./endpoints/marketCap/controller');
 
 const {
   onUserTouchpointCreate,
