@@ -1,12 +1,13 @@
 const {
   find,
   get,
-  create,
-  patch,
+  // create,
+  // patch,
   remove,
 
   findByCompany,
   findByVault,
+  findByUser,
 } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
@@ -38,6 +39,16 @@ exports.vaultTransactionsRoutesConfig = function (app) {
     findByVault,
   ]);
 
+  app.get('/by-user/:userId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      allowSameUser: true,
+    }),
+    findByUser,
+  ]);
+
   // busca una relacion
   app.get('/:companyId/:userId/:id', [
     Audit.logger,
@@ -51,28 +62,28 @@ exports.vaultTransactionsRoutesConfig = function (app) {
   ]);
 
   // crea un elemento relacionado a la empresa enviada y al usuario enviado
-  app.post('/:companyId/:userId/:vaultId', [
-    Audit.logger,
-    Auth.isAuthenticated,
-    Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN],
-      hasEnterpriseRole: [
-        Types.EnterpriseRols.ENTERPRISE_ADMIN,
-        Types.EnterpriseRols.ENTERPRISE_RRHH,
-      ],
-    }),
-    create,
-  ]);
+  // app.post('/:companyId/:userId/:vaultId', [
+  //   Audit.logger,
+  //   Auth.isAuthenticated,
+  //   Auth.isAuthorized({
+  //     hasAppRole: [Types.AppRols.APP_ADMIN],
+  //     hasEnterpriseRole: [
+  //       Types.EnterpriseRols.ENTERPRISE_ADMIN,
+  //       Types.EnterpriseRols.ENTERPRISE_RRHH,
+  //     ],
+  //   }),
+  //   create,
+  // ]);
 
   // actualiza un elemento relacionado a la empresa enviada y al usuario enviado
-  app.patch('/:companyId/:userId/:id', [
-    Audit.logger,
-    Auth.isAuthenticated,
-    Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN],
-    }),
-    patch,
-  ]);
+  // app.patch('/:companyId/:userId/:id', [
+  //   Audit.logger,
+  //   Auth.isAuthenticated,
+  //   Auth.isAuthorized({
+  //     hasAppRole: [Types.AppRols.APP_ADMIN],
+  //   }),
+  //   patch,
+  // ]);
 
   // elimina un elemento relacionado a la empresa enviada
   app.delete('/:companyId/:userId/:id', [

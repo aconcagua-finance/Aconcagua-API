@@ -61,7 +61,7 @@ exports.findByCompany = async function (req, res) {
   if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
 
   try {
-    console.log('GET VAULTS BY COMPANY ' + companyId);
+    console.log('GET VAULT TRANSACTIONS BY COMPANY ' + companyId);
 
     const result = await listByPropInner({
       limit,
@@ -96,7 +96,7 @@ exports.findByVault = async function (req, res) {
   if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
 
   try {
-    console.log('GET VAULTS BY VAULT ' + vaultId);
+    console.log('GET VAULT TRANSACTIONS BY VAULT ' + vaultId);
 
     const result = await listByPropInner({
       limit,
@@ -105,6 +105,41 @@ exports.findByVault = async function (req, res) {
 
       primaryEntityPropName: VAULT_ENTITY_PROPERTY_NAME,
       primaryEntityValue: vaultId,
+      // primaryEntityCollectionName: Collections.COMPANIES,
+      listByCollectionName: COLLECTION_NAME,
+      indexedFilters: INDEXED_FILTERS,
+      relationships: [
+        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
+      ],
+    });
+
+    return res.send(result);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.findByUser = async function (req, res) {
+  const { userId } = req.params;
+
+  const { limit, offset } = req.query;
+  let { filters } = req.query;
+
+  if (!filters) filters = {};
+  if (!filters.state) filters.state = { $equal: Types.StateTypes.STATE_ACTIVE };
+
+  try {
+    console.log('GET VAULT TRANSACTIONS BY USER ' + userId);
+
+    const result = await listByPropInner({
+      limit,
+      offset,
+      filters,
+
+      primaryEntityPropName: USER_ENTITY_PROPERTY_NAME,
+      primaryEntityValue: userId,
       // primaryEntityCollectionName: Collections.COMPANIES,
       listByCollectionName: COLLECTION_NAME,
       indexedFilters: INDEXED_FILTERS,
@@ -143,45 +178,85 @@ exports.get = async function (req, res) {
   });
 };
 
-exports.patch = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
+// exports.patch = async function (req, res) {
+//   const { userId } = res.locals;
+//   const auditUid = userId;
 
-  const { userId: targetUserId, companyId } = req.params;
+//   const { userId: targetUserId, companyId } = req.params;
 
-  const body = req.body;
-  body.companyId = companyId;
+//   const body = req.body;
+//   body.companyId = companyId;
 
-  const collectionName = COLLECTION_NAME;
-  const validationSchema = schemas.update;
+//   const collectionName = COLLECTION_NAME;
+//   const validationSchema = schemas.update;
 
-  try {
-    const { id } = req.params;
+//   try {
+//     const { id } = req.params;
 
-    if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+//     if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
 
-    console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
+//     console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
 
-    const itemData = await sanitizeData({ data: body, validationSchema });
+//     const itemData = await sanitizeData({ data: body, validationSchema });
 
-    if (!companyId || !targetUserId) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_COMPANY_CLIENT',
-        null,
-        'Error creating company client. Missing args',
-        null
-      );
-    }
+//     if (!companyId || !targetUserId) {
+//       throw new CustomError.TechnicalError(
+//         'ERROR_CREATE_COMPANY_CLIENT',
+//         null,
+//         'Error creating company client. Missing args',
+//         null
+//       );
+//     }
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+//     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
 
-    console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
+//     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
-    return res.status(204).send(doc);
-  } catch (err) {
-    return ErrorHelper.handleError(req, res, err);
-  }
-};
+//     return res.status(204).send(doc);
+//   } catch (err) {
+//     return ErrorHelper.handleError(req, res, err);
+//   }
+// };
+
+// exports.create = async function (req, res) {
+//   const { userId } = res.locals;
+//   const auditUid = userId;
+//   const { userId: targetUserId, companyId, vaultId } = req.params;
+
+//   const body = req.body;
+//   body.userId = targetUserId;
+//   body.companyId = companyId;
+//   body.vaultId = vaultId;
+
+//   const collectionName = COLLECTION_NAME;
+//   const validationSchema = schemas.create;
+
+//   try {
+//     console.log('Create args (' + collectionName + '):', body);
+
+//     const itemData = await sanitizeData({ data: body, validationSchema });
+
+//     if (!companyId || !targetUserId) {
+//       throw new CustomError.TechnicalError(
+//         'ERROR_CREATE_COMPANY_CLIENT',
+//         null,
+//         'Error creating company client. Missing args',
+//         null
+//       );
+//     }
+
+//     const createArgs = { collectionName, itemData, auditUid };
+
+//     // creo la relacion empresa-empleado
+//     const dbItemData = await createFirestoreDocument(createArgs);
+
+//     console.log('Create data: (' + collectionName + ')', dbItemData);
+
+//     return res.status(201).send(dbItemData);
+//   } catch (err) {
+//     return ErrorHelper.handleError(req, res, err);
+//   }
+// };
 
 exports.remove = async function (req, res) {
   const { userId } = res.locals;
@@ -199,44 +274,4 @@ exports.remove = async function (req, res) {
   }
 
   await remove(req, res, COLLECTION_NAME);
-};
-
-exports.create = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
-  const { userId: targetUserId, companyId, vaultId } = req.params;
-
-  const body = req.body;
-  body.userId = targetUserId;
-  body.companyId = companyId;
-  body.vaultId = vaultId;
-
-  const collectionName = COLLECTION_NAME;
-  const validationSchema = schemas.create;
-
-  try {
-    console.log('Create args (' + collectionName + '):', body);
-
-    const itemData = await sanitizeData({ data: body, validationSchema });
-
-    if (!companyId || !targetUserId) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_COMPANY_CLIENT',
-        null,
-        'Error creating company client. Missing args',
-        null
-      );
-    }
-
-    const createArgs = { collectionName, itemData, auditUid };
-
-    // creo la relacion empresa-empleado
-    const dbItemData = await createFirestoreDocument(createArgs);
-
-    console.log('Create data: (' + collectionName + ')', dbItemData);
-
-    return res.status(201).send(dbItemData);
-  } catch (err) {
-    return ErrorHelper.handleError(req, res, err);
-  }
 };
