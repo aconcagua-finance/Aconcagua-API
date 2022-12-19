@@ -26,6 +26,7 @@ const {
 
   fetchItemsByIds,
   filterItems,
+  fetchItems,
 } = require('../baseEndpoint');
 
 const COLLECTION_NAME = Collections.COMPANIES;
@@ -34,23 +35,38 @@ exports.find = async function (req, res) {
   await find(req, res, COLLECTION_NAME);
 };
 
-exports.findGranted = async function (req, res) {
-  try {
-    const collectionName = COLLECTION_NAME;
+const getGrantedIds = async ({ enterpriseRols, userId }) => {
+  let ids = [];
+  if (enterpriseRols) {
+    ids = enterpriseRols.map((entRol) => {
+      return entRol.companyId;
+    });
+  } else {
+    const companyClientsRelationships = await fetchItems({
+      collectionName: Collections.COMPANY_CLIENTS,
+      limit: 1000,
+      filterState: Types.StateTypes.STATE_ACTIVE,
+      filters: { userId: { $equal: userId } },
+    });
 
-    // / movies?filters[movies]=USA&fields[]=id&fields[]=name
-    let { limit, offset, filters, state } = req.query;
-
-    if (limit) limit = parseInt(limit);
-
-    const { enterpriseRols } = res.locals;
-
-    let ids = [];
-    if (enterpriseRols) {
-      ids = enterpriseRols.map((entRol) => {
-        return entRol.companyId;
+    if (companyClientsRelationships && companyClientsRelationships.length) {
+      companyClientsRelationships.forEach((element) => {
+        if (!ids.includes(element.companyId)) ids.push(element.companyId);
       });
     }
+  }
+
+  return ids;
+};
+
+exports.findGranted = async function (req, res) {
+  try {
+    const { userId, enterpriseRols } = res.locals;
+
+    const collectionName = COLLECTION_NAME;
+
+    const ids = await getGrantedIds({ enterpriseRols, userId });
+
     console.log(
       'enterpriseRols: ' + JSON.stringify(enterpriseRols) + '. ids: ' + JSON.stringify(ids)
     );
@@ -62,6 +78,11 @@ exports.findGranted = async function (req, res) {
       console.log('OK - all - fetch (' + collectionName + '): ' + items.length);
     }
 
+    // / movies?filters[movies]=USA&fields[]=id&fields[]=name
+    let { limit, offset, filters, state } = req.query;
+
+    if (limit) limit = parseInt(limit);
+
     const filteredItems = filterItems({ items, limit, offset, filters });
 
     if (filteredItems.items) {
@@ -69,6 +90,36 @@ exports.findGranted = async function (req, res) {
     }
 
     return res.send(filteredItems);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.getGranted = async function (req, res) {
+  try {
+    const { userId, enterpriseRols } = res.locals;
+
+    const collectionName = COLLECTION_NAME;
+
+    const { id } = req.params;
+
+    const ids = await getGrantedIds({ enterpriseRols, userId });
+
+    if (!ids.includes(id)) {
+      throw new CustomError.TechnicalError(
+        'ERROR_NOT_ALLOWED',
+        null,
+        'se esta consultando por un id que no está habilitado',
+        null
+      );
+    }
+
+    console.log(
+      'enterpriseRols: ' + JSON.stringify(enterpriseRols) + '. ids: ' + JSON.stringify(ids)
+    );
+
+    const item = await fetchSingleItem({ collectionName, id });
+    return res.send(item);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }
