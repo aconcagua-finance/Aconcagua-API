@@ -36,12 +36,13 @@ exports.transactionRequestsRoutesConfig = function (app) {
     findByCompany,
   ]);
 
-  app.get('/by-vault/:companyId/:vaultId', [
+  app.get('/by-vault/:companyId/:userId/:vaultId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
       isEnterpriseEmployee: true,
+      allowSameUser: true,
     }),
     findByVault,
   ]);

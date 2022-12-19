@@ -121,7 +121,7 @@ exports.findByCompany = async function (req, res) {
 };
 
 exports.findByVault = async function (req, res) {
-  const { companyId, vaultId } = req.params;
+  const { companyId, userId, vaultId } = req.params;
 
   const { limit, offset } = req.query;
   let { filters } = req.query;
@@ -147,6 +147,19 @@ exports.findByVault = async function (req, res) {
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
       ],
     });
+
+    if (
+      result.items.find((item) => {
+        item.companyId !== companyId || item.userId !== userId;
+      })
+    ) {
+      throw new CustomError.TechnicalError(
+        'ERROR_NOW_ALLOWED',
+        null,
+        'Se está consultando una vault que no corresponde a los args recibidos de company o user',
+        null
+      );
+    }
 
     return res.send(result);
   } catch (err) {

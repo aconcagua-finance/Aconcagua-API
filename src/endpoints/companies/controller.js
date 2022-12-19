@@ -37,7 +37,7 @@ exports.find = async function (req, res) {
 
 const getGrantedIds = async ({ enterpriseRols, userId }) => {
   let ids = [];
-  if (enterpriseRols) {
+  if (enterpriseRols && enterpriseRols.length) {
     ids = enterpriseRols.map((entRol) => {
       return entRol.companyId;
     });
@@ -105,6 +105,15 @@ exports.getGranted = async function (req, res) {
 
     const ids = await getGrantedIds({ enterpriseRols, userId });
 
+    console.log(
+      'enterpriseRols: ' +
+        JSON.stringify(enterpriseRols) +
+        '. ids: ' +
+        JSON.stringify(ids) +
+        '. param.id: ' +
+        id
+    );
+
     if (!ids.includes(id)) {
       throw new CustomError.TechnicalError(
         'ERROR_NOT_ALLOWED',
@@ -113,10 +122,6 @@ exports.getGranted = async function (req, res) {
         null
       );
     }
-
-    console.log(
-      'enterpriseRols: ' + JSON.stringify(enterpriseRols) + '. ids: ' + JSON.stringify(ids)
-    );
 
     const item = await fetchSingleItem({ collectionName, id });
     return res.send(item);
