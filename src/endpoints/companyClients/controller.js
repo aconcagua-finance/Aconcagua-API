@@ -451,7 +451,10 @@ exports.updateByCompany = async function (req, res) {
     console.log('Patch args (' + collectionName + '):', JSON.stringify(req.body));
 
     // solo lo dejo editar estos campos, no roles ni mail nada raro
-    const { firstName, lastName, company, phoneNumber, identificationNumber } = req.body;
+    let { firstName, lastName, company, phoneNumber, identificationNumber } = req.body;
+
+    if (!company) company = '';
+    if (!phoneNumber) phoneNumber = '';
 
     let itemData = await sanitizeData({
       data: { firstName, lastName, company, phoneNumber, identificationNumber },
@@ -486,7 +489,6 @@ exports.updateByCompany = async function (req, res) {
       );
     }
 
-    const updateData = { firstName, lastName, company, phoneNumber, identificationNumber };
     await updateSingleItem({
       collectionName: Collections.USERS,
       id: currentRelationship.userId,
