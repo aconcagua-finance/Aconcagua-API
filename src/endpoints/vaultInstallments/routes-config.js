@@ -22,6 +22,7 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
       isEnterpriseEmployee: true,
+      allowSameUser: true,
     }),
     findByVault,
   ]);
