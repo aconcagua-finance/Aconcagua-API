@@ -59,20 +59,20 @@ exports.transactionRequestsRoutesConfig = function (app) {
     get,
   ]);
 
-  // crea un elemento relacionado a la empresa enviada y al usuario enviado
-  app.post('/:companyId', [
+  // crea un elemento relacionado a la empresa enviada y al usuario enviado y al vault enviado
+  app.post('/:companyId/:userId/:vaultId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
-
-      isEnterpriseEmployee: true,
+      allowSameUser: true, // quien solicita un rescate
+      isEnterpriseEmployee: true, // quien solicita una liquidacion
     }),
     create,
   ]);
 
   // actualiza un elemento relacionado a la empresa enviada
-  app.patch('/:companyId/:id', [
+  app.patch('/:companyId/:userId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({

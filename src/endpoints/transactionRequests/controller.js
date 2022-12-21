@@ -247,26 +247,38 @@ exports.remove = async function (req, res) {
 };
 
 exports.create = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
-  const { companyId } = req.params;
+  const { userId: auditUid } = res.locals;
 
-  const body = req.body;
-  body.companyId = companyId;
-  body.requestStatus = 'requested';
-
-  const collectionName = COLLECTION_NAME;
-  const validationSchema = schemas.create;
+  const { companyId, userId, vaultId } = req.params;
 
   try {
+    const vault = await fetchSingleItem({
+      collectionName: Collections.VAULTS,
+      id: vaultId,
+    });
+
+    if (vault.userId !== userId || vault.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'ERROR_WRONG_ARGS',
+        null,
+        'Se recibio una solicitud de un usuario / empresa distintos a las del vault asociado',
+        null
+      );
+    }
+
+    const body = req.body;
+
+    body.companyId = companyId;
+    body.userId = userId;
+    body.vaultId = vaultId;
+    body.requestStatus = 'requested';
+
+    const collectionName = COLLECTION_NAME;
+    const validationSchema = schemas.create;
+
     console.log('Create args (' + collectionName + '):', body);
 
     const itemData = await sanitizeData({ data: body, validationSchema });
-
-    const vault = await fetchSingleItem({
-      collectionName: Collections.VAULTS,
-      id: itemData.vaultId,
-    });
 
     const arsCurrency = Types.CurrencyTypes.ARS;
 
@@ -299,7 +311,6 @@ exports.create = async function (req, res) {
 
     const createArgs = { collectionName, itemData, auditUid };
 
-    // creo la relacion empresa-empleado
     const dbItemData = await createFirestoreDocument(createArgs);
 
     console.log('Create data: (' + collectionName + ')', dbItemData);

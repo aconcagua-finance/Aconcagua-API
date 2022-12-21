@@ -2,9 +2,12 @@ const Joi = require('joi');
 
 const baseSchema = Joi.object({
   companyId: Joi.string(),
+  userId: Joi.string(),
   vaultId: Joi.string(),
 
   transactionType: Joi.string(),
+
+  rescueWalletAccount: Joi.string().allow(''),
 
   currency: Joi.string(),
   amount: Joi.number(),
@@ -17,6 +20,7 @@ const baseSchema = Joi.object({
 
 const requiredBaseFields = [
   'companyId',
+  'userId',
   'vaultId',
   'transactionType',
   'currency',
