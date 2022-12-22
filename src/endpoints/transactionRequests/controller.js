@@ -49,11 +49,10 @@ const {
 } = require('../baseEndpoint');
 const { invoke } = require('lodash');
 
-const INDEXED_FILTERS = ['vaultId', 'companyId', 'state'];
+const INDEXED_FILTERS = ['vaultId', 'companyId', 'userId', 'state'];
 
-// La fn findWithUserRelationship pretende recibir como value de PRIMARY_ENTITY_PROPERTY_NAME el id de usuario del staff.
-// En la fn findWithUserRelationship se recibi por param 'userId' y desde el front se envia el id del staff... medio raro, TODO FIX
 const COMPANY_ENTITY_PROPERTY_NAME = 'companyId';
+const USER_ENTITY_PROPERTY_NAME = 'userId';
 const VAULT_ENTITY_PROPERTY_NAME = 'vaultId';
 const COLLECTION_NAME = Collections.TRANSACTION_REQUESTS;
 
@@ -77,6 +76,7 @@ exports.find = async function (req, res) {
       relationships: [
         { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
       ],
     });
 
@@ -111,6 +111,7 @@ exports.findByCompany = async function (req, res) {
       relationships: [
         { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
       ],
     });
 
@@ -145,6 +146,7 @@ exports.findByVault = async function (req, res) {
       relationships: [
         { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
       ],
     });
 
@@ -184,6 +186,7 @@ exports.get = async function (req, res) {
     relationships: [
       { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
       { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
+      { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
     ],
   });
 };
@@ -271,7 +274,7 @@ exports.create = async function (req, res) {
     body.companyId = companyId;
     body.userId = userId;
     body.vaultId = vaultId;
-    body.requestStatus = 'requested';
+    body.requestStatus = 'pending'; // TODO normalizar, igual a formOptions de TransactionRequests en admin
 
     const collectionName = COLLECTION_NAME;
     const validationSchema = schemas.create;
