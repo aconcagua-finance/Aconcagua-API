@@ -16,7 +16,9 @@ const { Collections } = require('../../types/collectionsTypes');
 
 const schemas = require('./schemas');
 const usersByStaffschemas = require('../usersByStaff/schemas');
+const leadsSchemas = require('../leads/schemas');
 
+const { LeadStatusTypes } = require('../../types/leadStatusTypes');
 const {
   sanitizeData,
   find,
@@ -532,6 +534,50 @@ exports.create = async function (req, res) {
   }
 };
 
+const getUserByEmail = async (email) => {
+  try {
+    const firestoreUser = await admin.auth().getUserByEmail(email);
+    return firestoreUser;
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') return null;
+    throw e;
+  }
+};
+
+const getFirestoreUserByEmail = async (email) => {
+  const firestoreUsersByEmail = await fetchItems({
+    collectionName: COLLECTION_NAME,
+    filters: { email: { $equal: email } },
+    indexedFilters: ['email'],
+  });
+
+  if (firestoreUsersByEmail || firestoreUsersByEmail.length !== 1) {
+    return null;
+  }
+  return firestoreUsersByEmail[0];
+};
+
+const createLeadFromUser = async ({ auditUid, userId, user }) => {
+  const itemData = await sanitizeData({ data: user, validationSchema: leadsSchemas.create });
+  itemData.leadStatus = LeadStatusTypes.CONVERTED;
+
+  const db = admin.firestore();
+
+  const dbItemData = {
+    ...itemData,
+    id: userId,
+
+    state: Types.StateTypes.STATE_ACTIVE,
+
+    ...creationStruct(auditUid),
+    ...updateStruct(auditUid),
+  };
+
+  console.log('Create lead data:', dbItemData);
+
+  const doc = await db.collection(Collections.LEADS).doc(userId).set(dbItemData);
+};
+
 exports.signUp = async function (req, res) {
   try {
     // const documentId = await createFirestoreDocumentId({ collectionName: COLLECTION_NAME });
@@ -541,19 +587,22 @@ exports.signUp = async function (req, res) {
     console.log('Create args:', req.body.email);
 
     const body = req.body;
-
-    body.paymentData = {
-      type: null,
-      friendlyName: null,
-      holderIdentification: null,
-      holderName: null,
-      status: 'pending', // todo michel
-    };
-
-    body.appUserStatus = 'inactive';
+    body.appUserStatus = Types.UserStatusTypes.USER_STATUS_TYPE_ACTIVE;
     body.appRols = [Types.AppRols.APP_CLIENT];
 
-    const itemData = await sanitizeData({ data: req.body, validationSchema: schemas.create });
+    const itemData = await sanitizeData({ data: body, validationSchema: schemas.create });
+
+    // valido que aún no exista
+    const firestoreUser = await getUserByEmail(itemData.email);
+
+    if (firestoreUser) {
+      throw new CustomError.TechnicalError(
+        'ERROR_DUPLICATED_EMAIL',
+        null,
+        'Ya existía el usuario con email ' + itemData.email,
+        null
+      );
+    }
 
     const appUserStatus = itemData.appUserStatus;
 
@@ -563,6 +612,80 @@ exports.signUp = async function (req, res) {
       appUserStatus: appUserStatus || null,
       password: req.body.password,
     });
+
+    try {
+      await createLeadFromUser({ auditUid, userId: userData.id, user: userData });
+    } catch (e) {
+      console.error('Error creando lead' + e.message);
+    }
+
+    return res.status(201).send(userData);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.signUpFederatedAuth = async function (req, res) {
+  try {
+    const { userId: auditUid, email } = res.locals;
+
+    const firebaseUser = await getFirebaseUserById(auditUid);
+
+    let firstName = '';
+    let lastName = '';
+
+    try {
+      if (firebaseUser.displayName) {
+        firstName = firebaseUser.displayName.split(' ')[0];
+        lastName = firebaseUser.displayName.split(' ')[1];
+      }
+    } catch (e) {
+      console.error('Error parseando displayName: ', e.message, firebaseUser.displayName);
+      // dejo seguir
+    }
+
+    const userInputData = {
+      firstName,
+      lastName,
+      email,
+      identificationNumber: 'n/a', // tiene que tener un valor, si quisieramos algo distinto deberíamos poner un form en el medio
+      appUserStatus: Types.UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
+      appRols: [Types.AppRols.APP_CLIENT],
+    };
+
+    const itemData = await sanitizeData({ data: userInputData, validationSchema: schemas.create });
+
+    // valido que aún no exista en firestore, si tiene que existir en auth
+    const firestoreUser = await getFirestoreUserByEmail(itemData.email);
+
+    console.log('Usuario consultado: ' + itemData.email, firestoreUser);
+
+    if (firestoreUser) {
+      throw new CustomError.TechnicalError(
+        'ERROR_DUPLICATED_EMAIL',
+        null,
+        '(1) Ya existía el usuario con email ' + itemData.email,
+        null
+      );
+    }
+
+    console.log('previo a crear usuario unicamente en firestore');
+
+    const userData = await createUser({
+      id: auditUid, // si le mando el id entonces no intenta crear el user en el motor de autenticación
+      auditUid,
+      userData: itemData,
+      appUserStatus: itemData.appUserStatus,
+      password: req.body.password,
+    });
+
+    try {
+      await createLeadFromUser({ auditUid, userId: userData.id, user: userData });
+    } catch (e) {
+      console.error('Error creando lead' + e.message);
+    }
+
+    console.log('Usuario creado OK');
 
     return res.status(201).send(userData);
   } catch (err) {

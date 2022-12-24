@@ -8,6 +8,7 @@ const {
   normalizePermissions,
   remove,
   signUp,
+  signUpFederatedAuth,
 } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
@@ -25,6 +26,8 @@ exports.usersRoutesConfig = function (app) {
     // }),
     normalizePermissions,
   ]);
+
+  app.post('/sign-up-federated-auth', [Audit.logger, Auth.isAuthenticated, signUpFederatedAuth]);
 
   // devuelve un usuario
   app.get('/:userId', [
