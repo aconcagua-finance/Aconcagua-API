@@ -551,10 +551,17 @@ const getFirestoreUserByEmail = async (email) => {
     indexedFilters: ['email'],
   });
 
-  if (firestoreUsersByEmail || firestoreUsersByEmail.length !== 1) {
+  if (!firestoreUsersByEmail || firestoreUsersByEmail.length === 0) {
     return null;
   }
-  return firestoreUsersByEmail[0];
+
+  if (firestoreUsersByEmail.length !== 1) {
+    throw new Error('Se encontro más de un usuario con el mismo mail (' + email + ')');
+  }
+
+  const user = firestoreUsersByEmail[0];
+
+  return user;
 };
 
 const createLeadFromUser = async ({ auditUid, userId, user }) => {
@@ -664,7 +671,7 @@ exports.signUpFederatedAuth = async function (req, res) {
       throw new CustomError.TechnicalError(
         'ERROR_DUPLICATED_EMAIL',
         null,
-        '(1) Ya existía el usuario con email ' + itemData.email,
+        'Ya existía el usuario con email ' + itemData.email,
         null
       );
     }
