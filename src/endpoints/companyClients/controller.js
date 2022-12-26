@@ -451,13 +451,27 @@ exports.updateByCompany = async function (req, res) {
     console.log('Patch args (' + collectionName + '):', JSON.stringify(req.body));
 
     // solo lo dejo editar estos campos, no roles ni mail nada raro
-    let { firstName, lastName, company, phoneNumber, identificationNumber } = req.body;
+    let {
+      firstName,
+      lastName,
+      company,
+      phoneNumber,
+      identificationNumber,
+      companyIdentificationNumber,
+    } = req.body;
 
     if (!company) company = '';
     if (!phoneNumber) phoneNumber = '';
 
     let itemData = await sanitizeData({
-      data: { firstName, lastName, company, phoneNumber, identificationNumber },
+      data: {
+        firstName,
+        lastName,
+        company,
+        phoneNumber,
+        identificationNumber,
+        companyIdentificationNumber,
+      },
       validationSchema,
     });
 
