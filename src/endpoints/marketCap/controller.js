@@ -31,6 +31,7 @@ const {
   updateSingleItem,
 
   fetchItemsByIds,
+  fetchItems,
   filterItems,
 } = require('../baseEndpoint');
 
@@ -113,21 +114,36 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
       null
     );
   }
+  const valuation = apiResponse.data.buy;
+  console.log(apiResponse.data.buy);
+  const filters = { currency: { $equal: 'ars' } };
+  const indexedFilters = ['currency'];
 
-  const valuation = apiResponse.buy;
+  // // consulto id de item que como currency = ARS y targetCurrency = USD
+  const items = await fetchItems({
+    collectionName: COLLECTION_NAME,
 
-  // consulto id de item que como currency = ARS y targetCurrency = USD
-  // update de la valuation de ese registro
-  // updateSingleItem({collectionName: Collections.MARKET_CAP, id})
+    filters,
+    indexedFilters,
+  });
+  items[0].value = valuation;
+  // // update de la valuation de ese registro
+  await updateSingleItem({
+    collectionName: COLLECTION_NAME,
+    id: items[0].id,
+    auditUid,
+    data: items[0],
+  });
+  return 'todo ok';
 };
 
 exports.fetchAndUpdateUSDValuation = async function (req, res) {
   const { userId: auditUid } = req.locals;
-
+  // return res.send('llegue aca')
   try {
-    await fetchAndUpdateUSDValuation({ auditUid });
+    const valuation = await fetchAndUpdateUSDValuation({ auditUid });
 
-    return res.send({});
+    return res.send(valuation);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }

@@ -39,3 +39,4 @@ export const GOOGLE_CALENDAR_EVENT_WEBHOOK_URL = Config.getEnvConfig(
 export const DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY = Config.getEnvConfig(
   'DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY'
 );
+export const API_USD_VALUATION = Config.getEnvConfig('API_USD_VALUATION');
