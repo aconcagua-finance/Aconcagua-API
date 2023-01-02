@@ -115,7 +115,7 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     );
   }
   const valuation = apiResponse.data.buy;
-  console.log(apiResponse.data.buy);
+  // armo los filtros para conseguir el registro de la db correcto
   const filters = { currency: { $equal: 'ars' } };
   const indexedFilters = ['currency'];
 
@@ -126,6 +126,16 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     filters,
     indexedFilters,
   });
+  // Valido que me devuelva solo un elemento
+  if (items.length !== 1) {
+    throw new CustomError.TechnicalError(
+      'ERROR_USD_VALUATION_INVALID_RESPONSE',
+      null,
+      'Se encontraron 0 o mas de 1 elemento',
+      null
+    )
+  }
+  // actualizo el valor de value con la nueva valuacion
   items[0].value = valuation;
   // // update de la valuation de ese registro
   await updateSingleItem({
@@ -134,12 +144,11 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     auditUid,
     data: items[0],
   });
-  return 'todo ok';
+  return {valuation};
 };
 
 exports.fetchAndUpdateUSDValuation = async function (req, res) {
   const { userId: auditUid } = req.locals;
-  // return res.send('llegue aca')
   try {
     const valuation = await fetchAndUpdateUSDValuation({ auditUid });
 
