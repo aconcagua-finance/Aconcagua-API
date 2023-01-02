@@ -127,11 +127,15 @@ exports.findByCompany = async function (req, res) {
     filters['companyId'] = { $equal: companyId };
 
     // groupBy = month / week / day...
-    const vaultsItems = await fetchItems({
+    let vaultsItems = await fetchItems({
       collectionName: Collections.VAULTS,
       limit: 10000,
       filters,
       indexedFilters,
+    });
+
+    vaultsItems = vaultsItems.map((item) => {
+      return { ...item, contractDeployment: null };
     });
 
     console.log('Insights vaults len:' + vaultsItems.length);
@@ -150,7 +154,7 @@ exports.findByCompany = async function (req, res) {
       'createdAtString'
     );
 
-    console.log('Insights vaults vaultsGroupArrays:', vaultsGroupArrays);
+    console.log('Insights vaults vaultsGroupArrays:', JSON.stringify(vaultsGroupArrays));
 
     const clientesGroupArrays = groupByMonth(
       clientsItems.map((item) => {
@@ -174,17 +178,24 @@ exports.findByCompany = async function (req, res) {
       depositsAmount += arsBalance.balance;
     });
 
+    // const result = {
+    //   vaults: normalizeAndCompleteWithEmptySlots(
+    //     vaultsGroupArrays,
+    //     groupBy,
+    //     new Date(filters.createdAt.$gte)
+    //   ),
+    //   clients: normalizeAndCompleteWithEmptySlots(
+    //     clientesGroupArrays,
+    //     groupBy,
+    //     new Date(filters.createdAt.$gte)
+    //   ),
+    //   depositsAmount,
+    //   creditsAmount,
+    // };
+
     const result = {
-      vaults: normalizeAndCompleteWithEmptySlots(
-        vaultsGroupArrays,
-        groupBy,
-        new Date(filters.createdAt.$gte)
-      ),
-      clients: normalizeAndCompleteWithEmptySlots(
-        clientesGroupArrays,
-        groupBy,
-        new Date(filters.createdAt.$gte)
-      ),
+      vaults: vaultsGroupArrays,
+      clients: clientesGroupArrays,
       depositsAmount,
       creditsAmount,
     };
