@@ -519,10 +519,10 @@ exports.updateByCompany = async function (req, res) {
 // eslint-disable-next-line camelcase
 exports.onVaultCreate_ThenCreateCompanyClientRelationship = functions.firestore
   .document(Collections.VAULTS + '/{docId}')
-  .onUpdate(async (change, context) => {
+  .onCreate(async (change, context) => {
     const { docId } = context.params;
     const documentPath = `${Collections.VAULTS}/${docId}`;
-    const before = change.before.data();
+
     const after = change.after.data();
 
     try {
