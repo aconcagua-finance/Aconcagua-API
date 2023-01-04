@@ -232,9 +232,6 @@ exports.patch = async function (req, res) {
 };
 
 exports.remove = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
-
   const { id: requestId, companyId } = req.params;
 
   if (!companyId || !requestId) {
