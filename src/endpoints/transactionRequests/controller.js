@@ -232,12 +232,9 @@ exports.patch = async function (req, res) {
 };
 
 exports.remove = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
+  const { id: requestId, companyId } = req.params;
 
-  const { userId: targetUserId, companyId } = req.params;
-
-  if (!companyId || !targetUserId) {
+  if (!companyId || !requestId) {
     throw new CustomError.TechnicalError(
       'ERROR_REMOVE_COMPANY_CLIENT',
       null,
