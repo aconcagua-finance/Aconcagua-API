@@ -232,12 +232,9 @@ exports.patch = async function (req, res) {
 };
 
 exports.remove = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
+  const { id: requestId, companyId } = req.params;
 
-  const { userId: targetUserId, companyId } = req.params;
-
-  if (!companyId || !targetUserId) {
+  if (!companyId || !requestId) {
     throw new CustomError.TechnicalError(
       'ERROR_REMOVE_COMPANY_CLIENT',
       null,
@@ -294,11 +291,22 @@ exports.create = async function (req, res) {
 
     if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
 
-    if (itemData.amount > arsDepositsAmount || itemData.amount > arsCredit) {
+    if (
+      itemData.amount > arsDepositsAmount ||
+      itemData.amount > arsCredit ||
+      arsDepositsAmount - itemData.amount < arsCredit * 1.1
+    ) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
         null,
-        'Excede el monto disponible para liquidar',
+        'Monto de la transacción está excedido',
+        null
+      );
+    } else if (itemData.amount <= 0) {
+      throw new CustomError.TechnicalError(
+        'ERROR_CREATE_INVALID_AMOUNT',
+        null,
+        'Monto de la transacción no puede ser negativo o cero',
         null
       );
     }
