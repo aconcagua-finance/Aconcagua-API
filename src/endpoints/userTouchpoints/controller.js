@@ -101,7 +101,7 @@ exports.createUserTouchpoint = async function ({ body, auditUid }) {
 
   const dbItemData = await createFirestoreDocument({ collectionName, itemData, auditUid });
 
-  console.log('Create data: (' + collectionName + ')', dbItemData);
+  console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
 };
 
 exports.create = async function (req, res) {

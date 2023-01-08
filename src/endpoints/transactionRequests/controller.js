@@ -324,7 +324,7 @@ exports.create = async function (req, res) {
 
     const dbItemData = await createFirestoreDocument(createArgs);
 
-    console.log('Create data: (' + collectionName + ')', dbItemData);
+    console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
 
     const mailResponse = await EmailSender.send({
       // from: '"TrendArt" <' + GMAIL_EMAIL + '>',

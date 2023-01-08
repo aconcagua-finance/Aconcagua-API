@@ -314,7 +314,7 @@ exports.create = async function (req, res) {
   try {
     const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
 
-    console.log('Create data: (' + collectionName + ')', dbItemData);
+    console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
 
     return res.status(201).send(dbItemData);
   } catch (err) {

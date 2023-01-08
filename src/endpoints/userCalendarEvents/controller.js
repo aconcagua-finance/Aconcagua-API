@@ -145,7 +145,7 @@ const createFirebaseUserCalendarEvent = async function ({ body, auditUid, docume
 
   const dbItemData = await createFirestoreDocument(createArgs);
 
-  console.log('Create data: (' + collectionName + ')', dbItemData);
+  console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
 
   return dbItemData;
 };

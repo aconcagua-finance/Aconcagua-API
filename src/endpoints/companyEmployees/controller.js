@@ -370,7 +370,7 @@ exports.create = async function (req, res) {
     // creo la relacion empresa-empleado
     const dbItemData = await createFirestoreDocument(createArgs);
 
-    console.log('Create data: (' + collectionName + ')', dbItemData);
+    console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
 
     return res.status(201).send(dbItemData);
   } catch (err) {
