@@ -240,7 +240,7 @@ exports.create = async function (req, res) {
   const validationSchema = schemas.create;
 
   try {
-    console.log('Create args (' + collectionName + '):', body);
+    console.log('Create args (' + collectionName + '): ' + JSON.stringify(body));
 
     const itemData = await sanitizeData({ data: body, validationSchema });
 

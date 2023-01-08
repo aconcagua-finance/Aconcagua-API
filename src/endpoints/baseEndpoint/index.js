@@ -1205,7 +1205,7 @@ exports.listByPropInner = async function ({
     };
   } else filters[primaryEntityPropName] = { $equal: primaryEntityValue };
 
-  console.log('Query (' + listByCollectionName + ') with filters:', filters);
+  console.log('Query (' + listByCollectionName + ') with filters:' + JSON.stringify(filters));
 
   const items = await fetchItems({
     collectionName: listByCollectionName,
