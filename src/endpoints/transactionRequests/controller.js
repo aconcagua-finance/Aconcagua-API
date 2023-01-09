@@ -246,10 +246,114 @@ exports.remove = async function (req, res) {
   await remove(req, res, COLLECTION_NAME);
 };
 
-exports.create = async function (req, res) {
+exports.createLenderTransactionRequest = async function (req, res) {
   const { userId: auditUid } = res.locals;
 
   const { companyId, userId, vaultId } = req.params;
+  if (!companyId || !userId || !vaultId) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE',
+      null,
+      'Error creating. Missing args',
+      null
+    );
+  }
+
+  try {
+    const vault = await fetchSingleItem({
+      collectionName: Collections.VAULTS,
+      id: vaultId,
+    });
+
+    if (vault.userId !== userId || vault.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'ERROR_WRONG_ARGS',
+        null,
+        'Se recibio una solicitud de un usuario / empresa distintos a las del vault asociado',
+        null
+      );
+    }
+
+    const body = req.body;
+
+    body.companyId = companyId;
+    body.userId = userId;
+    body.vaultId = vaultId;
+    body.requestStatus = 'pending'; // TODO normalizar, igual a formOptions de TransactionRequests en admin
+
+    const collectionName = COLLECTION_NAME;
+    const validationSchema = schemas.create;
+
+    console.log('Create args (' + collectionName + '):', body);
+
+    const itemData = await sanitizeData({ data: body, validationSchema });
+
+    const arsCurrency = Types.CurrencyTypes.ARS;
+
+    let arsDepositsAmount = 0;
+    const arsCredit = vault.amount;
+
+    const arsBalanceItem = vault.balances.find((balance) => {
+      return balance.currency === arsCurrency;
+    });
+
+    if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
+
+    if (itemData.transactionType === 'release') itemData.amount = arsCredit;
+
+    if (
+      itemData.transactionType !== 'release' &&
+      (itemData.amount > arsDepositsAmount ||
+        itemData.amount > arsCredit ||
+        arsDepositsAmount - itemData.amount < arsCredit * 1.1) // Debe quedar depositado el crédito + 10%
+    ) {
+      throw new CustomError.TechnicalError(
+        'ERROR_CREATE_EXCEED_AMOUNT',
+        null,
+        'Monto de la transacción está excedido',
+        null
+      );
+    } else if (itemData.amount <= 0) {
+      throw new CustomError.TechnicalError(
+        'ERROR_CREATE_INVALID_AMOUNT',
+        null,
+        'Monto de la transacción no puede ser negativo o cero',
+        null
+      );
+    }
+
+    const createArgs = { collectionName, itemData, auditUid };
+
+    const dbItemData = await createFirestoreDocument(createArgs);
+
+    console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
+
+    const mailResponse = await EmailSender.send({
+      // from: '"TrendArt" <' + GMAIL_EMAIL + '>',
+      to: SYS_ADMIN_EMAIL,
+
+      // bcc: SYS_ADMIN_EMAIL,
+      message: { subject: 'Se creo una solicitud', text: null, html: 'Vault: ' + itemData.vaultId },
+    });
+
+    return res.status(201).send(dbItemData);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.createBorrowerTransactionRequest = async function (req, res) {
+  const { userId: auditUid } = res.locals;
+
+  const { companyId, userId, vaultId } = req.params;
+  if (!companyId || !userId || !vaultId) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE',
+      null,
+      'Error creating. Missing args',
+      null
+    );
+  }
 
   try {
     const vault = await fetchSingleItem({
@@ -294,7 +398,7 @@ exports.create = async function (req, res) {
     if (
       itemData.amount > arsDepositsAmount ||
       itemData.amount > arsCredit ||
-      arsDepositsAmount - itemData.amount < arsCredit * 1.1
+      arsDepositsAmount - itemData.amount < arsCredit * 1.1 // Debe quedar depositado el crédito + 10%
     ) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
@@ -307,15 +411,6 @@ exports.create = async function (req, res) {
         'ERROR_CREATE_INVALID_AMOUNT',
         null,
         'Monto de la transacción no puede ser negativo o cero',
-        null
-      );
-    }
-
-    if (!companyId) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE',
-        null,
-        'Error creating. Missing args',
         null
       );
     }

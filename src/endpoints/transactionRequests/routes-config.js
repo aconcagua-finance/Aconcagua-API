@@ -1,8 +1,10 @@
 const {
   get,
-  create,
   patch,
   remove,
+
+  createBorrowerTransactionRequest,
+  createLenderTransactionRequest,
 
   find,
   findByCompany,
@@ -59,16 +61,26 @@ exports.transactionRequestsRoutesConfig = function (app) {
     get,
   ]);
 
-  // crea un elemento relacionado a la empresa enviada y al usuario enviado y al vault enviado
-  app.post('/:companyId/:userId/:vaultId', [
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
+  app.post('/borrower/:companyId/:userId/:vaultId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
-      allowSameUser: true, // quien solicita un rescate
-      isEnterpriseEmployee: true, // quien solicita una liquidacion
+      allowSameUser: true,
     }),
-    create,
+    createBorrowerTransactionRequest,
+  ]);
+
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
+  app.post('/lender/:companyId/:userId/:vaultId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
+    }),
+    createLenderTransactionRequest,
   ]);
 
   // actualiza un elemento relacionado a la empresa enviada
