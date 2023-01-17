@@ -80,8 +80,10 @@ exports.findByCompany = async function (req, res) {
       ],
     });
 
+    console.log('OK findByCompany ' + companyId);
     return res.send(result);
   } catch (err) {
+    console.log('ERROR findByCompany ' + companyId, err.message);
     return ErrorHelper.handleError(req, res, err);
   }
 };
