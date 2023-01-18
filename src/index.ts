@@ -392,7 +392,7 @@ configureApp(vaultTransactionsApp);
 vaultTransactionsRoutesConfig(vaultTransactionsApp);
 exports.vaultTransactions = functions
   .runWith({
-    // memory: "2GB",
+    memory: '2GB',
     // Keep 5 instances warm for this latency-critical function
     // in production only. Default to 0 for test projects.
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
