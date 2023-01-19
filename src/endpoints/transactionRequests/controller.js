@@ -299,13 +299,10 @@ exports.createLenderTransactionRequest = async function (req, res) {
 
     if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
 
-    if (itemData.transactionType === 'release') itemData.amount = arsCredit;
-
     if (
-      itemData.transactionType !== 'release' &&
-      (itemData.amount > arsDepositsAmount ||
-        itemData.amount > arsCredit ||
-        arsDepositsAmount - itemData.amount < arsCredit * 1.1) // Debe quedar depositado el crédito + 10%
+      itemData.amount > arsDepositsAmount ||
+      itemData.amount > arsCredit ||
+      arsDepositsAmount - itemData.amount < arsCredit * 1.1 // Debe quedar depositado el crédito + 10%
     ) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
