@@ -1212,6 +1212,7 @@ exports.listByPropInner = async function ({
     // filterState,
     filters,
     indexedFilters,
+    limit,
   });
 
   console.log('OK - all - fetch (' + listByCollectionName + '): ' + items.length);

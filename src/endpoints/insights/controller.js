@@ -154,8 +154,6 @@ exports.findByCompany = async function (req, res) {
       'createdAtString'
     );
 
-    console.log('Insights vaults vaultsGroupArrays:', JSON.stringify(vaultsGroupArrays));
-
     const clientesGroupArrays = groupByMonth(
       clientsItems.map((item) => {
         return { ...item, createdAtString: item.createdAt.toISOString() };
@@ -241,8 +239,6 @@ exports.findByUser = async function (req, res) {
       }),
       'createdAtString'
     );
-
-    console.log('Insights vaults vaultsGroupArrays:', vaultsGroupArrays);
 
     let depositsAmount = 0;
     let creditsAmount = 0;

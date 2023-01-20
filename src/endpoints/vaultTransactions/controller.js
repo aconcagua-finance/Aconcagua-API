@@ -42,7 +42,7 @@ const {
   createFirestoreDocument,
 } = require('../baseEndpoint');
 
-const INDEXED_FILTERS = ['userId', 'companyId', 'state'];
+const INDEXED_FILTERS = ['userId', 'companyId', 'state', 'transactionType'];
 
 // La fn findWithUserRelationship pretende recibir como value de PRIMARY_ENTITY_PROPERTY_NAME el id de usuario del staff.
 // En la fn findWithUserRelationship se recibi por param 'userId' y desde el front se envia el id del staff... medio raro, TODO FIX
@@ -80,7 +80,7 @@ exports.findByCompany = async function (req, res) {
       ],
     });
 
-    console.log('OK findByCompany ' + companyId);
+    console.log('OK findByCompany ' + companyId + ', Total: ' + result.total);
     return res.send(result);
   } catch (err) {
     console.log('ERROR findByCompany ' + companyId, err.message);

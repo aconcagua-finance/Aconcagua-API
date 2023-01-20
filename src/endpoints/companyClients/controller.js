@@ -204,6 +204,7 @@ const getCurrentRelationshipInner = async ({ companyId, userId }) => {
     else relationshipToReturn = result.items[0];
   }
 
+  console.log('relationship to return: ' + JSON.stringify(relationshipToReturn));
   return relationshipToReturn;
 };
 
