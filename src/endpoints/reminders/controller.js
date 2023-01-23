@@ -69,6 +69,7 @@ const getDynamicReminders = async ({ userId }) => {
     }
 
     if (
+      vault.amount > 0 &&
       (vault.creditType === Types.CreditTypes.CREDIT_TYPE_INSTALLMENT ||
         vault.creditType === Types.CreditTypes.CREDIT_TYPE_BULLET_ADVANCED ||
         vault.creditType === Types.CreditTypes.CREDIT_TYPE_BULLET_EXPIRATION) &&
