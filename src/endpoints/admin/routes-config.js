@@ -1,7 +1,13 @@
 const { Audit } = require('../../vs-core-firebase');
 const { Auth } = require('../../vs-core-firebase');
 
-const { showEnv, setUserClaimsByReq, setUserProps, switchMagic } = require('./controller');
+const {
+  showEnv,
+  setUserClaimsByReq,
+  setUserProps,
+  setUserPassword,
+  switchMagic,
+} = require('./controller');
 
 const { Types } = require('../../vs-core');
 
@@ -40,5 +46,12 @@ exports.adminRoutesConfig = function (app) {
     Auth.isAuthenticated,
     Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     setUserProps,
+  ]);
+
+  app.post('/set-user-pw', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
+    setUserPassword,
   ]);
 };
