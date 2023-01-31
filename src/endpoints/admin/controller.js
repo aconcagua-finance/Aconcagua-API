@@ -59,6 +59,20 @@ exports.setUserProps = async function (req, res) {
   }
 };
 
+exports.setUserPassword = async function (req, res) {
+  try {
+    const { uId, password } = req.body;
+
+    await admin.auth().updateUser(uId, {
+      password,
+    });
+
+    return res.status(200).send();
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
 exports.switchMagic = async function (req, res) {
   try {
     const db = admin.firestore();
