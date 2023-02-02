@@ -520,13 +520,14 @@ exports.updateByCompany = async function (req, res) {
 // eslint-disable-next-line camelcase
 exports.onVaultCreate_ThenCreateCompanyClientRelationship = functions.firestore
   .document(Collections.VAULTS + '/{docId}')
-  .onCreate(async (change, context) => {
+  .onCreate(async (snapshot, context) => {
     const { docId } = context.params;
+    // const docId = snapshot.key;
     const documentPath = `${Collections.VAULTS}/${docId}`;
-
-    const after = change.after.data();
-
     try {
+      const before = null;
+      const after = snapshot.data();
+
       console.log('onVaultCreate_ThenCreateCompanyClientRelationship ' + documentPath);
 
       const userId = after.userId;
