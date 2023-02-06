@@ -195,10 +195,10 @@ exports.patch = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
 
-  const { companyId } = req.params;
-
+  const { companyId, userId: entityUserId } = req.params;
   const body = req.body;
   body.companyId = companyId;
+  body.userId = entityUserId;
 
   const collectionName = COLLECTION_NAME;
   const validationSchema = schemas.update;
@@ -299,11 +299,7 @@ exports.createLenderTransactionRequest = async function (req, res) {
 
     if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
 
-    if (
-      itemData.amount > arsDepositsAmount ||
-      itemData.amount > arsCredit ||
-      arsDepositsAmount - itemData.amount < arsCredit * 1.1 // Debe quedar depositado el crédito + 10%
-    ) {
+    if (itemData.amount > arsDepositsAmount || itemData.amount > arsCredit) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
         null,
