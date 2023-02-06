@@ -6,6 +6,7 @@ const baseSchema = Joi.object({
   nickname: Joi.string().allow(''),
   email: Joi.string().email({ minDomainSegments: 2 }),
   phoneNumber: Joi.string().allow(''),
+  identificationNumber: Joi.string().allow(''),
 
   gender: Joi.string().allow(null).allow(''),
 

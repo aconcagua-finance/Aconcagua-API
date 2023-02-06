@@ -85,6 +85,7 @@ const requiredBaseFields = [
   'appUserStatus',
   'appRols',
   'identificationNumber',
+  'phoneNumber',
 ];
 
 const schemas = {
