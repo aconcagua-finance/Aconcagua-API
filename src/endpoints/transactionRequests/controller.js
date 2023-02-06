@@ -195,10 +195,10 @@ exports.patch = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
 
-  const { companyId } = req.params;
-
+  const { companyId, userId: entityUserId } = req.params;
   const body = req.body;
   body.companyId = companyId;
+  body.userId = entityUserId;
 
   const collectionName = COLLECTION_NAME;
   const validationSchema = schemas.update;
