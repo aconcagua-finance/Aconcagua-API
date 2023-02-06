@@ -7,7 +7,7 @@ const baseSchema = Joi.object({
   email: Joi.string().email({ minDomainSegments: 2 }),
   phoneNumber: Joi.string().allow(''),
   identificationNumber: Joi.string().allow(''),
-  
+
   gender: Joi.string().allow(null).allow(''),
   maritalStatus: Joi.string().allow(null).allow(''),
   birthDate: Joi.date().allow(null, ''),
