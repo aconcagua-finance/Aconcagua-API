@@ -8,11 +8,24 @@ export type EmailMessage = {
   text: string;
 };
 
+export type EmailTemplate = {
+  name: string;
+  data: any;
+};
+
+// {
+//   name: ‘WelcomeMail’,
+//   data: {
+//    username: ‘William Beh’
+//   }
+//  }
+
 export type EmailData = {
   to: string;
   from: string;
   bcc: string;
   message: EmailMessage;
+  template: EmailTemplate;
 };
 
 export class EmailSender {
