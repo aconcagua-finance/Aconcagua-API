@@ -32,6 +32,7 @@ env:
 
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar cripto'
   API_USD_VALUATION: 'http://us-central1-catedral-fb.cloudfunctions.net/scrapper/dolar-cripto'
+  API_TOKENS_VALUATIONS: 'http://localhost:5002/catedral-fb/us-central1/market/tokensQuotes'
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest

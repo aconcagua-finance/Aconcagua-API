@@ -1,4 +1,12 @@
-const { find, get, create, patch, remove, fetchAndUpdateUSDValuation } = require('./controller');
+const {
+  find,
+  get,
+  create,
+  patch,
+  remove,
+  fetchAndUpdateUSDValuation,
+  fetchAndUpdateTokensValuations,
+} = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
 const { Auth } = require('../../vs-core-firebase');
@@ -21,6 +29,15 @@ exports.marketCapRoutesConfig = function (app) {
     //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
     // }),
     fetchAndUpdateUSDValuation,
+  ]);
+
+  app.get('/tokensValuations', [
+    // Audit.logger,
+    // Auth.isAuthenticated,
+    // Auth.isAuthorized({
+    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+    // }),
+    fetchAndUpdateTokensValuations,
   ]);
 
   app.get('/', [
