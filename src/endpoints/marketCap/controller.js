@@ -169,7 +169,6 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
       null
     );
   }
-  debugger;
 
   const valuations = apiResponse;
   const tokens = Object.keys(valuations);
