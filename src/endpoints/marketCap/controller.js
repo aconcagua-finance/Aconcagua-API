@@ -222,8 +222,7 @@ exports.fetchAndUpdateTokensValuations = async function (req, res) {
   }
 };
 
-// change function name and inside logging too: cronUpdateValuations
-exports.cronUpdateUSDValuation = functions
+exports.cronUpdateValuations = functions
   .runWith({
     memory: '2GB',
     // timeoutSeconds: 540,
@@ -236,14 +235,14 @@ exports.cronUpdateUSDValuation = functions
       await fetchAndUpdateTokensValuations({ auditUid: 'admin' });
 
       LoggerHelper.appLogger({
-        message: 'CRON cronUpdateUSDValuation - OK',
+        message: 'CRON cronUpdateValuations - OK',
         data: null,
 
         notifyAdmin: true,
       });
     } catch (err) {
       ErrorHelper.handleCronError({
-        message: 'CRON cronUpdateUSDValuation - ERROR: ' + err.message,
+        message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
         error: err,
       });
     }
