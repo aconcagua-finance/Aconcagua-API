@@ -45,7 +45,6 @@ exports.findGranted = async function (req, res) {
   try {
     const collectionName = COLLECTION_NAME;
 
-    // / movies?filters[movies]=USA&fields[]=id&fields[]=name
     let { limit, offset, filters, state } = req.query;
 
     if (limit) limit = parseInt(limit);
@@ -98,13 +97,12 @@ exports.remove = async function (req, res) {
 
 exports.create = async function (req, res) {
   try {
-  const { userId } = res.locals;
-  const auditUid = userId;
+    const { userId } = res.locals;
+    const auditUid = userId;
 
-  // const {templateName} = req.body.documentId;
-  console.log('El nombre de documento es: ' + req.body.documentId)
-  await createInner(
-    {
+    // const {templateName} = req.body.documentId;
+    console.log('El nombre de documento es: ' + req.body.documentId);
+    await createInner({
       req,
       res,
       body: req.body,
