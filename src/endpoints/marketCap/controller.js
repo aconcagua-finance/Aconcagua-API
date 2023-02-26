@@ -160,17 +160,16 @@ exports.fetchAndUpdateUSDValuation = async function (req, res) {
 
 const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
-
-  if (!apiResponse) {
+  if (!apiResponse || apiResponse.errors[0]) {
     throw new CustomError.TechnicalError(
       'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
       null,
-      'Respuesta inválida del servicio de valuaciones de Tokens',
+      'Respuesta inválida del servicio de cotización de Tokens',
       null
     );
   }
 
-  const valuations = apiResponse;
+  const valuations = apiResponse.data.quotes;
   const tokens = Object.keys(valuations);
 
   for (const symbol of tokens) {
@@ -212,7 +211,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
 };
 
 exports.fetchAndUpdateTokensValuations = async function (req, res) {
-  const { userId: auditUid } = req.locals;
+  const auditUid = 'admin'; // const { userId: auditUid } = req.locals;
   try {
     const valuations = await fetchAndUpdateTokensValuations({ auditUid });
     return res.send(valuations);
@@ -230,15 +229,30 @@ exports.cronUpdateValuations = functions
   .timeZone('America/New_York') // Users can choose timezone - default is America/Los_Angeles
   .onRun(async (context) => {
     try {
-      await fetchAndUpdateUSDValuation({ auditUid: 'admin' });
-      await fetchAndUpdateTokensValuations({ auditUid: 'admin' });
+      const promises = [
+        fetchAndUpdateTokensValuations({ auditUid: 'admin' }),
+        fetchAndUpdateUSDValuation({ auditUid: 'admin' }),
+      ];
+      const results = await Promise.allSettled(promises);
 
-      LoggerHelper.appLogger({
-        message: 'CRON cronUpdateValuations - OK',
-        data: null,
+      const errors = results
+        .filter((result) => result.status === 'rejected')
+        .map((result) => result.reason);
 
-        notifyAdmin: true,
-      });
+      if (errors.length > 0) {
+        errors.forEach((err) =>
+          ErrorHelper.handleCronError({
+            message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
+            error: err,
+          })
+        );
+      } else {
+        LoggerHelper.appLogger({
+          message: 'CRON cronUpdateValuations - OK',
+          data: null,
+          notifyAdmin: true,
+        });
+      }
     } catch (err) {
       ErrorHelper.handleCronError({
         message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
