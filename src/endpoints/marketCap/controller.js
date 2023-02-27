@@ -160,7 +160,7 @@ exports.fetchAndUpdateUSDValuation = async function (req, res) {
 
 const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
-  if (!apiResponse || apiResponse.errors[0]) {
+  if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
     throw new CustomError.TechnicalError(
       'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
       null,
@@ -169,7 +169,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
     );
   }
 
-  const valuations = apiResponse.data.quotes;
+  const valuations = apiResponse.data;
   const tokens = Object.keys(valuations);
 
   for (const symbol of tokens) {
