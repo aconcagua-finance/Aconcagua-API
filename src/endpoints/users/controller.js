@@ -6,6 +6,7 @@ const Fuse = require('fuse.js');
 const { creationStruct, updateStruct } = require('../../vs-core-firebase/audit');
 const { ErrorHelper } = require('../../vs-core-firebase');
 const { LoggerHelper } = require('../../vs-core-firebase');
+const { EmailSender } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const { Auth } = require('../../vs-core-firebase');
 const { NEW_USERS_TEMP_PASSWORD } = require('../../config/appConfig');
@@ -585,6 +586,7 @@ const createLeadFromUser = async ({ auditUid, userId, user }) => {
   const doc = await db.collection(Collections.LEADS).doc(userId).set(dbItemData);
 };
 
+// Se utiliza desde el registro de usuarios (webUsers). Solo cuando ingresa con usuario y contraseña
 exports.signUp = async function (req, res) {
   try {
     // const documentId = await createFirestoreDocumentId({ collectionName: COLLECTION_NAME });
@@ -620,6 +622,19 @@ exports.signUp = async function (req, res) {
       password: req.body.password,
     });
 
+    // Se envia un mail luego de crear el usuario
+    await EmailSender.send({
+      to: itemData.email,
+      // message: { subject: 'Subject desde Sender' },
+      message: null,
+      template: {
+        name: 'mail-welcome',
+        data: {
+          username: itemData.firstName + ' ' + itemData.lastName,
+        },
+      },
+    });
+
     try {
       await createLeadFromUser({ auditUid, userId: userData.id, user: userData });
     } catch (e) {
@@ -632,6 +647,7 @@ exports.signUp = async function (req, res) {
   }
 };
 
+// Se utiliza desde el registro de usuarios (webUsers). Luego de haberse registrado con Google u otra autenticacion federada
 exports.signUpFederatedAuth = async function (req, res) {
   try {
     const { userId: auditUid, email } = res.locals;
@@ -684,6 +700,19 @@ exports.signUpFederatedAuth = async function (req, res) {
       userData: itemData,
       appUserStatus: itemData.appUserStatus,
       password: req.body.password,
+    });
+
+    // Se envia un mail luego de crear el usuario
+    await EmailSender.send({
+      to: itemData.email,
+      // message: { subject: 'Subject desde Sender' },
+      message: null,
+      template: {
+        name: 'mail-welcome',
+        data: {
+          username: itemData.firstName + ' ' + itemData.lastName,
+        },
+      },
     });
 
     try {

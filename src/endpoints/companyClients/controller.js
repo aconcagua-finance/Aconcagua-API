@@ -9,6 +9,7 @@ const { ErrorHelper } = require('../../vs-core-firebase');
 const { LoggerHelper } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const { Auth } = require('../../vs-core-firebase');
+const { EmailSender } = require('../../vs-core-firebase');
 
 const { CustomError } = require('../../vs-core');
 
@@ -384,6 +385,18 @@ exports.upsertByCompany = async function (req, res) {
         auditUid,
         userData: newUserData,
         appUserStatus: newUserData.appUserStatus,
+      });
+
+      await EmailSender.send({
+        to: newUserData.email,
+        // message: { subject: 'Subject desde Sender' },
+        message: null,
+        template: {
+          name: 'mail-welcome',
+          data: {
+            username: newUserData.firstName + ' ' + newUserData.lastName,
+          },
+        },
       });
 
       console.log('Usario creado con éxito');
