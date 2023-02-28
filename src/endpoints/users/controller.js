@@ -622,10 +622,9 @@ exports.signUp = async function (req, res) {
       password: req.body.password,
     });
 
-    // Se envia un mail luego de crear el usuario
+    // Envio mail de bienvenida al usuario recien creado
     await EmailSender.send({
       to: itemData.email,
-      // message: { subject: 'Subject desde Sender' },
       message: null,
       template: {
         name: 'mail-welcome',
@@ -705,7 +704,6 @@ exports.signUpFederatedAuth = async function (req, res) {
     // Se envia un mail luego de crear el usuario
     await EmailSender.send({
       to: itemData.email,
-      // message: { subject: 'Subject desde Sender' },
       message: null,
       template: {
         name: 'mail-welcome',

@@ -387,9 +387,9 @@ exports.upsertByCompany = async function (req, res) {
         appUserStatus: newUserData.appUserStatus,
       });
 
+      // Envio mail de bienvenida al usuario recien creado
       await EmailSender.send({
         to: newUserData.email,
-        // message: { subject: 'Subject desde Sender' },
         message: null,
         template: {
           name: 'mail-welcome',
