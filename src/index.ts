@@ -28,6 +28,7 @@ const { hookedEventsRoutesConfig } = require('./endpoints/hookedEvents/routes-co
 const { insightsRoutesConfig } = require('./endpoints/insights/routes-config');
 const { userProductsRoutesConfig } = require('./endpoints/userProducts/routes-config');
 const { marketCapRoutesConfig } = require('./endpoints/marketCap/routes-config');
+const { emailTemplatesRoutesConfig } = require('./endpoints/emailTemplates/routes-config');
 
 const { googleOAuthRoutesConfig } = require('./endpoints/googleOAuth/routes-config');
 const { userCalendarsRoutesConfig } = require('./endpoints/userCalendars/routes-config');
@@ -278,6 +279,18 @@ exports.marketCap = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(marketCapApp);
+
+  const emailTemplatesApp = express();
+  configureApp(emailTemplatesApp);
+  emailTemplatesRoutesConfig(emailTemplatesApp);
+  exports.emailTemplates = functions
+    .runWith({
+      // memory: "2GB",
+      // Keep 5 instances warm for this latency-critical function
+      // in production only. Default to 0 for test projects.
+      // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+    })
+    .https.onRequest(emailTemplatesApp);
 
 const googleOAuthApp = express();
 configureApp(googleOAuthApp);
