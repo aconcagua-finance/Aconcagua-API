@@ -19,7 +19,11 @@ const schemas = require('./schemas');
 // eslint-disable-next-line camelcase
 const { invoke_get_api } = require('../../helpers/httpInvoker');
 
-const { API_USD_VALUATION, API_TOKENS_VALUATIONS } = require('../../config/appConfig');
+const {
+  API_USD_VALUATION,
+  API_TOKENS_VALUATIONS,
+  API_EVALUATE_VAULTS,
+} = require('../../config/appConfig');
 
 const {
   find,
@@ -220,6 +224,22 @@ exports.fetchAndUpdateTokensValuations = async function (req, res) {
   }
 };
 
+const notifyVaults = async () => {
+  const apiResponse = await invoke_get_api({ endpoint: API_EVALUATE_VAULTS });
+  debugger;
+
+  /*
+  if (!apiResponse || !apiResponse.data || !apiResponse.data.buy) {
+    throw new CustomError.TechnicalError(
+      'ERROR_USD_VALUATION_INVALID_RESPONSE',
+      null,
+      'Respuesta inválida del servicio de valuacion de USD',
+      null
+    );
+  }
+  */
+};
+
 exports.cronUpdateValuations = functions
   .runWith({
     memory: '2GB',
@@ -229,16 +249,17 @@ exports.cronUpdateValuations = functions
   .timeZone('America/New_York') // Users can choose timezone - default is America/Los_Angeles
   .onRun(async (context) => {
     try {
-      const promises = [
+      // Consulto y updateo valuaciones
+      const valuationsPromises = [
         fetchAndUpdateTokensValuations({ auditUid: 'admin' }),
         fetchAndUpdateUSDValuation({ auditUid: 'admin' }),
       ];
-      const results = await Promise.allSettled(promises);
+      const results = await Promise.allSettled(valuationsPromises);
 
+      // Logueo errores
       const errors = results
         .filter((result) => result.status === 'rejected')
         .map((result) => result.reason);
-
       if (errors.length > 0) {
         errors.forEach((err) =>
           ErrorHelper.handleCronError({
@@ -253,6 +274,9 @@ exports.cronUpdateValuations = functions
           notifyAdmin: true,
         });
       }
+
+      // Notifico a Vaults para posterior evaluación de vaults balances con nuevas cotizaciones.
+      await notifyVaults();
     } catch (err) {
       ErrorHelper.handleCronError({
         message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
