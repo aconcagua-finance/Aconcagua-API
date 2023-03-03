@@ -226,10 +226,8 @@ exports.fetchAndUpdateTokensValuations = async function (req, res) {
 
 const notifyVaults = async () => {
   const apiResponse = await invoke_get_api({ endpoint: API_EVALUATE_VAULTS });
-  debugger;
 
-  /*
-  if (!apiResponse || !apiResponse.data || !apiResponse.data.buy) {
+  if (!apiResponse || apiResponse.errors.length > 0) {
     throw new CustomError.TechnicalError(
       'ERROR_USD_VALUATION_INVALID_RESPONSE',
       null,
@@ -237,7 +235,8 @@ const notifyVaults = async () => {
       null
     );
   }
-  */
+
+  console.log('Notificación vaults ' + apiResponse.data);
 };
 
 exports.cronUpdateValuations = functions
