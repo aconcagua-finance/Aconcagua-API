@@ -390,7 +390,6 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
 
     if (
       itemData.amount > arsDepositsAmount ||
-      itemData.amount > arsCredit ||
       arsDepositsAmount - itemData.amount < arsCredit * 1.1 // Debe quedar depositado el crédito + 10%
     ) {
       throw new CustomError.TechnicalError(
