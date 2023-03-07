@@ -211,7 +211,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
 };
 
 exports.fetchAndUpdateTokensValuations = async function (req, res) {
-  const auditUid = 'admin'; // const { userId: auditUid } = req.locals;
+  const { userId: auditUid } = req.locals;
   try {
     const valuations = await fetchAndUpdateTokensValuations({ auditUid });
     return res.send(valuations);
