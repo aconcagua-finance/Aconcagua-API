@@ -160,6 +160,7 @@ exports.fetchAndUpdateUSDValuation = async function (req, res) {
 
 const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   // Obtengo las valuaciones
+  console.log(`Llamada a API-POLYGON market para obtener valuaciones`);
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
   if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
     throw new CustomError.TechnicalError(
@@ -173,6 +174,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const valuations = apiResponse.data;
   const tokens = Object.keys(valuations);
 
+  console.log(`Actualizo el marketCap de cada token obtenido en valuaciones`);
   for (const symbol of tokens) {
     // Obtengo el marketCap del token con nueva valuación
     const filters = { currency: { $equal: symbol } };
