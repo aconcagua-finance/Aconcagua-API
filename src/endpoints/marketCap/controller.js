@@ -159,10 +159,11 @@ exports.fetchAndUpdateUSDValuation = async function (req, res) {
 };
 
 const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
+  // Obtengo las valuaciones
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
   if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
     throw new CustomError.TechnicalError(
-      'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
+      'ERROR_API_TOKENS_VALUATIONS_INVALID_RESPONSE',
       null,
       'Respuesta inválida del servicio de cotización de Tokens',
       null
@@ -173,18 +174,15 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const tokens = Object.keys(valuations);
 
   for (const symbol of tokens) {
-    // Filtro para conseguir el marketCap del token
+    // Obtengo el marketCap del token con nueva valuación
     const filters = { currency: { $equal: symbol } };
     const indexedFilters = ['currency'];
-
-    // Consulto id de item para currency = symbol y targetCurrency = USD
     const items = await fetchItems({
       collectionName: COLLECTION_NAME,
 
       filters,
       indexedFilters,
     });
-
     // Valido
     if (items.length !== 1) {
       throw new CustomError.TechnicalError(
@@ -195,10 +193,9 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
       );
     }
 
-    // actualizo el valor de value con la nueva valuacion
+    // Actualizo el marketCap del token con nueva cotización
     items[0].value = valuations[symbol];
 
-    // update de la valuation de ese registro
     await updateSingleItem({
       collectionName: COLLECTION_NAME,
       id: items[0].id,
@@ -246,13 +243,13 @@ exports.cronUpdateValuations = functions
             error: err,
           })
         );
-      } else {
-        LoggerHelper.appLogger({
-          message: 'CRON cronUpdateValuations - OK',
-          data: null,
-          notifyAdmin: true,
-        });
       }
+
+      LoggerHelper.appLogger({
+        message: 'CRON cronUpdateValuations - OK',
+        data: null,
+        notifyAdmin: true,
+      });
     } catch (err) {
       ErrorHelper.handleCronError({
         message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
