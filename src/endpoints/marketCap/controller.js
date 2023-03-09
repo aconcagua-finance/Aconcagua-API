@@ -19,7 +19,7 @@ const schemas = require('./schemas');
 // eslint-disable-next-line camelcase
 const { invoke_get_api } = require('../../helpers/httpInvoker');
 
-const { API_USD_VALUATION } = require('../../config/appConfig');
+const { API_USD_VALUATION, API_TOKENS_VALUATIONS } = require('../../config/appConfig');
 
 const {
   find,
@@ -133,7 +133,7 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
       null,
       'Se encontraron 0 o mas de 1 elemento',
       null
-    )
+    );
   }
   // actualizo el valor de value con la nueva valuacion
   items[0].value = valuation;
@@ -144,7 +144,7 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     auditUid,
     data: items[0],
   });
-  return {valuation};
+  return { valuation };
 };
 
 exports.fetchAndUpdateUSDValuation = async function (req, res) {
@@ -158,7 +158,68 @@ exports.fetchAndUpdateUSDValuation = async function (req, res) {
   }
 };
 
-exports.cronUpdateUSDValuation = functions
+const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
+  // Obtengo las valuaciones
+  console.log(`Llamada a API-POLYGON market para obtener valuaciones`);
+  const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
+  if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
+    throw new CustomError.TechnicalError(
+      'ERROR_API_TOKENS_VALUATIONS_INVALID_RESPONSE',
+      null,
+      'Respuesta inválida del servicio de cotización de Tokens',
+      null
+    );
+  }
+
+  const valuations = apiResponse.data;
+  const tokens = Object.keys(valuations);
+
+  console.log(`Actualizo el marketCap de cada token obtenido en valuaciones`);
+  for (const symbol of tokens) {
+    // Obtengo el marketCap del token con nueva valuación
+    const filters = { currency: { $equal: symbol } };
+    const indexedFilters = ['currency'];
+    const items = await fetchItems({
+      collectionName: COLLECTION_NAME,
+
+      filters,
+      indexedFilters,
+    });
+    // Valido
+    if (items.length !== 1) {
+      throw new CustomError.TechnicalError(
+        'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
+        null,
+        'Se encontraron 0 o mas de 1 elemento',
+        null
+      );
+    }
+
+    // Actualizo el marketCap del token con nueva cotización
+    items[0].value = valuations[symbol];
+
+    await updateSingleItem({
+      collectionName: COLLECTION_NAME,
+      id: items[0].id,
+      auditUid,
+      data: items[0],
+    });
+  }
+
+  return { valuations };
+};
+
+exports.fetchAndUpdateTokensValuations = async function (req, res) {
+  const { userId: auditUid } = req.locals;
+  try {
+    const valuations = await fetchAndUpdateTokensValuations({ auditUid });
+    return res.send(valuations);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.cronUpdateValuations = functions
   .runWith({
     memory: '2GB',
     // timeoutSeconds: 540,
@@ -167,17 +228,33 @@ exports.cronUpdateUSDValuation = functions
   .timeZone('America/New_York') // Users can choose timezone - default is America/Los_Angeles
   .onRun(async (context) => {
     try {
-      await fetchAndUpdateUSDValuation({ auditUid: 'admin' });
+      const promises = [
+        fetchAndUpdateTokensValuations({ auditUid: 'admin' }),
+        fetchAndUpdateUSDValuation({ auditUid: 'admin' }),
+      ];
+      const results = await Promise.allSettled(promises);
+
+      const errors = results
+        .filter((result) => result.status === 'rejected')
+        .map((result) => result.reason);
+
+      if (errors.length > 0) {
+        errors.forEach((err) =>
+          ErrorHelper.handleCronError({
+            message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
+            error: err,
+          })
+        );
+      }
 
       LoggerHelper.appLogger({
-        message: 'CRON cronUpdateUSDValuation - OK',
+        message: 'CRON cronUpdateValuations - OK',
         data: null,
-
         notifyAdmin: true,
       });
     } catch (err) {
       ErrorHelper.handleCronError({
-        message: 'CRON cronUpdateUSDValuation - ERROR: ' + err.message,
+        message: 'CRON cronUpdateValuations - ERROR: ' + err.message,
         error: err,
       });
     }

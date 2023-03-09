@@ -48,7 +48,7 @@ const {
 
 const { remindersRoutesConfig } = require('./endpoints/reminders/routes-config');
 
-const { cronUpdateUSDValuation } = require('./endpoints/marketCap/controller');
+const { cronUpdateValuations } = require('./endpoints/marketCap/controller');
 
 const {
   onUserTouchpointCreate,
@@ -447,4 +447,4 @@ exports.onUserCalendarEventBronzeCreate = onUserCalendarEventBronzeCreate;
 exports.onVaultCreate_ThenCreateCompanyClientRelationship =
   onVaultCreate_ThenCreateCompanyClientRelationship;
 
-exports.cronUpdateUSDValuation = cronUpdateUSDValuation;
+exports.cronUpdateValuations = cronUpdateValuations;
