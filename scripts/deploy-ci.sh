@@ -45,6 +45,7 @@ echo "GOOGLE_CALENDAR_EVENT_WEBHOOK_URL="${GOOGLE_CALENDAR_EVENT_WEBHOOK_URL} >>
 echo "DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY="${DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY} >> .env
 echo "API_USD_VALUATION="${API_USD_VALUATION} >> .env
 echo "API_TOKENS_VALUATIONS="${API_TOKENS_VALUATIONS} >> .env
+echo "API_EVALUATE_VAULTS=" ${API_EVALUATE_VAULTS} >> .env
 
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:admin,functions:users,functions:products,functions:leads,functions:aspects,functions:attachments,functions:levels,functions:packages,functions:practitioners,functions:tasks,functions:userTasks
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions

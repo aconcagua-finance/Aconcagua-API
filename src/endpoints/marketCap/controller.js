@@ -19,7 +19,11 @@ const schemas = require('./schemas');
 // eslint-disable-next-line camelcase
 const { invoke_get_api } = require('../../helpers/httpInvoker');
 
-const { API_USD_VALUATION, API_TOKENS_VALUATIONS } = require('../../config/appConfig');
+const {
+  API_USD_VALUATION,
+  API_TOKENS_VALUATIONS,
+  API_EVALUATE_VAULTS,
+} = require('../../config/appConfig');
 
 const {
   find,
@@ -160,6 +164,7 @@ exports.fetchAndUpdateUSDValuation = async function (req, res) {
 
 const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   // Obtengo las valuaciones
+  debugger;
   console.log(`Llamada a API-POLYGON market para obtener valuaciones`);
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
   if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
@@ -219,6 +224,21 @@ exports.fetchAndUpdateTokensValuations = async function (req, res) {
   }
 };
 
+const notifyVaults = async () => {
+  const apiResponse = await invoke_get_api({ endpoint: API_EVALUATE_VAULTS });
+
+  if (!apiResponse || apiResponse.errors.length > 0) {
+    throw new CustomError.TechnicalError(
+      'ERROR_API_EVALUATE_VAULTS_INVALID_RESPONSE',
+      null,
+      'Respuesta inválida del servicio de notificación de valuaciones a vaults',
+      null
+    );
+  }
+
+  console.log('Notificación valuaciones a vaults: ' + apiResponse.data);
+};
+
 exports.cronUpdateValuations = functions
   .runWith({
     memory: '2GB',
@@ -228,16 +248,17 @@ exports.cronUpdateValuations = functions
   .timeZone('America/New_York') // Users can choose timezone - default is America/Los_Angeles
   .onRun(async (context) => {
     try {
-      const promises = [
+      // Consulto y updateo valuaciones
+      const valuationsPromises = [
         fetchAndUpdateTokensValuations({ auditUid: 'admin' }),
         fetchAndUpdateUSDValuation({ auditUid: 'admin' }),
       ];
-      const results = await Promise.allSettled(promises);
+      const results = await Promise.allSettled(valuationsPromises);
 
+      // Logueo errores
       const errors = results
         .filter((result) => result.status === 'rejected')
         .map((result) => result.reason);
-
       if (errors.length > 0) {
         errors.forEach((err) =>
           ErrorHelper.handleCronError({
@@ -245,7 +266,12 @@ exports.cronUpdateValuations = functions
             error: err,
           })
         );
+      } else {
+        console.log('CRON CronUpdateValuations - valuaciones actualizadas');
       }
+
+      // Notifico a Vaults de nuevas cotizaciones.
+      await notifyVaults();
 
       LoggerHelper.appLogger({
         message: 'CRON cronUpdateValuations - OK',
