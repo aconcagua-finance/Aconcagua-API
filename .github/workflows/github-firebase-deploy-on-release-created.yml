@@ -37,6 +37,7 @@ env:
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar cripto'
   API_USD_VALUATION: 'http://us-central1-aconcagua-365314.cloudfunctions.net/scrapper/dolar-cripto'
   API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
+  API_EVALUATE_VAULTS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/vaultsPolygon/evaluate'
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
