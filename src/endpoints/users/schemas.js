@@ -20,6 +20,7 @@ const basicData = {
   addressResidenceCountry: Joi.string().allow(null).allow(''),
   currentJobType: Joi.string().allow(null).allow(''),
 
+  walletAccount: Joi.string().allow(null).allow(''),
   // lastTouchpoint: Joi.date().allow(null, ''), // no lo recibo. Se crea en el onCreate o onUpdate
 
   appUserStatus: Joi.string(),
@@ -69,6 +70,10 @@ const updateByStaff = Joi.object({
   attachments: Joi.any(),
 });
 
+const updateCurrentUser = Joi.object({
+  walletAccount: Joi.string().allow(null).allow(''),
+});
+
 const createByStaff = Joi.object({
   ...basicData,
   email: Joi.string().email({ minDomainSegments: 2 }),
@@ -92,6 +97,7 @@ const schemas = {
   create: createSchema.fork(requiredBaseFields, (field) => field.required()),
   update: updateSchema,
   updateByStaff,
+  updateCurrentUser,
   createByStaff,
 };
 

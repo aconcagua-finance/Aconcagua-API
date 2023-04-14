@@ -494,12 +494,8 @@ exports.patch = async function (req, res) {
     return;
   }
 
-  throw new CustomError.TechnicalError(
-    'ERROR_INVALID_AUTH',
-    null,
-    'El requestno tiene los permisos necesarios para actualizar el usuario',
-    null
-  );
+  console.log('updating as CURRENT USER');
+  await validatePatchUser({ req, res, validationSchema: schemas.updateCurrentUser });
 };
 
 // OBSOLETO, NO SE USA

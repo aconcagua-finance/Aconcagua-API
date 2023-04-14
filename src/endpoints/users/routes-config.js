@@ -73,6 +73,7 @@ exports.usersRoutesConfig = function (app) {
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       allowStaffRelationship: true,
+      allowSameUser: true,
     }),
     patch,
   ]);
