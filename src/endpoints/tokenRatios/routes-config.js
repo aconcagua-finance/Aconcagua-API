@@ -26,7 +26,7 @@ exports.tokenRatiosRoutesConfig = function (app) {
   app.post('/', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     create,
   ]);
 
