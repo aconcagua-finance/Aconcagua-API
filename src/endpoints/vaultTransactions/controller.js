@@ -89,7 +89,7 @@ exports.findByCompany = async function (req, res) {
 };
 
 exports.findByVault = async function (req, res) {
-  const { vaultId } = req.params;
+  const { vaultId, companyId, userId } = req.params;
 
   const { limit, offset } = req.query;
   let { filters } = req.query;
@@ -115,6 +115,14 @@ exports.findByVault = async function (req, res) {
         { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
         { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
       ],
+      postProcessor: async (items) => {
+        items.items.forEach((item) => {
+          if (item.companyId !== companyId && item.userId !== userId) throw new Error('Missing permissons')
+        });
+
+
+        return items;
+      },
     });
 
     return res.send(result);
