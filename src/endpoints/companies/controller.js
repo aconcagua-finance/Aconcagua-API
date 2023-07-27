@@ -15,6 +15,9 @@ const { Collections } = require('../../types/collectionsTypes');
 
 const schemas = require('./schemas');
 
+// eslint-disable-next-line camelcase
+const { invoke_get_api } = require('../../helpers/httpInvoker');
+
 const {
   find,
   get,
@@ -24,10 +27,15 @@ const {
   fetchSingleItem,
   updateSingleItem,
 
+  sanitizeData,
+  createFirestoreDocument,
+
   fetchItemsByIds,
   filterItems,
   fetchItems,
 } = require('../baseEndpoint');
+
+const { API_VAULT_ADMIN } = require('../../config/appConfig');
 
 const COLLECTION_NAME = Collections.COMPANIES;
 
@@ -146,8 +154,35 @@ exports.remove = async function (req, res) {
 };
 
 exports.create = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
+  try {
+    const { userId } = res.locals;
+    const auditUid = userId;
+    const body = req.body;
+    console.log('Create args (' + COLLECTION_NAME + '):', body);
 
-  await create(req, res, auditUid, COLLECTION_NAME, schemas.create);
+    const endpoint = `${API_VAULT_ADMIN}/${body.safeLiq1}`;
+    const apiResponse = await invoke_get_api({ endpoint });
+
+    if (!apiResponse || apiResponse.errors.length > 0) {
+      throw new CustomError.TechnicalError(
+        'ERROR_API_VAULT_ADMIN_INVALID_RESPONSE',
+        null,
+        'Respuesta inválida del servicio de creación de VaultAdmin',
+        null
+      );
+    }
+
+    body.vaultAdminAddress = apiResponse.data.proxyAdminAddress;
+    body.vaultAdminOwner = apiResponse.data.owner;
+    body.vaultAdminDeployment = apiResponse.data.contractDeployment;
+
+    const itemData = await sanitizeData({ data: body, validationSchema: schemas.create });
+    const createArgs = { collectionName: COLLECTION_NAME, itemData, auditUid };
+    const dbItemData = await createFirestoreDocument(createArgs);
+
+    console.log('Create data: (' + COLLECTION_NAME + ') ' + JSON.stringify(dbItemData));
+    return res.status(201).send(dbItemData);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
 };

@@ -1,18 +1,37 @@
 const Joi = require('joi');
 
-const baseSchema = Joi.object({
+const basicData = {
   name: Joi.string().min(2).max(100),
   description: Joi.string().allow(''),
-
   notes: Joi.string().allow(''),
   attachments: Joi.any(),
+};
+
+const createSchema = Joi.object({
+  ...basicData,
+
+  safeLiq1: Joi.string().min(42).max(42),
+  safeLiq2: Joi.string().min(42).max(42),
+
+  vaultAdminAddress: Joi.string().min(42).max(42),
+  vaultAdminOwner: Joi.string().min(42).max(42),
+  vaultAdminDeployment: Joi.any(),
 });
 
-const requiredBaseFields = ['name'];
+const updateSchema = Joi.object({ ...basicData });
+
+const requiredBaseFields = [
+  'name',
+  'safeLiq1',
+  'safeLiq2',
+  'vaultAdminAddress',
+  'vaultAdminOwner',
+  'vaultAdminDeployment',
+];
 
 const schemas = {
-  create: baseSchema.fork(requiredBaseFields, (field) => field.required()),
-  update: baseSchema,
+  create: createSchema.fork(requiredBaseFields, (field) => field.required()),
+  update: updateSchema,
 };
 
 module.exports = schemas;

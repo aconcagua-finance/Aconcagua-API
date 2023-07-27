@@ -42,3 +42,4 @@ export const DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY = Config.getEnvConfig(
 export const API_USD_VALUATION = Config.getEnvConfig('API_USD_VALUATION');
 export const API_TOKENS_VALUATIONS = Config.getEnvConfig('API_TOKENS_VALUATIONS');
 export const API_EVALUATE_VAULTS = Config.getEnvConfig('API_EVALUATE_VAULTS');
+export const API_VAULT_ADMIN = Config.getEnvConfig('API_VAULT_ADMIN');
