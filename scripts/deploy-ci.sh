@@ -46,6 +46,7 @@ echo "DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY="${DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY} >> .
 echo "API_USD_VALUATION="${API_USD_VALUATION} >> .env
 echo "API_TOKENS_VALUATIONS="${API_TOKENS_VALUATIONS} >> .env
 echo "API_EVALUATE_VAULTS=" ${API_EVALUATE_VAULTS} >> .env
+echo "API_VAULT_ADMIN=" ${API_VAULT_ADMIN} >> .env
 
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions:admin,functions:users,functions:products,functions:leads,functions:aspects,functions:attachments,functions:levels,functions:packages,functions:practitioners,functions:tasks,functions:userTasks
 # firebase deploy --project $FIREB_PROJECT_ID --token "$FIREBASE_TOKEN" --only functions
