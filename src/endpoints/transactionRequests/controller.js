@@ -441,9 +441,11 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
   const validationSchema = schemas.update;
 
   try {
-    const { id } = req.params;
+    const { vaultId } = req.params;
 
-    if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+    if (!vaultId) {
+      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+    }
 
     console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
 
@@ -461,7 +463,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
       requestStatus: TransactionRequestStatusTypes.APPROVED,
     };
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    const doc = await updateSingleItem({ collectionName, id: vaultId, auditUid, data: itemData });
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
