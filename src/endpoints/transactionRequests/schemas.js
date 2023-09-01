@@ -14,6 +14,10 @@ const baseSchema = Joi.object({
 
   requestStatus: Joi.string(),
 
+  safeTransaction: Joi.any(),
+  requestConversion: Joi.any(),
+  safeAddress: Joi.string(),
+
   notes: Joi.string().allow(''),
   attachments: Joi.any(),
 });
