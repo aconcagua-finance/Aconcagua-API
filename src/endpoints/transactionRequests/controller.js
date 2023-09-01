@@ -22,6 +22,7 @@ const { setUserClaims } = require('../admin/controller');
 
 const schemas = require('./schemas');
 
+const { TransactionRequestStatusTypes } = require('../../types/transactionRequestStatusTypes');
 const {
   MULTIPLE_RELATIONSHIP_SUFFIX,
   sanitizeData,
@@ -279,7 +280,7 @@ exports.createLenderTransactionRequest = async function (req, res) {
     body.companyId = companyId;
     body.userId = userId;
     body.vaultId = vaultId;
-    body.requestStatus = 'pending'; // TODO normalizar, igual a formOptions de TransactionRequests en admin
+    body.requestStatus = TransactionRequestStatusTypes.REQUESTED;
 
     const collectionName = COLLECTION_NAME;
     const validationSchema = schemas.create;
@@ -368,7 +369,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     body.companyId = companyId;
     body.userId = userId;
     body.vaultId = vaultId;
-    body.requestStatus = 'pending'; // TODO normalizar, igual a formOptions de TransactionRequests en admin
+    body.requestStatus = TransactionRequestStatusTypes.REQUESTED;
 
     const collectionName = COLLECTION_NAME;
     const validationSchema = schemas.create;
