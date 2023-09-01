@@ -427,3 +427,46 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
+exports.lenderApproveTransactionRequest = async function (req, res) {
+  const { userId } = res.locals;
+  const auditUid = userId;
+
+  const { companyId, userId: entityUserId } = req.params;
+  const body = req.body;
+
+  if (!body.safeApproveData) throw new Error('missing safeApproveData');
+
+  const collectionName = COLLECTION_NAME;
+  const validationSchema = schemas.update;
+
+  try {
+    const { id } = req.params;
+
+    if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+
+    console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
+
+    if (!companyId) {
+      throw new CustomError.TechnicalError(
+        'ERROR_UPDATE',
+        null,
+        'Error updating. Missing args',
+        null
+      );
+    }
+
+    const itemData = {
+      safeApproveData: body.safeApproveData,
+      requestStatus: TransactionRequestStatusTypes.APPROVED,
+    };
+
+    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+
+    console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
+
+    return res.status(204).send(doc);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};

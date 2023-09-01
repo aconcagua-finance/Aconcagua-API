@@ -5,6 +5,7 @@ const {
 
   createBorrowerTransactionRequest,
   createLenderTransactionRequest,
+  lenderApproveTransactionRequest,
 
   find,
   findByCompany,
@@ -81,6 +82,17 @@ exports.transactionRequestsRoutesConfig = function (app) {
       isEnterpriseEmployee: true,
     }),
     createLenderTransactionRequest,
+  ]);
+
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
+  app.post('/lender-approve/:companyId/:userId/:vaultId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
+    }),
+    lenderApproveTransactionRequest,
   ]);
 
   // actualiza un elemento relacionado a la empresa enviada
