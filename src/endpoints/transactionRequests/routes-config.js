@@ -85,7 +85,7 @@ exports.transactionRequestsRoutesConfig = function (app) {
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
-  app.post('/lender-approve/:companyId/:userId/:vaultId', [
+  app.post('/lender-approve/:companyId/:id', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({

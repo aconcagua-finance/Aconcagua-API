@@ -432,38 +432,32 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
 
-  const { companyId, userId: entityUserId } = req.params;
+  const { companyId, id } = req.params;
   const body = req.body;
 
   if (!body.safeApproveData) throw new Error('missing safeApproveData');
 
   const collectionName = COLLECTION_NAME;
-  const validationSchema = schemas.update;
 
   try {
-    const { vaultId } = req.params;
-
-    if (!vaultId) {
+    if (!companyId || !id) {
       throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
     }
 
-    console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
+    const existentItem = await fetchSingleItem({ collectionName, id });
 
-    if (!companyId) {
-      throw new CustomError.TechnicalError(
-        'ERROR_UPDATE',
-        null,
-        'Error updating. Missing args',
-        null
-      );
+    if (existentItem.companyId !== companyId) {
+      throw new CustomError.TechnicalError('MISSING_PERMISSIONS', null, 'Invalid args', null);
     }
+
+    console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
 
     const itemData = {
       safeApproveData: body.safeApproveData,
       requestStatus: TransactionRequestStatusTypes.APPROVED,
     };
 
-    const doc = await updateSingleItem({ collectionName, id: vaultId, auditUid, data: itemData });
+    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
