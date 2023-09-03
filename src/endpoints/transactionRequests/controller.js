@@ -444,9 +444,13 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
       throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
     }
 
-    const existentItem = await fetchSingleItem({ collectionName, id });
+    const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
 
-    if (existentItem.companyId !== companyId) {
+    if (!existentTransactionRequest) {
+      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS2', null, 'Invalid args', null);
+    }
+
+    if (existentTransactionRequest.companyId !== companyId) {
       throw new CustomError.TechnicalError('MISSING_PERMISSIONS', null, 'Invalid args', null);
     }
 
@@ -457,7 +461,31 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
       requestStatus: TransactionRequestStatusTypes.APPROVED,
     };
 
+    // actualiza el transaction request como aprobado y le guarda la info de resultado de la confirmacion en safe
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+
+    // actualiza el prestamo (vault) descontando del crédito el monto ingresado por el operador de aconcagua
+    if (
+      existentTransactionRequest.requestConversion &&
+      existentTransactionRequest.requestConversion.creditCancellationAmount &&
+      existentTransactionRequest.vaultId
+    ) {
+      const existentVault = await fetchSingleItem({
+        collectionName: Collections.VAULTS,
+        id: existentTransactionRequest.vaultId,
+      });
+
+      const doc = await updateSingleItem({
+        collectionName: Collections.VAULTS,
+        id: existentTransactionRequest.vaultId,
+        auditUid,
+        data: {
+          amount:
+            existentVault.amount -
+            existentTransactionRequest.requestConversion.creditCancellationAmount,
+        },
+      });
+    }
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
