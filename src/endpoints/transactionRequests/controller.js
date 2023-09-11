@@ -465,10 +465,12 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
 
     // actualiza el prestamo (vault) descontando del crédito el monto ingresado por el operador de aconcagua
+
     if (
       existentTransactionRequest.requestConversion &&
       existentTransactionRequest.requestConversion.creditCancellationAmount &&
-      existentTransactionRequest.vaultId
+      existentTransactionRequest.vaultId &&
+      existentTransactionRequest.transactionType === 'liquidate' // si es rescate no resta al credito
     ) {
       const existentVault = await fetchSingleItem({
         collectionName: Collections.VAULTS,
