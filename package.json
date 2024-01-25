@@ -43,7 +43,7 @@
     "postversion": "git push && git push --tags"
   },
   "engines": {
-    "node": "16"
+    "node": "18"
   },
   "bugs": {
     "url": "https://github.com/replace-org-name/replace-package-name/issues"
@@ -65,6 +65,7 @@
     "fast-memoize": "^2.5.1",
     "firebase-admin": "^10.2.0",
     "firebase-functions": "^4.1.0",
+    "firebase-tools": "^13.1.0",
     "fs-extra": "^10.0.0",
     "fuse.js": "^6.5.3",
     "googleapis": "^105.0.0",
@@ -75,9 +76,9 @@
     "moment": "^2.29.1",
     "nodemailer": "^4.7.0",
     "npm": "^8.5.3",
+    "puppeteer": "10.4.0",
     "raw-body": "^2.5.1",
-    "uuid": "^8.3.2",
-    "puppeteer": "10.4.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
@@ -97,7 +98,6 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "4.0.1",
     "firebase-functions-test": "^0.2.0",
-    "firebase-tools": "^11.14.2",
     "husky": "^4.3.8",
     "jest": "^27.0.5",
     "lint-staged": "^11.0.0",
