@@ -2,6 +2,6 @@
   "projects": {
     "default": "catedral-fb",
     "prod": "aconcagua-365314",
-    "qa": "catedral-fb"
+    "sandbox": "lanin-3369b"
   }
 }
