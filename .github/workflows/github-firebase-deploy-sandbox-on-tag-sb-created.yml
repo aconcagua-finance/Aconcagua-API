@@ -23,7 +23,7 @@ env:
   FIREB_APP_ID: '1:371212123512:web:c4b0fde885caa45036dc8d'
   FIREB_MEASURAMENT_ID: 'G-7X16DSM5BJ'
 
-  DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar cripto'
+  DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar Bolsa'
   API_USD_VALUATION: 'https://us-central1-lanin-6339b.cloudfunctions.net/scrapper/dolar-cripto'
   #Token valuations usamos las de producción
   API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
