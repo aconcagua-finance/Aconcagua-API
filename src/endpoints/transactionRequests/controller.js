@@ -211,8 +211,8 @@ exports.patch = async function (req, res) {
     const { id } = req.params;
 
     const requestToPatch = await fetchSingleItem({
-      collectionName: collectionName,
-      id: id,
+      collectionName,
+      id,
     });
 
     if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
