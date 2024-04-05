@@ -3,8 +3,11 @@
 
 name: On tag created - Firebase deploy QA
 
+#Check that tag is reinforced with if condition on job description
 on:
   push:
+    branches:
+      - catedral
     tags:
       - rc*
 
@@ -38,6 +41,7 @@ env:
 
 jobs:
   build-and-publish:
+    if: github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/rc')
     runs-on: ubuntu-latest
     permissions: write-all
 
