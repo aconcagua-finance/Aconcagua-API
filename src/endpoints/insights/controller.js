@@ -240,11 +240,22 @@ exports.findByUser = async function (req, res) {
       'createdAtString'
     );
 
-    let depositsAmount = 0;
+    let depositsArsAmount = 0;
+    let depositsUsdAmount = 0;
+
+    // MRM para guardar los depósitos por tipo de bóveda
+    let depositsSecUsdAmount = 0;
+    let depositsSecArsAmount = 0;
+    let depositsCreUsdAmount = 0;
+    let depositsCreArsAmount = 0;
+
     let creditsAmount = 0;
+    let creditsCreAmount = 0;
 
     vaultsItems.forEach((item) => {
       creditsAmount += item.amount;
+      if (item && item.vaultType && item.vaultType == 'credit') creditsCreAmount += item.amount;
+
       if (!item || !item.balances) return;
       const arsBalance = item.balances.find((balance) => {
         return balance.currency === Types.CurrencyTypes.ARS;
@@ -252,7 +263,25 @@ exports.findByUser = async function (req, res) {
 
       if (!arsBalance) return;
 
-      depositsAmount += arsBalance.balance;
+      depositsArsAmount += arsBalance.balance;
+
+      const usdBalance = item.balances.find((balance) => {
+        return balance.currency === Types.CurrencyTypes.USD;
+      });
+
+      if (!usdBalance) return;
+
+      depositsUsdAmount += usdBalance.balance;
+
+      if (item && item.vaultType && item.vaultType == 'credit') {
+        depositsCreUsdAmount += usdBalance.balance;
+        depositsCreArsAmount += arsBalance.balance;
+      }
+
+      if (item && item.vaultType && item.vaultType == 'savings') {
+        depositsSecUsdAmount += usdBalance.balance;
+        depositsSecArsAmount += arsBalance.balance;
+      }
     });
 
     const result = {
@@ -262,8 +291,14 @@ exports.findByUser = async function (req, res) {
         new Date(filters.createdAt.$gte)
       ),
 
-      depositsAmount,
+      depositsArsAmount,
+      depositsUsdAmount,
+      depositsSecUsdAmount,
+      depositsSecArsAmount,
+      depositsCreUsdAmount,
+      depositsCreArsAmount,
       creditsAmount,
+      creditsCreAmount,
     };
 
     console.log('OK - all - fetch (' + 'INSIGHTS' + '): ');
