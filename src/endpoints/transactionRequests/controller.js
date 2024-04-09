@@ -23,6 +23,9 @@ const { setUserClaims } = require('../admin/controller');
 const schemas = require('./schemas');
 
 const { TransactionRequestStatusTypes } = require('../../types/transactionRequestStatusTypes');
+
+const { findByCompany: findByCompanyEmployees } = require('../companyEmployees/controller');
+
 const {
   MULTIPLE_RELATIONSHIP_SUFFIX,
   sanitizeData,
@@ -207,6 +210,11 @@ exports.patch = async function (req, res) {
   try {
     const { id } = req.params;
 
+    const requestToPatch = await fetchSingleItem({
+      collectionName,
+      id,
+    });
+
     if (!id) throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
 
     console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
@@ -223,6 +231,92 @@ exports.patch = async function (req, res) {
     }
 
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    console.log('requestToPatch ', requestToPatch);
+
+    if (
+      requestToPatch.requestStatus == TransactionRequestStatusTypes.REQUESTED &&
+      itemData.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        requestToPatch.requestStatus,
+        ' y ahora es ',
+        itemData.requestStatus,
+        ' - Transacción Firmada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: requestToPatch.createdBy,
+      });
+
+      const userActive = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: body.userId,
+      });
+
+      const userBorrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: requestToPatch.userId,
+      });
+
+      // companyId
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: companyId,
+      });
+
+      const message =
+        company.name +
+        '.  Cliente ' +
+        userBorrower.firstName +
+        ' ' +
+        userBorrower.lastName +
+        '.  Bóveda ' +
+        requestToPatch.vaultId +
+        '.  Transacción por USD ' +
+        itemData.requestConversion.amountInUSD +
+        ' firmada por ' +
+        userActive.firstName +
+        ' ' +
+        userActive.lastName;
+
+      // Envío mail a admin y al lender
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-signature',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: itemData.requestConversion.amountInUSD,
+            lender: company.name,
+            vaultid: requestToPatch.vaultId,
+            tipodetransaccion: requestToPatch.transactionType,
+          },
+        },
+      });
+
+      // Envío mail a admin y
+      EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-signature',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: itemData.requestConversion.amountInUSD,
+            lender: company.name,
+            vaultid: requestToPatch.vaultId,
+            tipodetransaccion: requestToPatch.transactionType,
+          },
+        },
+      });
+
+      console.log(message);
+    }
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
@@ -446,6 +540,8 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
 
     const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
 
+    console.log('existentTransactionRequest es ', existentTransactionRequest);
+
     if (!existentTransactionRequest) {
       throw new CustomError.TechnicalError('ERROR_MISSING_ARGS2', null, 'Invalid args', null);
     }
@@ -488,6 +584,97 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
         },
       });
     }
+
+    // MRM envío de nueva notificación
+
+    if (
+      existentTransactionRequest.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE &&
+      itemData.requestStatus == TransactionRequestStatusTypes.APPROVED
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        existentTransactionRequest.requestStatus,
+        ' y ahora es ',
+        itemData.requestStatus,
+        ' - Transacción Firmada y Aprobada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.createdBy,
+      });
+
+      const userActive = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: userId,
+      });
+
+      const userBorrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.userId,
+      });
+
+      // companyId
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: companyId,
+      });
+
+      console.log('userOriginator es ', userOriginator);
+      console.log('userActive es ', userActive);
+      console.log('userBorrower es ', userBorrower);
+      console.log('companyId es ', companyId);
+
+      const message =
+        company.name +
+        '.  Cliente ' +
+        userBorrower.lastName +
+        ' ' +
+        userBorrower.lastName +
+        '.  Bóveda: ' +
+        existentTransactionRequest.vaultId +
+        '. Transacción por USD ' +
+        existentTransactionRequest.requestConversion.amountInUSD +
+        ' firmada y aprobada por ' +
+        userActive.firstName +
+        ' ' +
+        userActive.lastName;
+
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.requestConversion.amountInUSD,
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            tipodetransaccion: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.requestConversion.amountInUSD,
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            tipodetransaccion: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      console.log(message);
+    }
+    // Fin nueva notificación
 
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 

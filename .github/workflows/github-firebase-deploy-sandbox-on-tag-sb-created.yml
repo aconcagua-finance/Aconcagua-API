@@ -13,7 +13,7 @@ env:
   NEW_USERS_TEMP_PASSWORD: '@Temp1234'
 
   TEST_ENV_KEY: 'TEST_ENV_VALUE'
-  ENVIRONMENT: sanbox
+  ENVIRONMENT: sandbox
 
   FIREB_PROJECT_ID: 'lanin-6339b'
   FIREB_API_KEY: 'AIzaSyBekTDESxGgAx9EVMOfkHhvaKyA8p9rLeg'
@@ -23,10 +23,10 @@ env:
   FIREB_APP_ID: '1:371212123512:web:c4b0fde885caa45036dc8d'
   FIREB_MEASURAMENT_ID: 'G-7X16DSM5BJ'
 
-  DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar cripto'
+  DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar Bolsa'
   API_USD_VALUATION: 'https://us-central1-lanin-6339b.cloudfunctions.net/scrapper/dolar-cripto'
   #Token valuations usamos las de producción
-  API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
+  API_TOKENS_VALUATIONS: 'https://us-central1-lanin-6339b.cloudfunctions.net/market/tokensQuotes'
   API_EVALUATE_VAULTS: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/evaluate'
   API_VAULT_ADMIN: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/vaultAdmin'
 
@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: 16.17.1
+          node-version: 18.19.0
           registry-url: https://npm.pkg.github.com/
       - run: npm ci --force --legacy-peer-deps
         env:
