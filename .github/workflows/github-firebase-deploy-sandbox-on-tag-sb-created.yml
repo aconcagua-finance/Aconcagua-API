@@ -26,7 +26,7 @@ env:
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar Bolsa'
   API_USD_VALUATION: 'https://us-central1-lanin-6339b.cloudfunctions.net/scrapper/dolar-cripto'
   #Token valuations usamos las de producción
-  API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
+  API_TOKENS_VALUATIONS: 'https://us-central1-lanin-6339b.cloudfunctions.net/market/tokensQuotes'
   API_EVALUATE_VAULTS: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/evaluate'
   API_VAULT_ADMIN: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/vaultAdmin'
 
