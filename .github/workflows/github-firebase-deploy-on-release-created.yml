@@ -67,7 +67,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
           VS_GITHUB_NPM_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
-          FIREBASE_TOKEN: ${{secrets.FIREBASE_TOKEN}}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{secrets.FIREBASE_SERVICE_ACCOUNT_KEY}}
 
   # publish-gpr:
   #   needs: build
