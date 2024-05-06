@@ -3,8 +3,11 @@
 
 name: On tag created - Firebase deploy QA
 
+#Check that tag is reinforced with if condition on job description
 on:
   push:
+    branches:
+      - catedral
     tags:
       - rc*
 
@@ -32,12 +35,13 @@ env:
 
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar Bolsa'
   API_USD_VALUATION: 'http://us-central1-catedral-fb.cloudfunctions.net/scrapper/dolar-cripto'
-  API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
+  API_TOKENS_VALUATIONS: 'http://us-central1-catedral-fb.cloudfunctions.net/market/tokensQuotes'
   API_EVALUATE_VAULTS: 'http://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/evaluate'
   API_VAULT_ADMIN: 'http://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/vaultAdmin'
 
 jobs:
   build-and-publish:
+    if: github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/rc')
     runs-on: ubuntu-latest
     permissions: write-all
 
