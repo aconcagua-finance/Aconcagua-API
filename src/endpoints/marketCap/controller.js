@@ -141,9 +141,9 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
   // Valido que me devuelva solo un elemento
   if (items.length !== 1) {
     throw new CustomError.TechnicalError(
-      'ERROR_USD_VALUATION_INVALID_RESPONSE',
+      'fetchAndUpdateUSDValuation - ERROR_USD_VALUATION_INVALID_RESPONSE',
       null,
-      'Se encontraron 0 o mas de 1 elemento',
+      'fetchAndUpdateUSDValuation - Se encontraron 0 o mas de 1 elemento',
       null
     );
   }
@@ -178,9 +178,9 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
   if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
     throw new CustomError.TechnicalError(
-      'ERROR_API_TOKENS_VALUATIONS_INVALID_RESPONSE',
+      'fetchAndUpdateTokensValuations - ERROR_API_TOKENS_VALUATIONS_INVALID_RESPONSE',
       null,
-      'Respuesta inválida del servicio de cotización de Tokens',
+      'fetchAndUpdateTokensValuations - Respuesta inválida del servicio de cotización de Tokens',
       null
     );
   }
@@ -206,12 +206,15 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
       filters,
       indexedFilters,
     });
-    // Valido
+    // Loggeo y valido
+    console.log('fetchAndUpdateTokensValuations - items');
+    console.log(items);
+
     if (items.length !== 1) {
       throw new CustomError.TechnicalError(
-        'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
+        'fetchAndUpdateTokensValuations - ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
         null,
-        'Se encontraron 0 o mas de 1 elemento',
+        'fetchAndUpdateTokensValuations - Se encontraron 0 o mas de 1 elemento',
         null
       );
     }
