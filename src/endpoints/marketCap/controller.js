@@ -180,7 +180,14 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const valuations = apiResponse.data;
   const tokens = Object.keys(valuations);
 
-  console.log(`Actualizo el marketCap de cada token obtenido en valuaciones`);
+  console.log(
+    'fetchAndUpdateTokensValuations - Actualizo el marketCap de cada token obtenido en valuaciones'
+  );
+  console.log('fetchAndUpdateTokensValuations - valuations');
+  console.log(valuations);
+  console.log('fetchAndUpdateTokensValuations - tokens');
+  console.log(tokens);
+
   for (const symbol of tokens) {
     // Obtengo el marketCap del token con nueva valuación
     const filters = { currency: { $equal: symbol } };
