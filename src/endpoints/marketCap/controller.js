@@ -178,7 +178,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   }
 
   const valuations = apiResponse.data;
-  const tokens = Object.keys(valuations);
+  const tokens = valuations.map((valuation) => valuation[0]);
 
   console.log(
     'fetchAndUpdateTokensValuations - Actualizo el marketCap de cada token obtenido en valuaciones'
@@ -209,7 +209,8 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
     }
 
     // Actualizo el marketCap del token con nueva cotización
-    items[0].value = valuations[symbol];
+    const valuation = valuations.find(([symbol, _]) => symbol === items[0].currency);
+    items[0].value = valuation;
 
     await updateSingleItem({
       collectionName: COLLECTION_NAME,
