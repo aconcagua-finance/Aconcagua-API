@@ -220,7 +220,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
     }
 
     // Actualizo el marketCap del token con nueva cotización
-    const valuation = valuations.find(([symbol, _]) => symbol === items[0].currency);
+    const [, valuation] = valuations.find(([symbol, _]) => symbol === items[0].currency) || [];
     items[0].value = valuation;
 
     await updateSingleItem({
