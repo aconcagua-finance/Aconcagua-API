@@ -130,6 +130,14 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     filters,
     indexedFilters,
   });
+
+  // Loggeo resultados
+
+  console.log('fetchAndUpdateUSDValuation - valuation');
+  console.log(valuation);
+  console.log('fetchAndUpdateUSDValuation - items');
+  console.log(items);
+
   // Valido que me devuelva solo un elemento
   if (items.length !== 1) {
     throw new CustomError.TechnicalError(
