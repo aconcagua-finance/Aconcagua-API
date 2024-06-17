@@ -135,7 +135,7 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     throw new CustomError.TechnicalError(
       'ERROR_USD_VALUATION_INVALID_RESPONSE',
       null,
-      'Se encontraron 0 o mas de 1 elemento',
+      'fetchAndUpdateUSDValuation - Se encontraron 0 o mas de 1 elemento',
       null
     );
   }
@@ -183,6 +183,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   console.log(`Actualizo el marketCap de cada token obtenido en valuaciones`);
   for (const symbol of tokens) {
     // Obtengo el marketCap del token con nueva valuación
+    console.log('fetchAndUpdateTokensValuations - Token ', symbol);
     const filters = { currency: { $equal: symbol } };
     const indexedFilters = ['currency'];
     const items = await fetchItems({
@@ -196,7 +197,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
       throw new CustomError.TechnicalError(
         'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
         null,
-        'Se encontraron 0 o mas de 1 elemento',
+        'fetchAndUpdateTokensValuations - Se encontraron 0 o mas de 1 elemento',
         null
       );
     }
