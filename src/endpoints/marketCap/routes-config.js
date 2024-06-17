@@ -35,7 +35,12 @@ exports.marketCapRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [
+        Types.AppRols.APP_ADMIN,
+        Types.AppRols.APP_VIEWER,
+        Types.AppRols.APP_STAFF,
+        Types.AppRols.APP_CLIENT,
+      ],
     }),
     get,
   ]);
@@ -44,7 +49,12 @@ exports.marketCapRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [
+        Types.AppRols.APP_ADMIN,
+        Types.AppRols.APP_VIEWER,
+        Types.AppRols.APP_STAFF,
+        Types.AppRols.APP_CLIENT,
+      ],
     }),
     find,
   ]);

@@ -130,10 +130,18 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
     filters,
     indexedFilters,
   });
+
+  // Loggeo resultados
+
+  console.log('fetchAndUpdateUSDValuation - valuation');
+  console.log(valuation);
+  console.log('fetchAndUpdateUSDValuation - items');
+  console.log(items);
+
   // Valido que me devuelva solo un elemento
   if (items.length !== 1) {
     throw new CustomError.TechnicalError(
-      'ERROR_USD_VALUATION_INVALID_RESPONSE',
+      'fetchAndUpdateUSDValuation - ERROR_USD_VALUATION_INVALID_RESPONSE',
       null,
       'fetchAndUpdateUSDValuation - Se encontraron 0 o mas de 1 elemento',
       null
@@ -170,17 +178,24 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
   const apiResponse = await invoke_get_api({ endpoint: API_TOKENS_VALUATIONS });
   if (!apiResponse || !apiResponse.data || apiResponse.errors[0]) {
     throw new CustomError.TechnicalError(
-      'ERROR_API_TOKENS_VALUATIONS_INVALID_RESPONSE',
+      'fetchAndUpdateTokensValuations - ERROR_API_TOKENS_VALUATIONS_INVALID_RESPONSE',
       null,
-      'Respuesta inválida del servicio de cotización de Tokens',
+      'fetchAndUpdateTokensValuations - Respuesta inválida del servicio de cotización de Tokens',
       null
     );
   }
 
   const valuations = apiResponse.data;
-  const tokens = Object.keys(valuations);
+  const tokens = valuations.map((valuation) => valuation[0]);
 
-  console.log(`Actualizo el marketCap de cada token obtenido en valuaciones`);
+  console.log(
+    'fetchAndUpdateTokensValuations - Actualizo el marketCap de cada token obtenido en valuaciones'
+  );
+  console.log('fetchAndUpdateTokensValuations - valuations');
+  console.log(valuations);
+  console.log('fetchAndUpdateTokensValuations - tokens');
+  console.log(tokens);
+
   for (const symbol of tokens) {
     // Obtengo el marketCap del token con nueva valuación
     console.log('fetchAndUpdateTokensValuations - Token ', symbol);
@@ -192,10 +207,13 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
       filters,
       indexedFilters,
     });
-    // Valido
+    // Loggeo y valido
+    console.log('fetchAndUpdateTokensValuations - items');
+    console.log(items);
+
     if (items.length !== 1) {
       throw new CustomError.TechnicalError(
-        'ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
+        'fetchAndUpdateTokensValuations - ERROR_TOKENS_VALUATIONS_INVALID_RESPONSE',
         null,
         'fetchAndUpdateTokensValuations - Se encontraron 0 o mas de 1 elemento',
         null
@@ -203,7 +221,8 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
     }
 
     // Actualizo el marketCap del token con nueva cotización
-    items[0].value = valuations[symbol];
+    const [, valuation] = valuations.find(([symbol, _]) => symbol === items[0].currency) || [];
+    items[0].value = valuation;
 
     await updateSingleItem({
       collectionName: COLLECTION_NAME,
