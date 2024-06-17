@@ -198,6 +198,7 @@ const fetchAndUpdateTokensValuations = async function ({ auditUid }) {
 
   for (const symbol of tokens) {
     // Obtengo el marketCap del token con nueva valuación
+    console.log('fetchAndUpdateTokensValuations - Token ', symbol);
     const filters = { currency: { $equal: symbol } };
     const indexedFilters = ['currency'];
     const items = await fetchItems({
