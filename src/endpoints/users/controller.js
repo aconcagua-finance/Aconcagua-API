@@ -47,6 +47,8 @@ const COLLECTION_NAME = Collections.USERS;
 
 const INDEXED_FILTERS = ['state'];
 
+const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
+
 const createUser = async function ({ auditUid, userData, appUserStatus, password }) {
   let userId = userData.id;
 
@@ -621,6 +623,7 @@ exports.signUp = async function (req, res) {
     // Envio mail de bienvenida al usuario recien creado
     await EmailSender.send({
       to: itemData.email,
+      SYS_ADMIN_EMAIL,
       message: null,
       template: {
         name: 'mail-welcome',
@@ -700,6 +703,7 @@ exports.signUpFederatedAuth = async function (req, res) {
     // Se envia un mail luego de crear el usuario
     await EmailSender.send({
       to: itemData.email,
+      SYS_ADMIN_EMAIL,
       message: null,
       template: {
         name: 'mail-welcome',
