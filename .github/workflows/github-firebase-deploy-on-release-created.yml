@@ -52,10 +52,6 @@ jobs:
           node-version: 18.19.0
           registry-url: https://npm.pkg.github.com/
       - run: npm ci --force --legacy-peer-deps
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
-          # NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}} este no tiee permisos en otro repo
-          VS_GITHUB_NPM_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
       - run: npm run prettier-ci
       - run: npm run lint-ci
       - run: npm run test-ci
@@ -65,8 +61,6 @@ jobs:
 
       - run: npm run deploy-ci
         env:
-          NODE_AUTH_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
-          VS_GITHUB_NPM_TOKEN: ${{secrets.VS_GITHUB_NPM_TOKEN}}
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{secrets.FIREBASE_SERVICE_ACCOUNT_KEY}}
 
   # publish-gpr:
