@@ -297,7 +297,7 @@ exports.cronUpdateValuations = functions
       LoggerHelper.appLogger({
         message: 'CRON cronUpdateValuations - OK',
         data: null,
-        notifyAdmin: true,
+        notifyAdmin: false,
       });
     } catch (err) {
       ErrorHelper.handleCronError({
