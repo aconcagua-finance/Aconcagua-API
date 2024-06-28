@@ -352,7 +352,26 @@ exports.appLogger = async function ({ uid, message, data, notifyAdmin }) {
 
     try {
       if (notifyAdmin && ENVIRONMENT !== 'local') {
-        await notifyError(message, 'OK', JSON.stringify(message), uid);
+        const HEADER_TITLE = 'Mensaje para el Admin de ' + ENVIRONMENT;
+        const HEADER_BODY = 'Mensaje para el Admin  <br /> (' + severity + ') <br />' + data;
+        const CONTENT_TITLE = 'OK';
+        const CONTENT_BODY = message;
+        const BUTTON_TEXT = 'Ir al sitio';
+        const BUTTON_LINK = WEBSITE_DOMAIN_URL;
+        const emailTo = SYS_ADMIN_EMAIL;
+        const SUBJECT = HEADER_TITLE;
+
+        await sendTemplateEmail(
+          'src/vs-core-firebase/email/emailTemplates/info.html',
+          HEADER_TITLE,
+          HEADER_BODY,
+          CONTENT_TITLE,
+          CONTENT_BODY,
+          BUTTON_TEXT,
+          BUTTON_LINK,
+          emailTo,
+          SUBJECT
+        );
       }
     } catch (err) {
       return;
@@ -589,7 +608,7 @@ async function sendTemplateEmail(
       message: { subject: SUBJECT, text: null, html },
     });
 
-    console.log('Mail sended: (' + SUBJECT + ')');
+    console.log('Mail sen: (' + SUBJECT + ')');
   } catch (e) {
     console.log('Mail not sended:', e.message, e.code, e.response, e.responseCode, e.command);
     throw e;
