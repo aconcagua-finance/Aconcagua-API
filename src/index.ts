@@ -62,6 +62,7 @@ const { onHookedEventCreate, onHookedEventUpdate } = require('./endpoints/hooked
 const {
   onVaultCreate_ThenCreateCompanyClientRelationship,
 } = require('./endpoints/companyClients/controller');
+const { onRequestUpdate } = require('./endpoints/transactionRequests/controller0');
 
 console.log('NODE_ENV:', process.env.NODE_ENV, 'ENVIRONMENT:', process.env.ENVIRONMENT);
 
@@ -281,29 +282,29 @@ exports.marketCap = functions
   })
   .https.onRequest(marketCapApp);
 
-  const emailTemplatesApp = express();
-  configureApp(emailTemplatesApp);
-  emailTemplatesRoutesConfig(emailTemplatesApp);
-  exports.emailTemplates = functions
-    .runWith({
-      // memory: "2GB",
-      // Keep 5 instances warm for this latency-critical function
-      // in production only. Default to 0 for test projects.
-      // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-    })
-    .https.onRequest(emailTemplatesApp);
+const emailTemplatesApp = express();
+configureApp(emailTemplatesApp);
+emailTemplatesRoutesConfig(emailTemplatesApp);
+exports.emailTemplates = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(emailTemplatesApp);
 
-  const tokenRatiosApp = express();
-  configureApp(tokenRatiosApp);
-  tokenRatiosRoutesConfig(tokenRatiosApp);
-  exports.tokenRatios = functions
-    .runWith({
-      // memory: "2GB",
-      // Keep 5 instances warm for this latency-critical function
-      // in production only. Default to 0 for test projects.
-      // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-    })
-    .https.onRequest(tokenRatiosApp)
+const tokenRatiosApp = express();
+configureApp(tokenRatiosApp);
+tokenRatiosRoutesConfig(tokenRatiosApp);
+exports.tokenRatios = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(tokenRatiosApp);
 
 const googleOAuthApp = express();
 configureApp(googleOAuthApp);
@@ -461,3 +462,5 @@ exports.onVaultCreate_ThenCreateCompanyClientRelationship =
   onVaultCreate_ThenCreateCompanyClientRelationship;
 
 exports.cronUpdateValuations = cronUpdateValuations;
+
+exports.onRequestUpdate = onRequestUpdate;

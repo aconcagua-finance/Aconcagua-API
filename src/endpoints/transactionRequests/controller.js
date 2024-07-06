@@ -297,8 +297,7 @@ exports.patch = async function (req, res) {
           },
         },
       });
-
-      // Envío mail a admin y
+      // TODO Esto debe ser al borrower
       EmailSender.send({
         to: userOriginator.email,
         message: null,
@@ -535,7 +534,12 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
 
   try {
     if (!companyId || !id) {
-      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+      throw new CustomError.TechnicalError(
+        'lenderApproveTransactionRequest - ERROR_MISSING_ARGS',
+        null,
+        'Invalid args',
+        null
+      );
     }
 
     const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
@@ -543,11 +547,21 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
     console.log('existentTransactionRequest es ', existentTransactionRequest);
 
     if (!existentTransactionRequest) {
-      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS2', null, 'Invalid args', null);
+      throw new CustomError.TechnicalError(
+        'lenderApproveTransactionRequest - ERROR_MISSING_ARGS2',
+        null,
+        'Invalid args',
+        null
+      );
     }
 
     if (existentTransactionRequest.companyId !== companyId) {
-      throw new CustomError.TechnicalError('MISSING_PERMISSIONS', null, 'Invalid args', null);
+      throw new CustomError.TechnicalError(
+        'lenderApproveTransactionRequest - MISSING_PERMISSIONS',
+        null,
+        'Invalid args',
+        null
+      );
     }
 
     console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
@@ -683,3 +697,25 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
+exports.onRequestUpdate = functions.firestore
+  .document(COLLECTION_NAME + '/{docId}')
+  .onUpdate((change, context) => {
+    const { docId } = context.params;
+    const before = change.before.data();
+    const after = change.after.data();
+
+    if (
+      before.requestStatus === TransactionRequestStatusTypes.PENDING_APPROVE &&
+      after.requestStatus === TransactionRequestStatusTypes.APPROVED
+    ) {
+      console.log(
+        'onRequestUpdate Estado de la transacción era ',
+        before.requestStatus,
+        ' y ahora es ',
+        after.requestStatus
+      );
+    }
+
+    return null;
+  });
