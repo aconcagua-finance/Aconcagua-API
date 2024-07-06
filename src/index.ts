@@ -62,7 +62,8 @@ const { onHookedEventCreate, onHookedEventUpdate } = require('./endpoints/hooked
 const {
   onVaultCreate_ThenCreateCompanyClientRelationship,
 } = require('./endpoints/companyClients/controller');
-const { onRequestUpdate } = require('./endpoints/transactionRequests/controller0');
+
+const { onRequestUpdate } = require('./endpoints/transactionRequests/controller');
 
 console.log('NODE_ENV:', process.env.NODE_ENV, 'ENVIRONMENT:', process.env.ENVIRONMENT);
 
