@@ -18,7 +18,6 @@
     "clean": "bash ./scripts/clean.sh",
     "cleanse": "bash ./scripts/cleanse.sh",
     "deploy-ci": "bash ./scripts/deploy-ci.sh",
-    "deploy-ci-sb": "bash ./scripts/deploy-ci-sb.sh",
     "database-rules:deploy": "bash ./scripts/database-rules-deploy.sh",
     "database-rules:deploy-ci": "bash ./scripts/database-rules-deploy-ci.sh",
     "storage-rules:deploy": "bash ./scripts/storage-rules-deploy.sh",

@@ -49,7 +49,7 @@ jobs:
       # ya lo hace el firebase.json
       # - run: npm run build
 
-      - run: npm run deploy-ci-sb
+      - run: npm run deploy-ci
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{secrets.FIREBASE_SERVICE_ACCOUNT_KEY_SB}}
 
