@@ -439,6 +439,8 @@ exports.transactionRequests = functions
   })
   .https.onRequest(transactionRequestsApp);
 
+exports.onRequestUpdate = onRequestUpdate;
+
 const remindersApp = express();
 configureApp(remindersApp);
 remindersRoutesConfig(remindersApp);
@@ -463,5 +465,3 @@ exports.onVaultCreate_ThenCreateCompanyClientRelationship =
   onVaultCreate_ThenCreateCompanyClientRelationship;
 
 exports.cronUpdateValuations = cronUpdateValuations;
-
-exports.onRequestUpdate = onRequestUpdate;

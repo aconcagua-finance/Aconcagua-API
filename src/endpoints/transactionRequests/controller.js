@@ -700,22 +700,16 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
 
 exports.onRequestUpdate = functions.firestore
   .document(COLLECTION_NAME + '/{docId}')
-  .onUpdate((change, context) => {
+  .onUpdate(async (change, context) => {
     const { docId } = context.params;
     const before = change.before.data();
     const after = change.after.data();
-
-    if (
-      before.requestStatus === TransactionRequestStatusTypes.PENDING_APPROVE &&
-      after.requestStatus === TransactionRequestStatusTypes.APPROVED
-    ) {
-      console.log(
-        'onRequestUpdate Estado de la transacción era ',
-        before.requestStatus,
-        ' y ahora es ',
-        after.requestStatus
-      );
-    }
+    console.log(
+      'onRequestUpdate Estado de la transacción era ',
+      before.requestStatus,
+      ' y ahora es ',
+      after.requestStatus
+    );
 
     return null;
   });
