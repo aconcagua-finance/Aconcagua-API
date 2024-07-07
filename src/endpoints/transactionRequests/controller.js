@@ -711,5 +711,36 @@ exports.onRequestUpdate = functions.firestore
       after.requestStatus
     );
 
+    if (after.transactionType === 'liquidate') {
+      console.log('withdraw - mando mails de liquidación ' + docId);
+
+      // const employee = await fetchSingleItem({ collectionName: Collections.USERS, id: after.auditUid });
+      // const lender = await fetchSingleItem({ collectionName: Collections.COMPANIES, id: after.companyId });
+      const borrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.userId,
+      });
+      const vault = await fetchSingleItem({
+        collectionName: Collections.VAULTS,
+        id: after.vaultId,
+      });
+
+      await EmailSender.send({
+        to: borrower.email,
+        message: null,
+        template: {
+          name: 'mail-liquidate',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: id,
+            lender: 'Lender',
+            value: after.amount,
+            vaultType: vault.vaultType,
+            creditType: vault.creditType,
+          },
+        },
+      });
+    }
+
     return null;
   });
