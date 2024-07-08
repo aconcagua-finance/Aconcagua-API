@@ -732,7 +732,7 @@ exports.onRequestUpdate = functions.firestore
           name: 'mail-liquidate',
           data: {
             username: borrower.firstName + ' ' + borrower.lastName,
-            vaultId: id,
+            vaultId: vault.id,
             lender: 'Lender',
             value: after.amount,
             vaultType: vault.vaultType,
