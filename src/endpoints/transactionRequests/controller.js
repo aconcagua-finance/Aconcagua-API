@@ -644,6 +644,11 @@ exports.onRequestUpdate = functions.firestore
         id: after.vaultId,
       });
 
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: after.companyId,
+      });
+
       await EmailSender.send({
         to: borrower.email,
         message: null,
@@ -652,8 +657,9 @@ exports.onRequestUpdate = functions.firestore
           data: {
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
-            lender: 'Lender',
+            lender: company.name,
             value: after.amount,
+            currency: after.currency,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
           },
@@ -679,6 +685,11 @@ exports.onRequestUpdate = functions.firestore
         id: after.vaultId,
       });
 
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: after.companyId,
+      });
+
       await EmailSender.send({
         to: borrower.email,
         message: null,
@@ -687,9 +698,9 @@ exports.onRequestUpdate = functions.firestore
           data: {
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
-            lender: 'Lender',
+            lender: company.name,
             value: after.amount,
-            current: 'ARS',
+            currency: after.currency,
           },
         },
       });
