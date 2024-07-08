@@ -665,6 +665,46 @@ exports.onRequestUpdate = functions.firestore
           },
         },
       });
+
+      await EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-liquidate',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+            vaultType: vault.vaultType,
+            creditType: vault.creditType,
+          },
+        },
+      });
+
+      // Envio aviso al empleado que pidió la liquidación
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.createdBy,
+      });
+
+      await EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-liquidate',
+          data: {
+            username: userOriginator.firstName + ' ' + userOriginator.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+            vaultType: vault.vaultType,
+            creditType: vault.creditType,
+          },
+        },
+      });
     }
 
     if (
@@ -697,6 +737,42 @@ exports.onRequestUpdate = functions.firestore
           name: 'mail-rescue',
           data: {
             username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+          },
+        },
+      });
+
+      await EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-rescue',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+          },
+        },
+      });
+
+      // Envio aviso al empleado que firmó la transacción
+      const userSigner = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.updatedBy,
+      });
+
+      await EmailSender.send({
+        to: userSigner.email,
+        message: null,
+        template: {
+          name: 'mail-rescue',
+          data: {
+            username: userSigner.firstName + ' ' + userSigner.lastName,
             vaultId: vault.id,
             lender: company.name,
             value: after.amount,
