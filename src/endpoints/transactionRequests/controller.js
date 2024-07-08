@@ -232,91 +232,6 @@ exports.patch = async function (req, res) {
 
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
     console.log('requestToPatch ', requestToPatch);
-
-    if (
-      requestToPatch.requestStatus == TransactionRequestStatusTypes.REQUESTED &&
-      itemData.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE
-    ) {
-      console.log(
-        'Estado de la transacción era ',
-        requestToPatch.requestStatus,
-        ' y ahora es ',
-        itemData.requestStatus,
-        ' - Transacción Firmada'
-      );
-
-      const userOriginator = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: requestToPatch.createdBy,
-      });
-
-      const userActive = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: body.userId,
-      });
-
-      const userBorrower = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: requestToPatch.userId,
-      });
-
-      // companyId
-      const company = await fetchSingleItem({
-        collectionName: Collections.COMPANIES,
-        id: companyId,
-      });
-
-      const message =
-        company.name +
-        '.  Cliente ' +
-        userBorrower.firstName +
-        ' ' +
-        userBorrower.lastName +
-        '.  Bóveda ' +
-        requestToPatch.vaultId +
-        '.  Transacción por USD ' +
-        itemData.requestConversion.amountInUSD +
-        ' firmada por ' +
-        userActive.firstName +
-        ' ' +
-        userActive.lastName;
-
-      // Envío mail a admin y al lender
-      EmailSender.send({
-        to: SYS_ADMIN_EMAIL,
-        message: null,
-        template: {
-          name: 'mail-signature',
-          data: {
-            useroriginator: userOriginator.firstName,
-            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: itemData.requestConversion.amountInUSD,
-            lender: company.name,
-            vaultid: requestToPatch.vaultId,
-            tipodetransaccion: requestToPatch.transactionType,
-          },
-        },
-      });
-      // TODO Esto debe ser al borrower
-      EmailSender.send({
-        to: userOriginator.email,
-        message: null,
-        template: {
-          name: 'mail-signature',
-          data: {
-            useroriginator: userOriginator.firstName,
-            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: itemData.requestConversion.amountInUSD,
-            lender: company.name,
-            vaultid: requestToPatch.vaultId,
-            tipodetransaccion: requestToPatch.transactionType,
-          },
-        },
-      });
-
-      console.log(message);
-    }
-
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
     return res.status(204).send(doc);
@@ -711,7 +626,11 @@ exports.onRequestUpdate = functions.firestore
       after.requestStatus
     );
 
-    if (after.transactionType === 'liquidate') {
+    if (
+      before.requestStatus === TransactionRequestStatusTypes.PENDING_APPROVE &&
+      after.requestStatus === TransactionRequestStatusTypes.APPROVED &&
+      after.transactionType === 'liquidate'
+    ) {
       console.log('withdraw - mando mails de liquidación ' + docId);
 
       // const employee = await fetchSingleItem({ collectionName: Collections.USERS, id: after.auditUid });
@@ -737,6 +656,104 @@ exports.onRequestUpdate = functions.firestore
             value: after.amount,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
+          },
+        },
+      });
+    }
+
+    if (
+      before.requestStatus === TransactionRequestStatusTypes.PENDING_APPROVE &&
+      after.requestStatus === TransactionRequestStatusTypes.APPROVED &&
+      after.transactionType === 'rescue'
+    ) {
+      console.log('rescue - mando mails de rescate ' + docId);
+
+      // const employee = await fetchSingleItem({ collectionName: Collections.USERS, id: after.auditUid });
+      // const lender = await fetchSingleItem({ collectionName: Collections.COMPANIES, id: after.companyId });
+      const borrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.userId,
+      });
+      const vault = await fetchSingleItem({
+        collectionName: Collections.VAULTS,
+        id: after.vaultId,
+      });
+
+      await EmailSender.send({
+        to: borrower.email,
+        message: null,
+        template: {
+          name: 'mail-rescue',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: 'Lender',
+            value: after.amount,
+            current: 'ARS',
+          },
+        },
+      });
+    }
+
+    // Primera firma
+    if (
+      before.requestStatus == TransactionRequestStatusTypes.REQUESTED &&
+      after.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        after.requestStatus,
+        ' y ahora es ',
+        after.requestStatus,
+        ' - Transacción Firmada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.createdBy,
+      });
+
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: after.companyId,
+      });
+
+      const borrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.userId,
+      });
+
+      // Envío mail a admin y al lender
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-signature',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: borrower.firstName + ' ' + borrower.lastName,
+            monto: after.amount,
+            current: after.currency,
+            lender: company.name,
+            vaultid: after.vaultId,
+            tipodetransaccion: after.transactionType,
+          },
+        },
+      });
+      // TODO Esto debe ser al borrower
+      EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-signature',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: borrower.firstName + ' ' + borrower.lastName,
+            monto: after.amount,
+            current: after.currency,
+            lender: company.name,
+            vaultid: after.vaultId,
+            tipodetransaccion: after.transactionType,
           },
         },
       });
