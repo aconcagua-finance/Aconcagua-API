@@ -16,7 +16,11 @@ const { CustomError } = require('../../vs-core');
 
 const { Collections } = require('../../types/collectionsTypes');
 
-const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/coreHelper');
+const {
+  areEqualStringLists,
+  areDeepEqualDocuments,
+  formatMoneyWithCurrency,
+} = require('../../helpers/coreHelper');
 
 const { setUserClaims } = require('../admin/controller');
 
@@ -554,6 +558,14 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
       console.log('userBorrower es ', userBorrower);
       console.log('companyId es ', companyId);
 
+      const amountUSD = formatMoneyWithCurrency(
+        existentTransactionRequest.requestConversion.amountInUSD,
+        0,
+        undefined,
+        undefined,
+        'usd'
+      );
+
       const message =
         company.name +
         '.  Cliente ' +
@@ -563,7 +575,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
         '.  Bóveda: ' +
         existentTransactionRequest.vaultId +
         '. Transacción por USD ' +
-        existentTransactionRequest.requestConversion.amountInUSD +
+        amountUSD +
         ' firmada y aprobada por ' +
         userActive.firstName +
         ' ' +
@@ -577,10 +589,10 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.requestConversion.amountInUSD,
+            monto: amountUSD,
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
-            tipodetransaccion: existentTransactionRequest.transactionType,
+            transactiontype: existentTransactionRequest.transactionType,
           },
         },
       });
@@ -593,10 +605,10 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.requestConversion.amountInUSD,
+            monto: amountUSD,
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
-            tipodetransaccion: existentTransactionRequest.transactionType,
+            transactiontype: existentTransactionRequest.transactionType,
           },
         },
       });
