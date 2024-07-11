@@ -7,6 +7,7 @@ const {
   setUserProps,
   setUserPassword,
   switchMagic,
+  createSysAdmin,
 } = require('./controller');
 
 const { Types } = require('../../vs-core');
@@ -56,5 +57,6 @@ exports.adminRoutesConfig = function (app) {
   ]);
 
   // Función para crear el primer admin
+
   app.get('/create-sys-admin', [Audit.logger, createSysAdmin]);
 };
