@@ -137,11 +137,11 @@ exports.createSysAdmin = async function (req, res) {
 
     await setUserClaims({
       userId: uId,
-      appRoles: [Types.AppRoles.APP_ADMIN],
+      appRoles: [Types.AppRols.APP_ADMIN],
       orgRoles: [],
       userDefinedRoles: [],
       enterpriseRoles: [],
-      appUserStatus: UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
+      appUserStatus: Types.UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
     });
 
     console.log('Return');
