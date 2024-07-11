@@ -135,14 +135,20 @@ exports.createSysAdmin = async function (req, res) {
 
     console.log('Firestore User created ok');
 
-    await setUserClaims({
-      userId: uId,
-      appRoles: [Types.AppRols.APP_ADMIN],
-      orgRoles: [],
-      userDefinedRoles: [],
-      enterpriseRoles: [],
-      appUserStatus: Types.UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
-    });
+    try {
+      await setUserClaims({
+        userId: uId,
+        appRoles: ['app-admin'], // Ensure this is defined
+        orgRoles: [],
+        userDefinedRoles: [],
+        enterpriseRoles: [],
+        appUserStatus: UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
+      });
+      console.log('User claims set successfully');
+    } catch (err) {
+      console.error('Error setting user claims', err);
+      throw new Error('Failed to set user claims');
+    }
 
     console.log('Return');
     return res.status(200).send(newUserdata);
