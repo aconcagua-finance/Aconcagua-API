@@ -63,6 +63,8 @@ const {
   onVaultCreate_ThenCreateCompanyClientRelationship,
 } = require('./endpoints/companyClients/controller');
 
+const { onRequestUpdate } = require('./endpoints/transactionRequests/controller');
+
 console.log('NODE_ENV:', process.env.NODE_ENV, 'ENVIRONMENT:', process.env.ENVIRONMENT);
 
 admin.initializeApp(FirebaseConfig);
@@ -281,29 +283,29 @@ exports.marketCap = functions
   })
   .https.onRequest(marketCapApp);
 
-  const emailTemplatesApp = express();
-  configureApp(emailTemplatesApp);
-  emailTemplatesRoutesConfig(emailTemplatesApp);
-  exports.emailTemplates = functions
-    .runWith({
-      // memory: "2GB",
-      // Keep 5 instances warm for this latency-critical function
-      // in production only. Default to 0 for test projects.
-      // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-    })
-    .https.onRequest(emailTemplatesApp);
+const emailTemplatesApp = express();
+configureApp(emailTemplatesApp);
+emailTemplatesRoutesConfig(emailTemplatesApp);
+exports.emailTemplates = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(emailTemplatesApp);
 
-  const tokenRatiosApp = express();
-  configureApp(tokenRatiosApp);
-  tokenRatiosRoutesConfig(tokenRatiosApp);
-  exports.tokenRatios = functions
-    .runWith({
-      // memory: "2GB",
-      // Keep 5 instances warm for this latency-critical function
-      // in production only. Default to 0 for test projects.
-      // minInstances: envProjectId === "my-production-project" ? 5 : 0,
-    })
-    .https.onRequest(tokenRatiosApp)
+const tokenRatiosApp = express();
+configureApp(tokenRatiosApp);
+tokenRatiosRoutesConfig(tokenRatiosApp);
+exports.tokenRatios = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(tokenRatiosApp);
 
 const googleOAuthApp = express();
 configureApp(googleOAuthApp);
@@ -436,6 +438,8 @@ exports.transactionRequests = functions
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
   })
   .https.onRequest(transactionRequestsApp);
+
+exports.onRequestUpdate = onRequestUpdate;
 
 const remindersApp = express();
 configureApp(remindersApp);

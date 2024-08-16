@@ -392,7 +392,18 @@ exports.upsertByCompany = async function (req, res) {
       // Envio mail de bienvenida al usuario recien creado
       await EmailSender.send({
         to: newUserData.email,
-        SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-welcome',
+          data: {
+            username: newUserData.firstName + ' ' + newUserData.lastName,
+          },
+        },
+      });
+
+      // Envio mail de bienvenida al usuario recien creado
+      await EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
         message: null,
         template: {
           name: 'mail-welcome',

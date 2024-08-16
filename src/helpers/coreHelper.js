@@ -92,3 +92,66 @@ exports.enumValuesToArray = (enumType) => {
     return isNaN(Number(item));
   });
 };
+
+export const formatMoneyWithCurrency = function (
+  amountArg,
+  decimalCount = 2,
+  decimal = ',',
+  thousands = '.',
+  currency = 'ars'
+) {
+  if (currency == 'ars') {
+    const currencySign = 'AR$';
+    let amount = amountArg;
+    if (!isFinite(amount)) amount = 0;
+
+    decimalCount = Math.abs(decimalCount);
+    decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
+
+    const negativeSign = amount < 0 ? '-' : '';
+
+    const ii = parseInt((amount = Math.abs(Number(amount) || 0).toFixed(decimalCount))).toString();
+    const jj = ii.length > 3 ? ii.length % 3 : 0;
+
+    return (
+      currencySign +
+      ' ' +
+      negativeSign +
+      (jj ? ii.substring(0, jj) + thousands : '') +
+      ii.substring(jj).replace(/(\d{3})(?=\d)/g, `$1${thousands}`) +
+      (decimalCount
+        ? decimal +
+          Math.abs(amount - ii)
+            .toFixed(decimalCount)
+            .slice(2)
+        : '')
+    );
+  } else if (currency == 'usd') {
+    const currencySign = 'U$D';
+    let amount = amountArg;
+    if (!isFinite(amount)) amount = 0;
+
+    decimalCount = Math.abs(decimalCount);
+    decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
+
+    const negativeSign = amount < 0 ? '-' : '';
+
+    const ii = parseInt((amount = Math.abs(Number(amount) || 0).toFixed(decimalCount))).toString();
+    const jj = ii.length > 3 ? ii.length % 3 : 0;
+
+    return (
+      currencySign +
+      ' ' +
+      negativeSign +
+      (jj ? ii.substring(0, jj) + thousands : '') +
+      ii.substring(jj).replace(/(\d{3})(?=\d)/g, `$1${thousands}`) +
+      (decimalCount
+        ? decimal +
+          Math.abs(amount - ii)
+            .toFixed(decimalCount)
+            .slice(2)
+        : '')
+    );
+  }
+  return 0;
+};

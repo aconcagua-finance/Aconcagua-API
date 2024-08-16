@@ -608,9 +608,9 @@ async function sendTemplateEmail(
       message: { subject: SUBJECT, text: null, html },
     });
 
-    console.log('Mail sen: (' + SUBJECT + ')');
+    console.log('Mail sent: (' + SUBJECT + ')');
   } catch (e) {
-    console.log('Mail not sended:', e.message, e.code, e.response, e.responseCode, e.command);
+    console.log('Mail not sent:', e.message, e.code, e.response, e.responseCode, e.command);
     throw e;
   }
 }
