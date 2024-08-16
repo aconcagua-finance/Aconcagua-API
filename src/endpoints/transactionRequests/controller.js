@@ -16,7 +16,11 @@ const { CustomError } = require('../../vs-core');
 
 const { Collections } = require('../../types/collectionsTypes');
 
-const { areEqualStringLists, areDeepEqualDocuments } = require('../../helpers/coreHelper');
+const {
+  areEqualStringLists,
+  areDeepEqualDocuments,
+  formatMoneyWithCurrency,
+} = require('../../helpers/coreHelper');
 
 const { setUserClaims } = require('../admin/controller');
 
@@ -232,92 +236,6 @@ exports.patch = async function (req, res) {
 
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
     console.log('requestToPatch ', requestToPatch);
-
-    if (
-      requestToPatch.requestStatus == TransactionRequestStatusTypes.REQUESTED &&
-      itemData.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE
-    ) {
-      console.log(
-        'Estado de la transacción era ',
-        requestToPatch.requestStatus,
-        ' y ahora es ',
-        itemData.requestStatus,
-        ' - Transacción Firmada'
-      );
-
-      const userOriginator = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: requestToPatch.createdBy,
-      });
-
-      const userActive = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: body.userId,
-      });
-
-      const userBorrower = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: requestToPatch.userId,
-      });
-
-      // companyId
-      const company = await fetchSingleItem({
-        collectionName: Collections.COMPANIES,
-        id: companyId,
-      });
-
-      const message =
-        company.name +
-        '.  Cliente ' +
-        userBorrower.firstName +
-        ' ' +
-        userBorrower.lastName +
-        '.  Bóveda ' +
-        requestToPatch.vaultId +
-        '.  Transacción por USD ' +
-        itemData.requestConversion.amountInUSD +
-        ' firmada por ' +
-        userActive.firstName +
-        ' ' +
-        userActive.lastName;
-
-      // Envío mail a admin y al lender
-      EmailSender.send({
-        to: SYS_ADMIN_EMAIL,
-        message: null,
-        template: {
-          name: 'mail-signature',
-          data: {
-            useroriginator: userOriginator.firstName,
-            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: itemData.requestConversion.amountInUSD,
-            lender: company.name,
-            vaultid: requestToPatch.vaultId,
-            tipodetransaccion: requestToPatch.transactionType,
-          },
-        },
-      });
-
-      // Envío mail a admin y
-      EmailSender.send({
-        to: userOriginator.email,
-        message: null,
-        template: {
-          name: 'mail-signature',
-          data: {
-            useroriginator: userOriginator.firstName,
-            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: itemData.requestConversion.amountInUSD,
-            lender: company.name,
-            vaultid: requestToPatch.vaultId,
-            tipodetransaccion: requestToPatch.transactionType,
-          },
-        },
-      });
-
-      console.log(message);
-    }
-
     console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
 
     return res.status(204).send(doc);
@@ -535,7 +453,12 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
 
   try {
     if (!companyId || !id) {
-      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS', null, 'Invalid args', null);
+      throw new CustomError.TechnicalError(
+        'lenderApproveTransactionRequest - ERROR_MISSING_ARGS',
+        null,
+        'Invalid args',
+        null
+      );
     }
 
     const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
@@ -543,11 +466,21 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
     console.log('existentTransactionRequest es ', existentTransactionRequest);
 
     if (!existentTransactionRequest) {
-      throw new CustomError.TechnicalError('ERROR_MISSING_ARGS2', null, 'Invalid args', null);
+      throw new CustomError.TechnicalError(
+        'lenderApproveTransactionRequest - ERROR_MISSING_ARGS2',
+        null,
+        'Invalid args',
+        null
+      );
     }
 
     if (existentTransactionRequest.companyId !== companyId) {
-      throw new CustomError.TechnicalError('MISSING_PERMISSIONS', null, 'Invalid args', null);
+      throw new CustomError.TechnicalError(
+        'lenderApproveTransactionRequest - MISSING_PERMISSIONS',
+        null,
+        'Invalid args',
+        null
+      );
     }
 
     console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
@@ -625,6 +558,14 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
       console.log('userBorrower es ', userBorrower);
       console.log('companyId es ', companyId);
 
+      const amountUSD = formatMoneyWithCurrency(
+        existentTransactionRequest.requestConversion.amountInUSD,
+        0,
+        undefined,
+        undefined,
+        'usd'
+      );
+
       const message =
         company.name +
         '.  Cliente ' +
@@ -634,7 +575,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
         '.  Bóveda: ' +
         existentTransactionRequest.vaultId +
         '. Transacción por USD ' +
-        existentTransactionRequest.requestConversion.amountInUSD +
+        amountUSD +
         ' firmada y aprobada por ' +
         userActive.firstName +
         ' ' +
@@ -648,10 +589,10 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.requestConversion.amountInUSD,
+            monto: amountUSD,
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
-            tipodetransaccion: existentTransactionRequest.transactionType,
+            transactiontype: existentTransactionRequest.transactionType,
           },
         },
       });
@@ -664,10 +605,10 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.requestConversion.amountInUSD,
+            monto: amountUSD,
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
-            tipodetransaccion: existentTransactionRequest.transactionType,
+            transactiontype: existentTransactionRequest.transactionType,
           },
         },
       });
@@ -683,3 +624,239 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
+exports.onRequestUpdate = functions.firestore
+  .document(COLLECTION_NAME + '/{docId}')
+  .onUpdate(async (change, context) => {
+    const { docId } = context.params;
+    const before = change.before.data();
+    const after = change.after.data();
+    console.log(
+      'onRequestUpdate Estado de la transacción era ',
+      before.requestStatus,
+      ' y ahora es ',
+      after.requestStatus
+    );
+
+    if (
+      before.requestStatus === TransactionRequestStatusTypes.PENDING_APPROVE &&
+      after.requestStatus === TransactionRequestStatusTypes.APPROVED &&
+      after.transactionType === 'liquidate'
+    ) {
+      console.log('withdraw - mando mails de liquidación ' + docId);
+
+      // const employee = await fetchSingleItem({ collectionName: Collections.USERS, id: after.auditUid });
+      // const lender = await fetchSingleItem({ collectionName: Collections.COMPANIES, id: after.companyId });
+      const borrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.userId,
+      });
+      const vault = await fetchSingleItem({
+        collectionName: Collections.VAULTS,
+        id: after.vaultId,
+      });
+
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: after.companyId,
+      });
+
+      await EmailSender.send({
+        to: borrower.email,
+        message: null,
+        template: {
+          name: 'mail-liquidate',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+            vaultType: vault.vaultType,
+            creditType: vault.creditType,
+          },
+        },
+      });
+
+      await EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-liquidate',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+            vaultType: vault.vaultType,
+            creditType: vault.creditType,
+          },
+        },
+      });
+
+      // Envio aviso al empleado que pidió la liquidación
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.createdBy,
+      });
+
+      await EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-liquidate',
+          data: {
+            username: userOriginator.firstName + ' ' + userOriginator.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+            vaultType: vault.vaultType,
+            creditType: vault.creditType,
+          },
+        },
+      });
+    }
+
+    if (
+      before.requestStatus === TransactionRequestStatusTypes.PENDING_APPROVE &&
+      after.requestStatus === TransactionRequestStatusTypes.APPROVED &&
+      after.transactionType === 'rescue'
+    ) {
+      console.log('rescue - mando mails de rescate ' + docId);
+
+      // const employee = await fetchSingleItem({ collectionName: Collections.USERS, id: after.auditUid });
+      // const lender = await fetchSingleItem({ collectionName: Collections.COMPANIES, id: after.companyId });
+      const borrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.userId,
+      });
+      const vault = await fetchSingleItem({
+        collectionName: Collections.VAULTS,
+        id: after.vaultId,
+      });
+
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: after.companyId,
+      });
+
+      await EmailSender.send({
+        to: borrower.email,
+        message: null,
+        template: {
+          name: 'mail-rescue',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+          },
+        },
+      });
+
+      await EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-rescue',
+          data: {
+            username: borrower.firstName + ' ' + borrower.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+          },
+        },
+      });
+
+      // Envio aviso al empleado que firmó la transacción
+      const userSigner = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.updatedBy,
+      });
+
+      await EmailSender.send({
+        to: userSigner.email,
+        message: null,
+        template: {
+          name: 'mail-rescue',
+          data: {
+            username: userSigner.firstName + ' ' + userSigner.lastName,
+            vaultId: vault.id,
+            lender: company.name,
+            value: after.amount,
+            currency: after.currency,
+          },
+        },
+      });
+    }
+
+    // Primera firma
+    if (
+      before.requestStatus == TransactionRequestStatusTypes.REQUESTED &&
+      after.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        after.requestStatus,
+        ' y ahora es ',
+        after.requestStatus,
+        ' - Transacción Firmada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.createdBy,
+      });
+
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: after.companyId,
+      });
+
+      const borrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: after.userId,
+      });
+
+      // Envío mail a admin y al lender
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-signature',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: borrower.firstName + ' ' + borrower.lastName,
+            monto: after.amount,
+            current: after.currency,
+            lender: company.name,
+            vaultid: after.vaultId,
+            tipodetransaccion: after.transactionType,
+          },
+        },
+      });
+      // TODO Esto debe ser al borrower
+      EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-signature',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: borrower.firstName + ' ' + borrower.lastName,
+            monto: after.amount,
+            current: after.currency,
+            lender: company.name,
+            vaultid: after.vaultId,
+            tipodetransaccion: after.transactionType,
+          },
+        },
+      });
+    }
+
+    return null;
+  });
