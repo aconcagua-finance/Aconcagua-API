@@ -348,6 +348,7 @@ configureApp(companiesApp);
 companiesRoutesConfig(companiesApp);
 exports.companies = functions
   .runWith({
+    timeoutSeconds: 540,
     // memory: "2GB",
     // Keep 5 instances warm for this latency-critical function
     // in production only. Default to 0 for test projects.
@@ -421,6 +422,7 @@ vaultTransactionsRoutesConfig(vaultTransactionsApp);
 exports.vaultTransactions = functions
   .runWith({
     memory: '2GB',
+    timeoutSeconds: 540,
     // Keep 5 instances warm for this latency-critical function
     // in production only. Default to 0 for test projects.
     // minInstances: envProjectId === "my-production-project" ? 5 : 0,
@@ -432,6 +434,7 @@ configureApp(transactionRequestsApp);
 transactionRequestsRoutesConfig(transactionRequestsApp);
 exports.transactionRequests = functions
   .runWith({
+    timeoutSeconds: 540,
     // memory: "2GB",
     // Keep 5 instances warm for this latency-critical function
     // in production only. Default to 0 for test projects.

@@ -163,7 +163,7 @@ exports.create = async function (req, res) {
     const endpoint = `${API_VAULT_ADMIN}/${body.safeLiq1}`;
     const apiResponse = await invoke_get_api({ endpoint });
 
-    if (!apiResponse || apiResponse.errors.length > 0) {
+    if (!apiResponse) {
       throw new CustomError.TechnicalError(
         'ERROR_API_VAULT_ADMIN_INVALID_RESPONSE',
         null,
@@ -172,9 +172,50 @@ exports.create = async function (req, res) {
       );
     }
 
-    body.vaultAdminAddress = apiResponse.data.proxyAdminAddress;
-    body.vaultAdminOwner = apiResponse.data.owner;
-    body.vaultAdminDeployment = apiResponse.data.contractDeployment;
+    // Verificar si hay error en la red Polygon
+    // Verificar si hay error en la red Polygon
+    if (
+      !apiResponse.data || // Verifica que el objeto `data` esté presente
+      !apiResponse.data.polygon || // Verifica que la respuesta de Polygon esté presente dentro de `data`
+      !apiResponse.data.polygon.proxyAdminAddress // Verifica si 'proxyAdminAddress' está presente en la respuesta de Polygon
+    ) {
+      const errorMessage = 'Error desconocido en la creación de ProxyAdmin en Polygon';
+
+      throw new CustomError.TechnicalError(
+        'ERROR_API_VAULT_ADMIN_INVALID_RESPONSE_POLYGON',
+        null,
+        errorMessage,
+        null
+      );
+    }
+
+    // Verificar si hay error en la red Rootstock (RSK)
+    if (
+      !apiResponse.data || // Verifica que el objeto `data` esté presente
+      !apiResponse.data.rootstock || // Verifica que la respuesta de Rootstock esté presente dentro de `data`
+      !apiResponse.data.rootstock.proxyAdminAddress // Verifica si 'proxyAdminAddress' está presente en la respuesta de Rootstock
+    ) {
+      const errorMessage = 'Error desconocido en la creación de ProxyAdmin en Rootstock';
+
+      throw new CustomError.TechnicalError(
+        'ERROR_API_VAULT_ADMIN_INVALID_RESPONSE_RSK',
+        null,
+        errorMessage,
+        null
+      );
+    }
+
+    // Si llegamos aquí, ambas redes (Polygon y Rootstock) fueron exitosas
+    console.log('ProxyAdmin creado con éxito en Polygon y Rootstock.');
+
+    // Guardar datos de Polygon y Rootstock en Firestore
+    body.vaultAdminAddressPolygon = apiResponse.data.polygon.proxyAdminAddress;
+    body.vaultAdminOwnerPolygon = apiResponse.data.polygon.owner;
+    body.vaultAdminDeploymentPolygon = apiResponse.data.polygon.contractDeployment;
+
+    body.vaultAdminAddressRootstock = apiResponse.data.rootstock.proxyAdminAddress;
+    body.vaultAdminOwnerRootstock = apiResponse.data.rootstock.owner;
+    body.vaultAdminDeploymentRootstock = apiResponse.data.rootstock.contractDeployment;
 
     const itemData = await sanitizeData({ data: body, validationSchema: schemas.create });
     const createArgs = { collectionName: COLLECTION_NAME, itemData, auditUid };
