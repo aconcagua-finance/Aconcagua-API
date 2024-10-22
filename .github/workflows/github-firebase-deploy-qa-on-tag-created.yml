@@ -36,8 +36,8 @@ env:
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar MEP/Bolsa'
   API_USD_VALUATION: 'http://us-central1-catedral-fb.cloudfunctions.net/scrapper/dolar-cripto'
   API_TOKENS_VALUATIONS: 'https://us-central1-catedral-fb.cloudfunctions.net/market/tokensQuotes'
-  API_EVALUATE_VAULTS: 'http://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/evaluate'
-  API_VAULT_ADMIN: 'http://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/vaultAdmin'
+  API_EVALUATE_VAULTS: 'https://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/evaluate'
+  API_VAULT_ADMIN: 'https://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/vaultAdmin'
 
 jobs:
   build-and-publish:
