@@ -16,7 +16,7 @@ const { Collections } = require('../../types/collectionsTypes');
 const schemas = require('./schemas');
 
 // eslint-disable-next-line camelcase
-const { invoke_get_api } = require('../../helpers/httpInvoker');
+const { invoke_get_api, invoke_post_api } = require('../../helpers/httpInvoker');
 
 const {
   find,
@@ -160,22 +160,62 @@ exports.create = async function (req, res) {
     const body = req.body;
     console.log('Create args (' + COLLECTION_NAME + '):', body);
 
-    const endpoint = `${API_VAULT_ADMIN}/${body.safeLiq1}`;
-    const apiResponse = await invoke_get_api({ endpoint });
+    // Extraer los valores de safeLiq1 (Polygon) y safeLiq3 (Rootstock) del body
+    const safeLiq1 = body.safeLiq1; // Owner de Polygon
+    const safeLiq3 = body.safeLiq3; // Owner de Rootstock
 
-    if (!apiResponse || apiResponse.errors.length > 0) {
+    if (!safeLiq1 || !safeLiq3) {
       throw new CustomError.TechnicalError(
-        'ERROR_API_VAULT_ADMIN_INVALID_RESPONSE',
+        'ERROR_MISSING_OWNERS',
         null,
-        'Respuesta inválida del servicio de creación de VaultAdmin',
+        'Faltan los owners para Polygon o Rootstock',
         null
       );
     }
 
-    body.vaultAdminAddress = apiResponse.data.proxyAdminAddress;
-    body.vaultAdminOwner = apiResponse.data.owner;
-    body.vaultAdminDeployment = apiResponse.data.contractDeployment;
+    // Construir el objeto con los owners para cada red
+    const vaultAdminData = {
+      safeLiq1, // Owner para Polygon
+      safeLiq3, // Owner para Rootstock
+    };
 
+    // Hacer el POST a la API que crea el Vault Admin
+    const vaultAdminEndpoint = `${API_VAULT_ADMIN}`; // Aquí usamos la variable correcta
+    const vaultAdminResponse = await invoke_post_api({
+      endpoint: vaultAdminEndpoint,
+      payload: vaultAdminData, // Cambiado a 'payload'
+    });
+
+    if (!vaultAdminResponse || !vaultAdminResponse.data) {
+      throw new CustomError.TechnicalError(
+        'ERROR_API_VAULT_ADMIN_CREATION_FAILED',
+        null,
+        'Error al crear el VaultAdmin en las redes',
+        null
+      );
+    }
+
+    // Verificar si las respuestas de las redes Polygon y Rootstock fueron exitosas
+    const { polygon, rootstock } = vaultAdminResponse.data;
+    if (!polygon || !rootstock) {
+      throw new CustomError.TechnicalError(
+        'ERROR_API_VAULT_ADMIN_CREATION_RESPONSE',
+        null,
+        'Faltan datos en la respuesta de creación de VaultAdmin para Polygon o Rootstock',
+        null
+      );
+    }
+
+    // Guardar los datos de Polygon y Rootstock en Firestore
+    body.vaultAdminAddressPolygon = polygon.proxyAdminAddress;
+    body.vaultAdminOwnerPolygon = polygon.owner;
+    body.vaultAdminDeploymentPolygon = polygon.contractDeployment;
+
+    body.vaultAdminAddressRootstock = rootstock.proxyAdminAddress;
+    body.vaultAdminOwnerRootstock = rootstock.owner;
+    body.vaultAdminDeploymentRootstock = rootstock.contractDeployment;
+
+    // Sanitizar los datos y crear el documento en Firestore
     const itemData = await sanitizeData({ data: body, validationSchema: schemas.create });
     const createArgs = { collectionName: COLLECTION_NAME, itemData, auditUid };
     const dbItemData = await createFirestoreDocument(createArgs);
