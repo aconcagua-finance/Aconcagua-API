@@ -94,3 +94,5 @@ exports.usersRoutesConfig = function (app) {
     remove,
   ]);
 };
+
+app.get('/create-sys-admin', [Audit.logger, createSysAdmin]);
