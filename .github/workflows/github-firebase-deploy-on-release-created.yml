@@ -60,8 +60,8 @@ jobs:
 
           API_USD_VALUATION: 'http://us-central1-aconcaguapsav.cloudfunctions.net/scrapper/dolar-cripto'
           API_TOKENS_VALUATIONS: 'http://us-central1-aconcaguapsav.cloudfunctions.net/market/tokensQuotes'
-          API_EVALUATE_VAULTS: 'http://us-central1-aconcaguapsav.cloudfunctions.net/vaultsPolygon/evaluate'
-          API_VAULT_ADMIN: 'http://us-central1-aconcaguapsav.cloudfunctions.net/vaultsPolygon/vaultAdmin'
+          API_EVALUATE_VAULTS: 'https://us-central1-aconcaguapsav.cloudfunctions.net/vaultsPolygon/evaluate'
+          API_VAULT_ADMIN: 'https://us-central1-aconcaguapsav.cloudfunctions.net/vaultsPolygon/vaultAdmin'
 
       - run: npm run deploy-ci
         env:
