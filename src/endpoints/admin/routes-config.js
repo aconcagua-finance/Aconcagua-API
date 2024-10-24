@@ -55,7 +55,4 @@ exports.adminRoutesConfig = function (app) {
     Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     setUserPassword,
   ]);
-
-  // Función para crear el primer admin
-  app.get('/create-sys-admin', [Audit.logger, createSysAdmin]);
 };
