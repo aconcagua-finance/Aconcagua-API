@@ -1,12 +1,6 @@
 /* eslint-disable no-console */
 const admin = require('firebase-admin');
 
-const { createFirestoreDocument } = require('../baseEndpoint');
-const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
-const { Collections } = require('../../types/collectionsTypes');
-const { Types } = require('../../vs-core');
-const { UserStatusTypes } = require('../../types/userStatusTypes');
-
 const { ErrorHelper } = require('../../vs-core-firebase');
 
 // Para correr función de sysadmin
@@ -157,4 +151,3 @@ exports.createSysAdmin = async function (req, res) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
-
