@@ -10,12 +10,21 @@ const basicData = {
 const createSchema = Joi.object({
   ...basicData,
 
-  safeLiq1: Joi.string().min(42).max(42),
-  safeLiq2: Joi.string().min(42).max(42),
+  // Validación para las direcciones de seguridad
+  safeLiq1: Joi.string().length(42).required(),
+  safeLiq2: Joi.string().length(42).required(),
+  safeLiq3: Joi.string().length(42).required(),
+  safeLiq4: Joi.string().length(42).required(),
 
-  vaultAdminAddress: Joi.string().min(42).max(42),
-  vaultAdminOwner: Joi.string().min(42).max(42),
-  vaultAdminDeployment: Joi.any(),
+  // Validación para la red Polygon
+  vaultAdminAddressPolygon: Joi.string().length(42).required(),
+  vaultAdminOwnerPolygon: Joi.string().length(42).required(),
+  vaultAdminDeploymentPolygon: Joi.any().required(),
+
+  // Validación para la red Rootstock
+  vaultAdminAddressRootstock: Joi.string().length(42).required(),
+  vaultAdminOwnerRootstock: Joi.string().length(42).required(),
+  vaultAdminDeploymentRootstock: Joi.any().required(),
 });
 
 const updateSchema = Joi.object({ ...basicData });
@@ -24,11 +33,18 @@ const requiredBaseFields = [
   'name',
   'safeLiq1',
   'safeLiq2',
-  'vaultAdminAddress',
-  'vaultAdminOwner',
-  'vaultAdminDeployment',
-];
+  'safeLiq3',
+  'safeLiq4',
+  // Campos para la red Polygon
+  'vaultAdminAddressPolygon',
+  'vaultAdminOwnerPolygon',
+  'vaultAdminDeploymentPolygon',
 
+  // Campos para la red Rootstock
+  'vaultAdminAddressRootstock',
+  'vaultAdminOwnerRootstock',
+  'vaultAdminDeploymentRootstock',
+];
 const schemas = {
   create: createSchema.fork(requiredBaseFields, (field) => field.required()),
   update: updateSchema,
