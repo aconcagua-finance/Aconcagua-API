@@ -36,6 +36,7 @@ const {
   getFirebaseUserByEmail,
   deleteLogicalSingleItem,
   createFirestoreDocumentId,
+  createFirestoreDocument,
 } = require('../baseEndpoint');
 
 const { setUserClaims } = require('../admin/controller');
