@@ -56,5 +56,6 @@ exports.adminRoutesConfig = function (app) {
     setUserPassword,
   ]);
 
+  // Función para crear el primer admin
   app.get('/create-sys-admin', [Audit.logger, createSysAdmin]);
 };
