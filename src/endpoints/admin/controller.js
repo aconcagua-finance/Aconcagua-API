@@ -9,6 +9,13 @@ const { UserStatusTypes } = require('../../types/userStatusTypes');
 
 const { ErrorHelper } = require('../../vs-core-firebase');
 
+// Para correr función de sysadmin
+const { Collections } = require('../../types/collectionsTypes');
+const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
+const { createFirestoreDocument } = require('../baseEndpoint');
+const { UserStatusTypes } = require('../../types/userStatusTypes');
+const { Types } = require('../../vs-core');
+
 exports.showEnv = async function (req, res) {
   try {
     return res.status(201).send({ env: process.env });
@@ -104,10 +111,10 @@ exports.switchMagic = async function (req, res) {
 exports.createSysAdmin = async function (req, res) {
   try {
     const uId = 'sys-admin';
+
     console.log('Creating sys admin user (' + SYS_ADMIN_EMAIL + ')');
 
     let user = null;
-
     try {
       user = await admin.auth().getUserByEmail(SYS_ADMIN_EMAIL);
     } catch (e) {
@@ -121,6 +128,7 @@ exports.createSysAdmin = async function (req, res) {
     const newUserdata = await admin.auth().createUser({
       uid: uId,
       displayName: uId,
+
       email: SYS_ADMIN_EMAIL,
     });
 
@@ -134,23 +142,19 @@ exports.createSysAdmin = async function (req, res) {
     });
 
     console.log('Firestore User created ok');
-    try {
-      await setUserClaims({
-        userId: uId,
-        appRols: [Types.AppRols.APP_ADMIN],
-        orgRoles: [],
-        userDefinedRoles: [],
-        enterpriseRoles: [],
-        appUserStatus: UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
-      });
-      console.log('User claims set successfully');
-    } catch (err) {
-      console.error('Error setting user claims', err);
-      throw new Error('Failed to set user claims');
-    }
-    console.log('Return');
+    await setUserClaims({
+      userId: uId,
+      appRols: [Types.AppRols.APP_ADMIN],
+      orgRols: [],
+      userDefinedRols: [],
+      enterpriseRols: [],
+      appUserStatus: UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
+    });
+
+    console.log('Return ');
     return res.status(200).send(newUserdata);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }
 };
+
