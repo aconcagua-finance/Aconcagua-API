@@ -26,11 +26,12 @@ exports.invoke_post_api = async function ({ endpoint, payload, noTrace }) {
     };
 
     if (spanId) config.headers.spanid = spanId;
-
+    console.log(' invoke_post_api ahora llamo a HttpClient.httpPost');
     result = await HttpClient.httpPost(apiUrl, {
       data: payload,
       ...config,
     });
+    console.log(' invoke_post_api result.data vale - ', result.data);
 
     // Calculate the difference in milliseconds
     const difference_ms = new Date().getTime() - traceStart.getTime();

@@ -62,38 +62,39 @@ jobs:
           API_TOKENS_VALUATIONS: 'http://us-central1-aconcaguapsav.cloudfunctions.net/market/tokensQuotes'
           API_EVALUATE_VAULTS: 'http://us-central1-aconcaguapsav.cloudfunctions.net/vaultsPolygon/evaluate'
           API_VAULT_ADMIN: 'http://us-central1-aconcaguapsav.cloudfunctions.net/vaultsPolygon/vaultAdmin'
-#      - run: npm run deploy-ci
-#        env:
-#          FIREBASE_SERVICE_ACCOUNT_KEY: ${{secrets.FIREBASE_SERVICE_ACCOUNT_KEY}}
-#          FIREB_PROJECT_ID: 'aconcagua-365314'
-#          FIREB_API_KEY: 'AIzaSyCVjVkwUc63D9ES6AVwPCEahJHw1ky978Q'
-#          FIREB_AUTH_DOMAIN: 'aconcagua-365314.firebaseapp.com'
-#          FIREB_STORAGE_BUCKET: 'aconcagua-365314.appspot.com'
-#          FIREB_MESSAGING_SENDER_ID: 101110014661
-#          FIREB_APP_ID: '1:101110014661:web:137167add231676d4846ac'
-#          FIREB_MEASURAMENT_ID: 'G-4EP13854VS'
-#
-#          GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/googleOAuth/oauth2callback'
-#          GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/userCalendarEvents/google-event-webhook'
-#
-#          API_USD_VALUATION: 'http://us-central1-aconcagua-365314.cloudfunctions.net/scrapper/dolar-cripto'
-#          API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
-#          API_EVALUATE_VAULTS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/vaultsPolygon/evaluate'
-#          API_VAULT_ADMIN: 'http://us-central1-aconcagua-365314.cloudfunctions.net/vaultsPolygon/vaultAdmin'
 
-# publish-gpr:
-#   needs: build
-#   runs-on: ubuntu-latest
-#   permissions:
-#     contents: read
-#     packages: write
-#   steps:
-#     - uses: actions/checkout@v2
-#     - uses: actions/setup-node@v2
-#       with:
-#         node-version: 14
-#         registry-url: https://npm.pkg.github.com/
-#     - run: npm ci
+      - run: npm run deploy-ci
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{secrets.FIREBASE_SERVICE_ACCOUNT_KEY}}
+          FIREB_PROJECT_ID: 'aconcagua-365314'
+          FIREB_API_KEY: 'AIzaSyCVjVkwUc63D9ES6AVwPCEahJHw1ky978Q'
+          FIREB_AUTH_DOMAIN: 'aconcagua-365314.firebaseapp.com'
+          FIREB_STORAGE_BUCKET: 'aconcagua-365314.appspot.com'
+          FIREB_MESSAGING_SENDER_ID: 101110014661
+          FIREB_APP_ID: '1:101110014661:web:137167add231676d4846ac'
+          FIREB_MEASURAMENT_ID: 'G-4EP13854VS'
 
-#       env:
-#         NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GOOGLE_OAUTH_REDIRECT_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/googleOAuth/oauth2callback'
+          GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-aconcagua-365314.cloudfunctions.net/userCalendarEvents/google-event-webhook'
+
+          API_USD_VALUATION: 'http://us-central1-aconcagua-365314.cloudfunctions.net/scrapper/dolar-cripto'
+          API_TOKENS_VALUATIONS: 'http://us-central1-aconcagua-365314.cloudfunctions.net/market/tokensQuotes'
+          API_EVALUATE_VAULTS: 'https://us-central1-aconcagua-365314.cloudfunctions.net/vaultsPolygon/evaluate'
+          API_VAULT_ADMIN: 'https://us-central1-aconcagua-365314.cloudfunctions.net/vaultsPolygon/vaultAdmin'
+
+  # publish-gpr:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 14
+  #         registry-url: https://npm.pkg.github.com/
+  #     - run: npm ci
+
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
