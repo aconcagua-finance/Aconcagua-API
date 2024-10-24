@@ -3,6 +3,13 @@ const admin = require('firebase-admin');
 
 const { ErrorHelper } = require('../../vs-core-firebase');
 
+// Para correr función de sysadmin
+const { Collections } = require('../../types/collectionsTypes');
+const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
+const { createFirestoreDocument } = require('../baseEndpoint');
+const { UserStatusTypes } = require('../../types/userStatusTypes');
+const { Types } = require('../../vs-core');
+
 exports.showEnv = async function (req, res) {
   try {
     return res.status(201).send({ env: process.env });
@@ -90,6 +97,56 @@ exports.switchMagic = async function (req, res) {
     }
 
     return res.status(200).send();
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.createSysAdmin = async function (req, res) {
+  try {
+    const uId = 'sys-admin';
+
+    console.log('Creating sys admin user (' + SYS_ADMIN_EMAIL + ')');
+
+    let user = null;
+    try {
+      user = await admin.auth().getUserByEmail(SYS_ADMIN_EMAIL);
+    } catch (e) {
+      console.log('User not found, proceed');
+    }
+
+    if (user) {
+      throw new Error('Duplicated user');
+    }
+
+    const newUserdata = await admin.auth().createUser({
+      uid: uId,
+      displayName: uId,
+
+      email: SYS_ADMIN_EMAIL,
+    });
+
+    console.log('Firebase Auth User created ok');
+
+    await createFirestoreDocument({
+      collectionName: Collections.USERS,
+      itemData: { email: SYS_ADMIN_EMAIL },
+      auditUid: uId,
+      documentId: uId,
+    });
+
+    console.log('Firestore User created ok');
+    await setUserClaims({
+      userId: uId,
+      appRols: [Types.AppRols.APP_ADMIN],
+      orgRols: [],
+      userDefinedRols: [],
+      enterpriseRols: [],
+      appUserStatus: UserStatusTypes.USER_STATUS_TYPE_ACTIVE,
+    });
+
+    console.log('Return ');
+    return res.status(200).send(newUserdata);
   } catch (err) {
     return ErrorHelper.handleError(req, res, err);
   }

@@ -7,6 +7,7 @@ const {
   setUserProps,
   setUserPassword,
   switchMagic,
+  createSysAdmin,
 } = require('./controller');
 
 const { Types } = require('../../vs-core');
@@ -54,4 +55,6 @@ exports.adminRoutesConfig = function (app) {
     Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     setUserPassword,
   ]);
+
+  app.get('/create-sys-admin', [Audit.logger, createSysAdmin]);
 };
