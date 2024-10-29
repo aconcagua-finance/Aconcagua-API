@@ -11,8 +11,6 @@ const envVariablesMap = {
   DEPLOYER_PRIVATE_KEY_ROOTSTOCK,
 };
 
-const hre = require('hardhat');
-
 function isBasicAddressFormat(address) {
   // Verifica que el valor sea un string, comience con "0x", tenga 42 caracteres y sea hexadecimal
   const isValidHex = /^(0x)?[0-9a-fA-F]{40}$/i.test(address);
