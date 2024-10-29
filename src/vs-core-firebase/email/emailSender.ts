@@ -1,3 +1,5 @@
+import { getEnvVariable } from '../helpers/envGetter';
+
 const admin = require('firebase-admin');
 
 // import * as Config from '../config';
@@ -29,12 +31,22 @@ export type EmailData = {
 };
 
 export class EmailSender {
-  // static defaultProps: LoggerConfigProps = {
-  //   debug: false,
-  //   info: true,
-  // };
+  static async send(data: EmailData) {
+    try {
+      // Obtener el valor de SEND_EMAIL usando la función que trae las variables de ambiente
+      const sendEmailFlag = await getEnvVariable('SEND_EMAIL');
 
-  static send(data: EmailData) {
-    admin.firestore().collection('mail').add(data);
+      // Si SEND_EMAIL es 'FALSE', no se envía el email
+      if (sendEmailFlag && sendEmailFlag.toUpperCase() === 'FALSE') {
+        console.log('El envío de correos está deshabilitado. No se enviará el correo.');
+        return; // Termina la ejecución sin enviar el email
+      }
+
+      // Si SEND_EMAIL es 'TRUE' o no está definida, procede con el envío
+      await admin.firestore().collection('mail').add(data);
+      console.log('Correo enviado con éxito.');
+    } catch (error) {
+      console.error('Error al obtener la variable SEND_EMAIL o al enviar el correo:', error);
+    }
   }
 }
