@@ -252,21 +252,58 @@ exports.remove = async function (req, res) {
 
   if (!companyId || !targetUserId) {
     throw new CustomError.TechnicalError(
-      'ERROR_CREATE_EMPLOYEE',
+      'ERROR_REMOVE_EMPLOYEE',
       null,
-      'Error creating employee. Missing args',
+      'Error removing employee. Missing args',
       null
     );
   }
 
-  await fetchAndUpdateUserEnterpriseRols({
-    auditUid,
-    userId: targetUserId,
-    companyId,
-    enterpriseRols: null,
-  });
+  try {
+    // Actualizar roles empresariales
+    await fetchAndUpdateUserEnterpriseRols({
+      auditUid,
+      userId: targetUserId,
+      companyId,
+      enterpriseRols: null, // Indica que la relación con esta empresa se elimina
+    });
 
-  await remove(req, res, Collections.COMPANY_EMPLOYEES);
+    // Remover la relación
+    await remove(req, res, Collections.COMPANY_EMPLOYEES);
+
+    // Verificar si el usuario tiene más relaciones activas
+    const activeRelationships = await listByPropInner({
+      filters: {
+        userId: { $equal: targetUserId },
+        state: { $equal: Types.StateTypes.STATE_ACTIVE },
+      },
+      listByCollectionName: Collections.COMPANY_EMPLOYEES,
+    });
+
+    // Si no hay relaciones activas, eliminar el rol APP_LENDER
+    if (!activeRelationships.items.length) {
+      const targetUser = await getFirebaseUserById(targetUserId);
+
+      if (targetUser.appRols.includes(Types.AppRols.APP_LENDER)) {
+        targetUser.appRols = targetUser.appRols.filter((rol) => rol !== Types.AppRols.APP_LENDER);
+
+        // Actualizar los roles del usuario
+        await updateSingleItem({
+          collectionName: Collections.USERS,
+          auditUid,
+          id: targetUserId,
+          data: { appRols: targetUser.appRols },
+        });
+
+        console.log('APP_LENDER role removed from user:', targetUserId);
+      }
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    console.error('Error in remove COMPANY_EMPLOYEES:', err);
+    return ErrorHelper.handleError(req, res, err);
+  }
 };
 
 const fetchAndUpdateUserEnterpriseRols = async ({

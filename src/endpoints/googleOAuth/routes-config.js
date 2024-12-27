@@ -9,7 +9,7 @@ exports.googleOAuthRoutesConfig = function (app) {
     Audit.logger,
     // Auth.isAuthenticated,
     // Auth.isAuthorized({
-    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     // }),
     oauth2init,
   ]);
@@ -17,7 +17,7 @@ exports.googleOAuthRoutesConfig = function (app) {
     Audit.logger,
     // Auth.isAuthenticated,
     // Auth.isAuthorized({
-    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     // }),
     oauth2callback,
   ]);
@@ -26,7 +26,7 @@ exports.googleOAuthRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     }),
     get,
   ]);
@@ -35,7 +35,7 @@ exports.googleOAuthRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     }),
     find,
   ]);
@@ -43,7 +43,7 @@ exports.googleOAuthRoutesConfig = function (app) {
   app.post('/', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     create,
   ]);
 

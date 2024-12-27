@@ -22,7 +22,7 @@ exports.vaultTransactionsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
     }),
     findByCompany,
@@ -33,7 +33,7 @@ exports.vaultTransactionsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
       allowSameUser: true,
     }),
@@ -44,7 +44,7 @@ exports.vaultTransactionsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
     }),
     findByUser,
@@ -55,7 +55,7 @@ exports.vaultTransactionsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       // hasEnterpriseRole: enumValuesToArray(Types.EnterpriseRols),
       isEnterpriseEmployee: true,
     }),

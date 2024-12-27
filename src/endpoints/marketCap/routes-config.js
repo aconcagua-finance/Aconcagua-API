@@ -17,7 +17,7 @@ exports.marketCapRoutesConfig = function (app) {
     // Audit.logger,
     // Auth.isAuthenticated,
     // Auth.isAuthorized({
-    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     // }),
     fetchAndUpdateUSDValuation,
   ]);
@@ -26,7 +26,7 @@ exports.marketCapRoutesConfig = function (app) {
     // Audit.logger,
     // Auth.isAuthenticated,
     // Auth.isAuthorized({
-    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     // }),
     fetchAndUpdateTokensValuations,
   ]);
@@ -63,7 +63,7 @@ exports.marketCapRoutesConfig = function (app) {
   app.post('/', [
     Audit.logger,
     Auth.isAuthenticated,
-    // Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    // Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     create,
   ]);

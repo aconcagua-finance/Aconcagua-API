@@ -10,14 +10,14 @@ exports.providersRoutesConfig = function (app) {
   app.get('/:id', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     get,
   ]);
 
   app.get('/', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     all,
   ]);
 

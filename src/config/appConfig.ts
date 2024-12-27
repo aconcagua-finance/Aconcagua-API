@@ -43,3 +43,5 @@ export const API_USD_VALUATION = Config.getEnvConfig('API_USD_VALUATION');
 export const API_TOKENS_VALUATIONS = Config.getEnvConfig('API_TOKENS_VALUATIONS');
 export const API_EVALUATE_VAULTS = Config.getEnvConfig('API_EVALUATE_VAULTS');
 export const API_VAULT_ADMIN = Config.getEnvConfig('API_VAULT_ADMIN');
+
+export const CONFIG_NETWORK_COLLECTION = Config.getEnvConfig('CONFIG_NETWORK_COLLECTION');

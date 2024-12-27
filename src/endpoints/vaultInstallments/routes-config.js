@@ -20,7 +20,7 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
       allowSameUser: true,
     }),
@@ -32,7 +32,7 @@ exports.vaultInstallmentsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       // hasEnterpriseRole: enumValuesToArray(Types.EnterpriseRols),
       isEnterpriseEmployee: true,
     }),

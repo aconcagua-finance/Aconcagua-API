@@ -6,7 +6,7 @@ const {
   createBorrowerTransactionRequest,
   createLenderTransactionRequest,
   lenderApproveTransactionRequest,
-
+  borrowerApproveTransactionRequest,
   find,
   findByCompany,
   findByVault,
@@ -23,7 +23,7 @@ exports.transactionRequestsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
     }),
     find,
   ]);
@@ -33,7 +33,7 @@ exports.transactionRequestsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
     }),
     findByCompany,
@@ -43,7 +43,7 @@ exports.transactionRequestsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
       allowSameUser: true,
     }),
@@ -55,7 +55,7 @@ exports.transactionRequestsRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       // hasEnterpriseRole: enumValuesToArray(Types.EnterpriseRols),
       isEnterpriseEmployee: true,
     }),
@@ -71,6 +71,17 @@ exports.transactionRequestsRoutesConfig = function (app) {
       allowSameUser: true,
     }),
     createBorrowerTransactionRequest,
+  ]);
+
+    // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
+    app.post('/borrower-approve/:companyId/:userId/:id', [
+      Audit.logger,
+      Auth.isAuthenticated,
+      Auth.isAuthorized({
+        hasAppRole: [Types.AppRols.APP_ADMIN],
+        allowSameUser: true,
+      }),
+    borrowerApproveTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.

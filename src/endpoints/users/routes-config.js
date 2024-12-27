@@ -18,12 +18,12 @@ const { Types } = require('../../vs-core');
 exports.usersRoutesConfig = function (app) {
   app.post('/normalizePermissions', [
     Audit.logger,
-    // Auth.isAuthenticated,
-    // Auth.isAuthorized({
-    //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
-    //   allowStaffRelationship: true,
-    //   allowSameUser: true,
-    // }),
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      allowStaffRelationship: true,
+      allowSameUser: true,
+    }),
     normalizePermissions,
   ]);
 
@@ -34,7 +34,7 @@ exports.usersRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       allowStaffRelationship: true,
       allowSameUser: true,
     }),
