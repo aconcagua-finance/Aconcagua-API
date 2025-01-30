@@ -5,6 +5,8 @@
 const admin = require('firebase-admin');
 const { Types } = require('../../vs-core');
 
+const { DelegateRelationshipTypes } = Types;
+
 export const userIsGranted = function ({
   userAppRols,
   userEnterpriseRols,

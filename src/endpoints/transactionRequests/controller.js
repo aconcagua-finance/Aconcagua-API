@@ -314,10 +314,10 @@ exports.createLenderTransactionRequest = async function (req, res) {
 
     if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
 
-    const requestAmount = itemData.amount; 
-    let requestCurrency = itemData.currency; 
+    const requestAmount = itemData.amount;
+    let requestCurrency = itemData.currency;
 
-    if (!itemData.currency) { requestCurrency = arsCurrency }; 
+    if (!itemData.currency) {requestCurrency = arsCurrency}
 
     // Calculate ARS value of request
     if (requestCurrency.toLowerCase() !== arsCurrency.toLowerCase()) {
@@ -325,7 +325,7 @@ exports.createLenderTransactionRequest = async function (req, res) {
         return balance.currency.toLowerCase() === requestCurrency.toLowerCase();
       });
       if (tokenBalance) {
-        const tokenArsValue = tokenBalance.valuations.find(v => v.currency.toLowerCase() === 'ars')?.value;
+        const tokenArsValue = tokenBalance.valuations.find((valuation) => valuation.currency.toLowerCase() === 'ars')?.value;
         const lastARStokenPrice = tokenArsValue / tokenBalance.balance;
         requestArsValue = requestAmount * lastARStokenPrice;
       }
@@ -381,7 +381,7 @@ exports.createLenderTransactionRequest = async function (req, res) {
     console.log('VALIDATION 2 PASSED');
 
     // 3. Valido que el monto de la transacción no sea negativo o cero
-    if (requestAmount <= 0) { 
+    if (requestAmount <= 0) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_INVALID_AMOUNT',
         null,
@@ -493,7 +493,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     const requestArsAmount = itemData.amount; // Monto de la transacción en ARS
     let requestCurrency = itemData.currency; // Moneda de la transacción
 
-    if (!itemData.currency) { requestCurrency = arsCurrency }; // Si no se especifica la moneda, se asume ARS
+    if (!itemData.currency) {requestCurrency = arsCurrency} // Si no se especifica la moneda, se asume ARS
 
     // Calculate ARS value of request
     if (requestCurrency.toLowerCase() !== arsCurrency.toLowerCase()) {
@@ -501,7 +501,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
         return balance.currency.toLowerCase() === requestCurrency.toLowerCase();
       });
       if (tokenBalance) {
-        const tokenArsValue = tokenBalance.valuations.find(v => v.currency.toLowerCase() === 'ars')?.value;
+        const tokenArsValue = tokenBalance.valuations.find((valuation) => valuation.currency.toLowerCase() === 'ars')?.value;
         const lastARStokenPrice = tokenArsValue / tokenBalance.balance;
         requestArsValue = requestArsAmount * lastARStokenPrice;
       }
@@ -545,7 +545,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     }
 
     // 3. Valido que el monto de la transacción no sea negativo o cero
-    if (requestArsAmount <= 0) { 
+    if (requestArsAmount <= 0) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_INVALID_AMOUNT',
         null,
@@ -563,7 +563,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
         null
       );
     }
-    
+
     // 5. Si es una liquidación, valido que el monto de la transacción no exceda el crédito
     if (itemData.transactionType === 'liquidate' && requestArsAmount > arsCredit) {
       throw new CustomError.TechnicalError(
