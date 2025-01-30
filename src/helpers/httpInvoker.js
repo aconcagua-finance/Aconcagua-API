@@ -28,8 +28,8 @@ exports.invoke_post_api = async function ({ endpoint, payload, noTrace }) {
     if (spanId) config.headers.spanid = spanId;
     console.log(' invoke_post_api ahora llamo a HttpClient.httpPost');
     result = await HttpClient.httpPost(apiUrl, {
-      data: payload,
       ...config,
+      ...payload
     });
     console.log(' invoke_post_api result.data vale - ', result.data);
 

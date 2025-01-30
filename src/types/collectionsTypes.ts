@@ -3,6 +3,7 @@ export enum Collections {
   USERS = 'users',
   PRODUCTS = 'products',
   STAFF = 'staff',
+  DELEGATES = 'delegates',
   USER_TOUCHPOINTS = 'userTouchpoints',
   ATTACHMENTS = 'attachments',
   USERS_BY_STAFF = 'usersByStaff',

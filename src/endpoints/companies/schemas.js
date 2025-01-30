@@ -1,10 +1,12 @@
 const Joi = require('joi');
+const { CompanyTypes } = require('../../vs-core/types');
 
 const basicData = {
   name: Joi.string().min(2).max(100),
   description: Joi.string().allow(''),
   notes: Joi.string().allow(''),
   attachments: Joi.any(),
+  companyType: Joi.string().valid(CompanyTypes.TRUST, CompanyTypes.LENDER),
 };
 
 const createSchema = Joi.object({
@@ -35,6 +37,7 @@ const requiredBaseFields = [
   'safeLiq2',
   'safeLiq3',
   'safeLiq4',
+  'companyType',
   // Campos para la red Polygon
   'vaultAdminAddressPolygon',
   'vaultAdminOwnerPolygon',

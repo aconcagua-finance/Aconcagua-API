@@ -8,3 +8,5 @@ export * from './creditTypes';
 export * from './loanStatusTypes';
 export * from './currencyTypes';
 export * from './serviceLevels';
+export * from './delegateRelationshipTypes';
+export * from './companyTypes';

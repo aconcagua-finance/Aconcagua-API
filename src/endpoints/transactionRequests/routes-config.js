@@ -10,6 +10,7 @@ const {
   find,
   findByCompany,
   findByVault,
+  trustApproveTransactionRequest,
 } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
@@ -104,6 +105,17 @@ exports.transactionRequestsRoutesConfig = function (app) {
       isEnterpriseEmployee: true,
     }),
     lenderApproveTransactionRequest,
+  ]);
+
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
+  app.post('/trust-approve/:companyId/:id', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      isEnterpriseEmployee: true,
+    }),
+    trustApproveTransactionRequest,
   ]);
 
   // actualiza un elemento relacionado a la empresa enviada

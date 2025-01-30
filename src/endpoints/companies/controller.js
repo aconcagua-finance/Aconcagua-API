@@ -175,15 +175,17 @@ exports.create = async function (req, res) {
 
     // Construir el objeto con los owners para cada red
     const vaultAdminData = {
-      safeLiq1, // Owner para Polygon
-      safeLiq3, // Owner para Rootstock
+      data: { // Nest the data properly for the API call
+        safeLiq1, // Owner para Polygon
+        safeLiq3, // Owner para Rootstock
+      }
     };
 
     // Hacer el POST a la API que crea el Vault Admin
-    const vaultAdminEndpoint = `${API_VAULT_ADMIN}`; // Aquí usamos la variable correcta
+    const vaultAdminEndpoint = `${API_VAULT_ADMIN}`;
     const vaultAdminResponse = await invoke_post_api({
       endpoint: vaultAdminEndpoint,
-      payload: vaultAdminData, // Cambiado a 'payload'
+      payload: vaultAdminData,
     });
 
     if (!vaultAdminResponse || !vaultAdminResponse.data) {
