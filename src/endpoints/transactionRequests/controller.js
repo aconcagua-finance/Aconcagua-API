@@ -317,7 +317,9 @@ exports.createLenderTransactionRequest = async function (req, res) {
     const requestAmount = itemData.amount;
     let requestCurrency = itemData.currency;
 
-    if (!itemData.currency) {requestCurrency = arsCurrency}
+    if (!itemData.currency) {
+      requestCurrency = arsCurrency;
+    }
 
     // Calculate ARS value of request
     if (requestCurrency.toLowerCase() !== arsCurrency.toLowerCase()) {
@@ -325,7 +327,9 @@ exports.createLenderTransactionRequest = async function (req, res) {
         return balance.currency.toLowerCase() === requestCurrency.toLowerCase();
       });
       if (tokenBalance) {
-        const tokenArsValue = tokenBalance.valuations.find((valuation) => valuation.currency.toLowerCase() === 'ars')?.value;
+        const tokenArsValue = tokenBalance.valuations.find(
+          (valuation) => valuation.currency.toLowerCase() === 'ars'
+        )?.value;
         const lastARStokenPrice = tokenArsValue / tokenBalance.balance;
         requestArsValue = requestAmount * lastARStokenPrice;
       }
@@ -343,7 +347,10 @@ exports.createLenderTransactionRequest = async function (req, res) {
     // Validaciones
     // 1. Valido que el monto de la transacción en ARS no exceda el saldo disponible
     // Esto aplica para los requests que son aprobados por el administrador que determina en que token se hará la transacción
-    if (requestCurrency.toLowerCase() === arsCurrency.toLowerCase() && (requestAmount > arsDepositsAmount)) {
+    if (
+      requestCurrency.toLowerCase() === arsCurrency.toLowerCase() &&
+      requestAmount > arsDepositsAmount
+    ) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
         null,
@@ -395,7 +402,7 @@ exports.createLenderTransactionRequest = async function (req, res) {
     // 4. Valido que el monto de la transacción no deje la bóveda sin colateral
     if (arsDepositsAmount - requestArsValue < arsCredit) {
       throw new CustomError.TechnicalError(
-      'ERROR_CREATE_INVALID_AMOUNT',
+        'ERROR_CREATE_INVALID_AMOUNT',
         null,
         'Monto de la transacción no puede dejar la bóveda sin colateral',
         null
@@ -482,7 +489,6 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
 
     let arsDepositsAmount = 0;
     const arsCredit = vault.amount || 0;
-    let requestArsValue = 0;
 
     const arsBalanceItem = vault.balances.find((balance) => {
       return balance.currency === arsCurrency && balance.isValuation;
@@ -490,29 +496,38 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
 
     if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
 
-    const requestArsAmount = itemData.amount; // Monto de la transacción en ARS
+    let requestArsAmount = itemData.amount; // Monto de la transacción en ARS
     let requestCurrency = itemData.currency; // Moneda de la transacción
 
-    if (!itemData.currency) {requestCurrency = arsCurrency} // Si no se especifica la moneda, se asume ARS
+    if (!itemData.currency) {
+      requestCurrency = arsCurrency;
+    } // Si no se especifica la moneda, se asume ARS
 
     // Calculate ARS value of request
+    console.log('requestCurrency ', requestCurrency);
+    console.log('arsCurrency ', arsCurrency);
     if (requestCurrency.toLowerCase() !== arsCurrency.toLowerCase()) {
       const tokenBalance = vault.balances.find((balance) => {
         return balance.currency.toLowerCase() === requestCurrency.toLowerCase();
       });
       if (tokenBalance) {
-        const tokenArsValue = tokenBalance.valuations.find((valuation) => valuation.currency.toLowerCase() === 'ars')?.value;
+        const tokenArsValue = tokenBalance.valuations.find(
+          (valuation) => valuation.currency.toLowerCase() === 'ars'
+        )?.value;
         const lastARStokenPrice = tokenArsValue / tokenBalance.balance;
-        requestArsValue = requestArsAmount * lastARStokenPrice;
+        requestArsAmount = itemData.amount * lastARStokenPrice;
       }
     } else {
-      requestArsValue = requestArsAmount;
+      requestArsAmount = itemData.amount;
     }
 
     // Validaciones
     // 1. Valido que el monto de la transacción en ARS no exceda el saldo disponible
     // Esto aplica para los requests que son aprobados por el administrador que determina en que token se hará la transacción
-    if (requestCurrency.toLowerCase() === arsCurrency.toLowerCase() && (requestArsAmount > arsDepositsAmount)) {
+    if (
+      requestCurrency.toLowerCase() === arsCurrency.toLowerCase() &&
+      requestArsAmount > arsDepositsAmount
+    ) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
         null,
@@ -555,13 +570,20 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     }
 
     // 4. Valido que el monto de la transacción no deje la bóveda sin colateral
-    if (arsDepositsAmount - requestArsAmount > arsCredit) {
+    if (arsDepositsAmount - requestArsAmount < arsCredit) {
+      console.log('arsDepositsAmount ', arsDepositsAmount);
+      console.log('requestArsAmount ', requestArsAmount);
+      console.log('arsCredit ', arsCredit);
       throw new CustomError.TechnicalError(
-      'ERROR_CREATE_INVALID_AMOUNT',
+        'ERROR_CREATE_INVALID_AMOUNT',
         null,
-        'Monto de la transacción no puede dejar la bóveda si colateral',
+        'Monto de la transacción no puede dejar la bóveda sin colateral',
         null
       );
+    } else {
+      console.log('arsDepositsAmount ', arsDepositsAmount);
+      console.log('requestArsAmount ', requestArsAmount);
+      console.log('arsCredit ', arsCredit);
     }
 
     // 5. Si es una liquidación, valido que el monto de la transacción no exceda el crédito
@@ -811,7 +833,10 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
 
     const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
 
-    console.log('borrowerApproveTransactionRequest - existentTransactionRequest es ', existentTransactionRequest);
+    console.log(
+      'borrowerApproveTransactionRequest - existentTransactionRequest es ',
+      existentTransactionRequest
+    );
 
     if (!existentTransactionRequest) {
       throw new CustomError.TechnicalError(
@@ -831,16 +856,20 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
       );
     }
 
-    console.log('borrowerApproveTransactionRequest - Patch args (' + collectionName + '):', JSON.stringify(body));
+    console.log(
+      'borrowerApproveTransactionRequest - Patch args (' + collectionName + '):',
+      JSON.stringify(body)
+    );
 
     const itemData = {};
 
     // Handle safeTransaction
     if (body.safeTransaction) {
       itemData.safeApproveData = body.safeTransaction;
-      itemData.requestStatus = existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
-        ? TransactionRequestStatusTypes.PENDING_APPROVE
-        : TransactionRequestStatusTypes.APPROVED;
+      itemData.requestStatus =
+        existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
+          ? TransactionRequestStatusTypes.PENDING_APPROVE
+          : TransactionRequestStatusTypes.APPROVED;
     }
 
     // Handle safeConfirmation
@@ -848,9 +877,10 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
       // Initialize array if it doesn't exist
       const currentConfirmations = existentTransactionRequest.safeConfirmations || [];
       itemData.safeConfirmations = [...currentConfirmations, body.safeConfirmation];
-      itemData.requestStatus = existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
-      ? TransactionRequestStatusTypes.PENDING_APPROVE
-      : TransactionRequestStatusTypes.APPROVED;
+      itemData.requestStatus =
+        existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
+          ? TransactionRequestStatusTypes.PENDING_APPROVE
+          : TransactionRequestStatusTypes.APPROVED;
     }
 
     // actualiza el transaction request como aprobado y le guarda la info de resultado de la confirmacion en safe
@@ -948,7 +978,10 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
     }
     // Fin nueva notificación
 
-    console.log('borrowerApproveTransactionRequest Patch data: (' + collectionName + ')', JSON.stringify(itemData));
+    console.log(
+      'borrowerApproveTransactionRequest Patch data: (' + collectionName + ')',
+      JSON.stringify(itemData)
+    );
 
     return res.status(204).send(doc);
   } catch (err) {
@@ -988,7 +1021,10 @@ exports.trustApproveTransactionRequest = async function (req, res) {
 
     const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
 
-    console.log('trustApproveTransactionRequest - existentTransactionRequest es ', existentTransactionRequest);
+    console.log(
+      'trustApproveTransactionRequest - existentTransactionRequest es ',
+      existentTransactionRequest
+    );
 
     if (!existentTransactionRequest) {
       throw new CustomError.TechnicalError(
@@ -1008,16 +1044,20 @@ exports.trustApproveTransactionRequest = async function (req, res) {
       );
     }
 
-    console.log('trustApproveTransactionRequest - Patch args (' + collectionName + '):', JSON.stringify(body));
+    console.log(
+      'trustApproveTransactionRequest - Patch args (' + collectionName + '):',
+      JSON.stringify(body)
+    );
 
     const itemData = {};
 
     // Handle safeTransaction
     if (body.safeTransaction) {
       itemData.safeApproveData = body.safeTransaction;
-      itemData.requestStatus = existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
-        ? TransactionRequestStatusTypes.PENDING_APPROVE
-        : TransactionRequestStatusTypes.APPROVED;
+      itemData.requestStatus =
+        existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
+          ? TransactionRequestStatusTypes.PENDING_APPROVE
+          : TransactionRequestStatusTypes.APPROVED;
     }
 
     // Handle safeConfirmation
@@ -1025,9 +1065,10 @@ exports.trustApproveTransactionRequest = async function (req, res) {
       // Initialize array if it doesn't exist
       const currentConfirmations = existentTransactionRequest.safeConfirmations || [];
       itemData.safeConfirmations = [...currentConfirmations, body.safeConfirmation];
-      itemData.requestStatus = existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
-        ? TransactionRequestStatusTypes.PENDING_APPROVE
-        : TransactionRequestStatusTypes.APPROVED;
+      itemData.requestStatus =
+        existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED
+          ? TransactionRequestStatusTypes.PENDING_APPROVE
+          : TransactionRequestStatusTypes.APPROVED;
     }
 
     // actualiza el transaction request como aprobado y le guarda la info de resultado de la confirmacion en safe
@@ -1125,7 +1166,10 @@ exports.trustApproveTransactionRequest = async function (req, res) {
     }
     // Fin nueva notificación
 
-    console.log('trustApproveTransactionRequest Patch data: (' + collectionName + ')', JSON.stringify(itemData));
+    console.log(
+      'trustApproveTransactionRequest Patch data: (' + collectionName + ')',
+      JSON.stringify(itemData)
+    );
 
     return res.status(204).send(doc);
   } catch (err) {
