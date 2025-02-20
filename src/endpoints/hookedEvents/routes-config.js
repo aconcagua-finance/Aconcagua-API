@@ -10,7 +10,7 @@ export function hookedEventsRoutesConfig(app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
       allowStaffRelationship: true,
     }),
@@ -22,7 +22,7 @@ export function hookedEventsRoutesConfig(app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
     }),
     findByStaff,
@@ -33,7 +33,7 @@ export function hookedEventsRoutesConfig(app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       allowStaffRelationship: true,
     }),
     get,
@@ -43,7 +43,7 @@ export function hookedEventsRoutesConfig(app) {
   app.get('/', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     find,
   ]);
 
@@ -52,7 +52,7 @@ export function hookedEventsRoutesConfig(app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       allowStaffRelationship: true,
     }),
     create,

@@ -9,7 +9,7 @@ exports.staffRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     }),
     get,
   ]);
@@ -18,7 +18,7 @@ exports.staffRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     }),
     find,
   ]);
@@ -26,7 +26,7 @@ exports.staffRoutesConfig = function (app) {
   app.post('/', [
     Audit.logger,
     Auth.isAuthenticated,
-    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER] }),
+    Auth.isAuthorized({ hasAppRole: [Types.AppRols.APP_ADMIN] }),
     create,
   ]);
 

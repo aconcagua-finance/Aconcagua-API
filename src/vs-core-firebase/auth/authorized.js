@@ -5,6 +5,8 @@
 const admin = require('firebase-admin');
 const { Types } = require('../../vs-core');
 
+const { DelegateRelationshipTypes } = Types;
+
 export const userIsGranted = function ({
   userAppRols,
   userEnterpriseRols,
@@ -45,6 +47,7 @@ export const isAuthorized = function ({
   hasEnterpriseRole,
   isEnterpriseEmployee,
   allowStaffRelationship,
+  allowDelegateAccess,
 }) {
   return async (req, res, next) => {
     const SYS_ADMIN_EMAIL = process.env.SYS_ADMIN_EMAIL;
@@ -103,6 +106,24 @@ export const isAuthorized = function ({
       } else {
         console.log('staff relationship NOT founded');
         // console.log('allowStaffRelationship: ', JSON.stringify({ userId, paramUserId }));
+      }
+    }
+
+    // Check delegate relationship
+    if (allowDelegateAccess && paramUserId && companyId) {
+      const vaultId = req.params.id;
+      const db = admin.firestore();
+
+      const querySnapshot = await db
+        .collection(DelegateRelationshipTypes.COLLECTION_NAME)
+        .where(DelegateRelationshipTypes.USER_ID_PROP_NAME, '==', paramUserId)
+        .where(DelegateRelationshipTypes.COMPANY_ID_PROP_NAME, '==', companyId)
+        .where(DelegateRelationshipTypes.VAULT_ID_PROP_NAME, '==', vaultId)
+        .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', userId)
+        .get();
+
+      if (querySnapshot.docs && querySnapshot.docs.length) {
+        return next();
       }
     }
 
