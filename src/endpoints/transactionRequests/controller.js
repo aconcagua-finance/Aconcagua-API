@@ -867,11 +867,11 @@ exports.trustApproveTransactionRequest = async function (req, res) {
   console.log('trustApproveTransactionRequest - body es ', body);
 
   // Modified validation to check for either safeTransaction or safeConfirmation
-  if (!body || (!body.safeTransaction && !body.safeConfirmation)) {
+  if (!body || (!body.safeMainTransaction && !body.safeConfirmation && !body.executionResult)) {
     throw new CustomError.TechnicalError(
       'ERROR_MISSING_ARGS',
       null,
-      'Missing safeTransaction or safeConfirmation data',
+      'Missing safeMainTransaction or safeConfirmation or executionResult data',
       null
     );
   }
@@ -928,6 +928,9 @@ exports.trustApproveTransactionRequest = async function (req, res) {
     if (body.safeConfirmation) {
       const currentConfirmations = existentTransactionRequest.safeConfirmations || [];
       itemData.safeConfirmations = [...currentConfirmations, body.safeConfirmation];
+    }
+    if (body.executionResult) {
+      itemData.executionResult = body.executionResult;
     }
 
     // Set requestStatus based on current status

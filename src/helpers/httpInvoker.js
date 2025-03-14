@@ -29,7 +29,7 @@ exports.invoke_post_api = async function ({ endpoint, payload, noTrace }) {
     console.log(' invoke_post_api ahora llamo a HttpClient.httpPost');
     result = await HttpClient.httpPost(apiUrl, {
       ...config,
-      ...payload
+      data: payload,
     });
     console.log(' invoke_post_api result.data vale - ', result.data);
 
