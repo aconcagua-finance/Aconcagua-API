@@ -47,12 +47,13 @@ echo "API_USD_VALUATION=${API_USD_VALUATION}" >> .env
 echo "API_TOKENS_VALUATIONS=${API_TOKENS_VALUATIONS}" >> .env
 echo "API_EVALUATE_VAULTS=${API_EVALUATE_VAULTS}" >> .env
 echo "API_VAULT_ADMIN=${API_VAULT_ADMIN}" >> .env
+echo "CONFIG_NETWORK_COLLECTION=${CONFIG_NETWORK_COLLECTION}" >> .env
 
 # Set Credentials
 echo "${FIREBASE_SERVICE_ACCOUNT_KEY}" > /tmp/serviceAccountKey.json
 export GOOGLE_APPLICATION_CREDENTIALS=/tmp/serviceAccountKey.json
 echo "Deploy proyecto $FIREB_PROJECT_ID"
 
-firebase deploy --project "$FIREB_PROJECT_ID" --only functions:users,functions:admin,functions:leads,functions:products,functions:staff,functions:attachments,functions:usersByStaff,functions:userTouchpoints,functions:hookedEvents,functions:insights,functions:userProducts,functions:googleOAuth,functions:userCalendars,functions:userCalendarEvents,functions:companies,functions:companyEmployees,functions:companyClients,functions:companyProfiles,functions:companyDepartments,functions:onUserTouchpointCreate,functions:onUserTouchpointUpdate,functions:onHookedEventCreate,functions:onHookedEventUpdate,functions:onUserCalendarEventBronzeCreate,functions:vaultInstallments,functions:vaultTransactions,functions:onVaultCreate_ThenCreateCompanyClientRelationship,functions:scrapper,functions:transactionRequests,functions:cronUpdateValuations,functions:marketCap,functions:reminders,functions:emailTemplates,functions:tokenRatios,functions:onRequestUpdate
+firebase deploy --project "$FIREB_PROJECT_ID" --only functions:users,functions:admin,functions:leads,functions:products,functions:staff,functions:attachments,functions:usersByStaff,functions:userTouchpoints,functions:hookedEvents,functions:insights,functions:userProducts,functions:googleOAuth,functions:userCalendars,functions:userCalendarEvents,functions:companies,functions:companyEmployees,functions:companyClients,functions:companyProfiles,functions:companyDepartments,functions:onUserTouchpointCreate,functions:onUserTouchpointUpdate,functions:onHookedEventCreate,functions:onHookedEventUpdate,functions:onUserCalendarEventBronzeCreate,functions:vaultInstallments,functions:vaultTransactions,functions:onVaultCreate_ThenCreateCompanyClientRelationship,functions:scrapper,functions:transactionRequests,functions:cronUpdateValuations,functions:marketCap,functions:reminders,functions:emailTemplates,functions:tokenRatios,functions:onRequestUpdate,functions:delegates
 
 echo "deploy complete!"

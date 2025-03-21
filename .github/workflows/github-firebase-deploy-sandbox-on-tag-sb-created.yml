@@ -29,6 +29,7 @@ env:
   API_TOKENS_VALUATIONS: 'https://us-central1-lanin-6339b.cloudfunctions.net/market/tokensQuotes'
   API_EVALUATE_VAULTS: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/evaluate'
   API_VAULT_ADMIN: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/vaultAdmin'
+  CONFIG_NETWORK_COLLECTION: 'configNetworks'
 
 jobs:
   build-and-publish:

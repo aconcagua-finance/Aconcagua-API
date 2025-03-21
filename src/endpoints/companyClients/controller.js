@@ -270,14 +270,50 @@ exports.remove = async function (req, res) {
 
   if (!companyId || !targetUserId) {
     throw new CustomError.TechnicalError(
-      'ERROR_REMOVE_COMPANY_CLIENT',
+      'ERROR_REMOVE_CLIENT',
       null,
-      'Error removing company client. Missing args',
+      'Error removing client. Missing args',
       null
     );
   }
 
-  await remove(req, res, Collections.COMPANY_CLIENTS);
+  try {
+    // Remover la relación
+    await remove(req, res, Collections.COMPANY_CLIENTS);
+
+    // Verificar si el usuario tiene más relaciones activas
+    const activeRelationships = await listByPropInner({
+      filters: {
+        userId: { $equal: targetUserId },
+        state: { $equal: Types.StateTypes.STATE_ACTIVE },
+      },
+      listByCollectionName: Collections.COMPANY_CLIENTS,
+    });
+
+    // Si no hay relaciones activas, eliminar el rol APP_STAFF
+    if (!activeRelationships.items.length) {
+      const targetUser = await getFirebaseUserById(targetUserId);
+
+      if (targetUser.appRols.includes(Types.AppRols.APP_STAFF)) {
+        targetUser.appRols = targetUser.appRols.filter((rol) => rol !== Types.AppRols.APP_STAFF);
+
+        // Actualizar los roles del usuario
+        await updateSingleItem({
+          collectionName: Collections.USERS,
+          auditUid,
+          id: targetUserId,
+          data: { appRols: targetUser.appRols },
+        });
+
+        console.log('APP_STAFF role removed from user:', targetUserId);
+      }
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    console.error('Error in remove COMPANY_CLIENTS:', err);
+    return ErrorHelper.handleError(req, res, err);
+  }
 };
 
 const createCompanyClientRelationship = async ({ auditUid, data }) => {
@@ -319,6 +355,22 @@ exports.create = async function (req, res) {
     const dbItemData = await createCompanyClientRelationship({ auditUid, data: body });
 
     console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
+
+    // Actualización para incluir el rol APP_STAFF al usuario
+    const targetUser = await getFirebaseUserById(targetUserId);
+    if (!targetUser.appRols) targetUser.appRols = [];
+
+    if (!targetUser.appRols.includes(Types.AppRols.APP_STAFF)) {
+      targetUser.appRols.push(Types.AppRols.APP_STAFF);
+      await updateSingleItem({
+        collectionName: Collections.USERS,
+        auditUid,
+        id: targetUserId,
+        data: { appRols: targetUser.appRols },
+      });
+
+      console.log('APP_STAFF role added to user:', targetUserId);
+    }
 
     return res.status(201).send(dbItemData);
   } catch (err) {

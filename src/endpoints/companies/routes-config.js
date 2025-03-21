@@ -13,7 +13,7 @@ exports.companiesRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     }),
     get,
   ]);
@@ -22,7 +22,7 @@ exports.companiesRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER, Types.AppRols.APP_STAFF],
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     }),
     find,
   ]);

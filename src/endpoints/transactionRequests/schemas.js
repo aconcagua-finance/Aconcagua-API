@@ -4,20 +4,18 @@ const baseSchema = Joi.object({
   companyId: Joi.string(),
   userId: Joi.string(),
   vaultId: Joi.string(),
-
   transactionType: Joi.string(),
-
   rescueWalletAccount: Joi.string().allow(''),
-
   currency: Joi.string(),
   amount: Joi.number(),
-
+  creditAmount: Joi.number(),
   requestStatus: Joi.string(),
-
-  safeTransaction: Joi.any(),
-  requestConversion: Joi.any(),
+  safeMainTransaction: Joi.any(),
+  safeApproveData: Joi.any(),
+  safeConfirmations: Joi.any(),
   safeAddress: Joi.string(),
-
+  executionResult: Joi.any(),
+  requestConversion: Joi.any(),
   notes: Joi.string().allow(''),
   attachments: Joi.any(),
 });

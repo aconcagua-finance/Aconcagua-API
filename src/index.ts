@@ -65,6 +65,8 @@ const {
 
 const { onRequestUpdate } = require('./endpoints/transactionRequests/controller');
 
+const { delegatesRoutesConfig } = require('./endpoints/delegates/routes-config');
+
 console.log('NODE_ENV:', process.env.NODE_ENV, 'ENVIRONMENT:', process.env.ENVIRONMENT);
 
 admin.initializeApp(FirebaseConfig);
@@ -468,3 +470,15 @@ exports.onVaultCreate_ThenCreateCompanyClientRelationship =
   onVaultCreate_ThenCreateCompanyClientRelationship;
 
 exports.cronUpdateValuations = cronUpdateValuations;
+
+const delegatesApp = express();
+configureApp(delegatesApp);
+delegatesRoutesConfig(delegatesApp);
+exports.delegates = functions
+  .runWith({
+    // memory: "2GB",
+    // Keep 5 instances warm for this latency-critical function
+    // in production only. Default to 0 for test projects.
+    // minInstances: envProjectId === "my-production-project" ? 5 : 0,
+  })
+  .https.onRequest(delegatesApp);

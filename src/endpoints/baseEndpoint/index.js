@@ -151,10 +151,11 @@ const countItems = async function ({
 // ncontainss: Doesn't contain case sensitive
 const fetchItems = async function ({
   collectionName,
-  limit = 500,
+  limit = 1000, // Increased safety net limit to 1000
   filterState,
   filters,
   indexedFilters,
+  skipLimit = false // Add new parameter to optionally skip limit
 }) {
   try {
     const db = admin.firestore();
@@ -165,7 +166,7 @@ const fetchItems = async function ({
     );
 
     let querySnapshot = buildQuerySnapshot({
-      ref: ref.limit(limit),
+      ref: skipLimit ? ref : ref.limit(limit), // Only apply limit if skipLimit is false
       filters,
       filterState,
       indexedFilters,
@@ -173,14 +174,6 @@ const fetchItems = async function ({
 
     querySnapshot = await querySnapshot.get();
     if (!querySnapshot.docs) return [];
-    // let querySnapshot = null;
-    // if (typeof filterState !== 'undefined' && filterState !== null)
-    //   querySnapshot = await ref
-    //     .where('state', '==', filterState)
-    //     .limit(limit)
-    //     .orderBy('createdAt', 'asc')
-    //     .get();
-    // else querySnapshot = await ref.limit(limit).orderBy('createdAt', 'asc').get();
 
     const items = querySnapshot.docs.map((doc) => {
       const id = doc.id;
@@ -1184,7 +1177,6 @@ exports.listByPropInner = async function ({
   limit,
   offset,
   filters,
-
   primaryEntityPropName,
   primaryEntityValue,
   primaryEntityCollectionName,
@@ -1197,7 +1189,6 @@ exports.listByPropInner = async function ({
   if (limit) limit = parseInt(limit);
 
   if (!filters) filters = {};
-  // { staffId: { '$equal': 'oKlebI6i03FAAZHsLWzn' } }
 
   if (overridePrimaryRelationshipOperator) {
     filters[primaryEntityPropName] = {
@@ -1207,17 +1198,24 @@ exports.listByPropInner = async function ({
 
   console.log('Query (' + listByCollectionName + ') with filters:' + JSON.stringify(filters));
 
+  // Fetch items without limit
   const items = await fetchItems({
     collectionName: listByCollectionName,
-    // filterState,
     filters,
     indexedFilters,
-    limit,
+    skipLimit: true // Skip limit during initial fetch
   });
 
   console.log('OK - all - fetch (' + listByCollectionName + '): ' + items.length);
 
-  const filteredItems = filterItems({ items, limit, offset, filters, indexedFilters });
+  // Apply filtering with limit after fetch
+  const filteredItems = filterItems({
+    items,
+    limit,
+    offset,
+    filters,
+    indexedFilters
+  });
 
   if (filteredItems.items) {
     console.log('OK - all - filter(' + listByCollectionName + '): ' + filteredItems.items.length);

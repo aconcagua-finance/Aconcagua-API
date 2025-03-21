@@ -64,7 +64,122 @@ const USER_ENTITY_PROPERTY_NAME = 'userId';
 const VAULT_ENTITY_PROPERTY_NAME = 'vaultId';
 const COLLECTION_NAME = Collections.TRANSACTION_REQUESTS;
 
+async function validateRequest(itemData, vault = null) {
+  if (!vault) {
+    vault = await fetchSingleItem({
+      collectionName: Collections.VAULTS,
+      id: itemData.vaultId,
+    });
+  }
+
+  const arsCurrency = Types.CurrencyTypes.ARS;
+
+  let arsDepositsAmount = 0;
+  const arsCredit = vault.amount || 0;
+  let requestArsValue = 0;
+  const creditAmount = itemData.creditAmount || 0;
+
+  const arsBalanceItem = vault.balances.find((balance) => {
+    return balance.currency === arsCurrency && balance.isValuation;
+  });
+
+  if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
+
+  const requestAmount = itemData.amount;
+  let requestCurrency = itemData.currency;
+
+  if (!itemData.currency) {
+    requestCurrency = arsCurrency;
+  }
+
+  // Calculate ARS value of request
+  if (requestCurrency.toLowerCase() !== arsCurrency.toLowerCase()) {
+    const tokenBalance = vault.balances.find((balance) => {
+      return balance.currency.toLowerCase() === requestCurrency.toLowerCase();
+    });
+    if (tokenBalance) {
+      const tokenArsValue = tokenBalance.valuations.find(
+        (valuation) => valuation.currency.toLowerCase() === 'ars'
+      )?.value;
+      const lastARStokenPrice = tokenArsValue / tokenBalance.balance;
+      requestArsValue = requestAmount * lastARStokenPrice;
+    }
+  } else {
+    requestArsValue = requestAmount;
+  }
+
+  // Validaciones
+  // 1. Valido que el monto de la transacción en ARS no exceda el saldo disponible
+  if (
+    requestCurrency.toLowerCase() === arsCurrency.toLowerCase() &&
+    requestAmount > arsDepositsAmount
+  ) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE_EXCEED_AMOUNT',
+      null,
+      'Monto de la transacción excede el saldo disponible',
+      null
+    );
+  }
+
+  // 2. Si la moneda es un token, valido que el monto no exceda el saldo de ese token en la bóveda
+  if (requestCurrency !== arsCurrency) {
+    const balance = vault.balances.find((balance) => {
+      return balance.currency.toLowerCase() === requestCurrency.toLowerCase();
+    });
+    if (!balance) {
+      throw new CustomError.TechnicalError(
+        'ERROR_CREATE_EXCEED_AMOUNT',
+        null,
+        'No hay saldo disponible del token solicitado en la bóveda',
+        null
+      );
+    }
+    if (itemData.amount > balance.balance) {
+      throw new CustomError.TechnicalError(
+        'ERROR_CREATE_EXCEED_AMOUNT',
+        null,
+        'El monto del token solicitado excede el saldo disponible de ese token en la bóveda',
+        null
+      );
+    }
+  }
+
+  // 3. Valido que el monto de la transacción no sea negativo o cero
+  if (requestAmount <= 0) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE_INVALID_AMOUNT',
+      null,
+      'Monto de la transacción no puede ser negativo o cero',
+      null
+    );
+  }
+
+  // 4. Valido que el monto de la transacción no deje la bóveda sin colateral
+  if (arsDepositsAmount - requestArsValue < arsCredit) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE_INVALID_AMOUNT',
+      null,
+      'Monto de la transacción no puede dejar la bóveda sin colateral',
+      null
+    );
+  }
+
+  // 5. Si es una liquidación, valido que el monto de la transacción no exceda el crédito
+  if (itemData.transactionType === 'liquidate' && creditAmount > arsCredit) {
+    throw new CustomError.TechnicalError(
+      'ERROR_CREATE_EXCEED_AMOUNT',
+      null,
+      'Monto de la transacción de liquidación excede el crédito',
+      null
+    );
+  }
+
+  return { requestArsValue, requestCurrency };
+}
+
 exports.find = async function (req, res) {
+  console.log('find');
   const { limit, offset } = req.query;
   let { filters } = req.query;
 
@@ -184,13 +299,8 @@ exports.get = async function (req, res) {
   await getByProp({
     req,
     res,
-
     byId: id,
-
-    // primaryEntityPropName: COMPANY_ENTITY_PROPERTY_NAME,
-    // primaryEntityCollectionName: Collections.COMPANIES,
     collectionName: COLLECTION_NAME,
-
     relationships: [
       { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
       { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
@@ -290,7 +400,7 @@ exports.createLenderTransactionRequest = async function (req, res) {
     const body = req.body;
 
     body.companyId = companyId;
-    body.userId = userId;
+    body.userId = vault.userId;
     body.vaultId = vaultId;
     body.requestStatus = TransactionRequestStatusTypes.REQUESTED;
 
@@ -301,35 +411,9 @@ exports.createLenderTransactionRequest = async function (req, res) {
 
     const itemData = await sanitizeData({ data: body, validationSchema });
 
-    const arsCurrency = Types.CurrencyTypes.ARS;
-
-    let arsDepositsAmount = 0;
-    const arsCredit = vault.amount;
-
-    const arsBalanceItem = vault.balances.find((balance) => {
-      return balance.currency === arsCurrency;
-    });
-
-    if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
-
-    if (itemData.amount > arsDepositsAmount || itemData.amount > arsCredit) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_EXCEED_AMOUNT',
-        null,
-        'Monto de la transacción está excedido',
-        null
-      );
-    } else if (itemData.amount <= 0) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_INVALID_AMOUNT',
-        null,
-        'Monto de la transacción no puede ser negativo o cero',
-        null
-      );
-    }
+    await validateRequest(itemData, vault);
 
     const createArgs = { collectionName, itemData, auditUid };
-
     const dbItemData = await createFirestoreDocument(createArgs);
 
     console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
@@ -379,7 +463,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     const body = req.body;
 
     body.companyId = companyId;
-    body.userId = userId;
+    body.userId = vault.userId;
     body.vaultId = vaultId;
     body.requestStatus = TransactionRequestStatusTypes.REQUESTED;
 
@@ -390,38 +474,9 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
 
     const itemData = await sanitizeData({ data: body, validationSchema });
 
-    const arsCurrency = Types.CurrencyTypes.ARS;
-
-    let arsDepositsAmount = 0;
-    const arsCredit = vault.amount;
-
-    const arsBalanceItem = vault.balances.find((balance) => {
-      return balance.currency === arsCurrency;
-    });
-
-    if (arsBalanceItem) arsDepositsAmount = arsBalanceItem.balance;
-
-    if (
-      itemData.amount > arsDepositsAmount ||
-      arsDepositsAmount - itemData.amount < arsCredit * 1.1 // Debe quedar depositado el crédito + 10%
-    ) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_EXCEED_AMOUNT',
-        null,
-        'Monto de la transacción está excedido',
-        null
-      );
-    } else if (itemData.amount <= 0) {
-      throw new CustomError.TechnicalError(
-        'ERROR_CREATE_INVALID_AMOUNT',
-        null,
-        'Monto de la transacción no puede ser negativo o cero',
-        null
-      );
-    }
+    await validateRequest(itemData, vault);
 
     const createArgs = { collectionName, itemData, auditUid };
-
     const dbItemData = await createFirestoreDocument(createArgs);
 
     console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
@@ -447,9 +502,11 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
   const { companyId, id } = req.params;
   const body = req.body;
 
-  if (!body.safeApproveData) throw new Error('missing safeApproveData');
-
+  if (!body.safeMainTransaction) throw new Error('missing safeMainTransaction');
   const collectionName = COLLECTION_NAME;
+  const validationSchema = schemas.update;
+  console.log('lenderApproveTransactionRequest args (' + collectionName + '):', body);
+  const itemData = await sanitizeData({ data: body, validationSchema });
 
   try {
     if (!companyId || !id) {
@@ -485,19 +542,20 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
 
     console.log('Patch args (' + collectionName + '):', JSON.stringify(body));
 
-    const itemData = {
-      safeApproveData: body.safeApproveData,
-      requestStatus: TransactionRequestStatusTypes.APPROVED,
-    };
+    // Set requestStatus based on current status
+    if (existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED) {
+      itemData.requestStatus = TransactionRequestStatusTypes.PENDING_APPROVE;
+    } else {
+      itemData.requestStatus = TransactionRequestStatusTypes.APPROVED;
+    }
 
-    // actualiza el transaction request como aprobado y le guarda la info de resultado de la confirmacion en safe
     const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
 
     // actualiza el prestamo (vault) descontando del crédito el monto ingresado por el operador de aconcagua
 
     if (
       existentTransactionRequest.requestConversion &&
-      existentTransactionRequest.requestConversion.creditCancellationAmount &&
+      existentTransactionRequest.requestConversion.creditAmount &&
       existentTransactionRequest.vaultId &&
       existentTransactionRequest.transactionType === 'liquidate' // si es rescate no resta al credito
     ) {
@@ -511,9 +569,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
         id: existentTransactionRequest.vaultId,
         auditUid,
         data: {
-          amount:
-            existentVault.amount -
-            existentTransactionRequest.requestConversion.creditCancellationAmount,
+          amount: existentVault.amount - existentTransactionRequest.requestConversion.creditAmount,
         },
       });
     }
@@ -589,7 +645,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: amountUSD,
+            monto: amountUSD.toFixed(2),
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
             transactiontype: existentTransactionRequest.transactionType,
@@ -605,7 +661,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: amountUSD,
+            monto: amountUSD.toFixed(2),
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
             transactiontype: existentTransactionRequest.transactionType,
@@ -617,7 +673,366 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
     }
     // Fin nueva notificación
 
-    console.log('Patch data: (' + collectionName + ')', JSON.stringify(itemData));
+    return res.status(204).send(doc);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.borrowerApproveTransactionRequest = async function (req, res) {
+  const { userId } = res.locals;
+  const auditUid = userId;
+
+  const { companyId, id } = req.params;
+  const body = req.body;
+  console.log('borrowerApproveTransactionRequest - body es ', body);
+
+  // Modified validation to check for either safeTransaction or safeConfirmation
+  if (!body || (!body.safeMainTransaction && !body.safeConfirmation && !body.executionResult)) {
+    throw new CustomError.TechnicalError(
+      'ERROR_MISSING_ARGS',
+      null,
+      'Missing safeMainTransaction or safeConfirmation or executionResult data',
+      null
+    );
+  }
+
+  const collectionName = COLLECTION_NAME;
+  const validationSchema = schemas.update;
+  console.log('borrowerApproveTransactionRequest args (' + collectionName + '):', body);
+  const itemData = await sanitizeData({ data: body, validationSchema });
+
+  try {
+    if (!companyId || !id) {
+      throw new CustomError.TechnicalError(
+        'borrowerApproveTransactionRequest - ERROR_MISSING_ARGS',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
+
+    console.log(
+      'borrowerApproveTransactionRequest - existentTransactionRequest es ',
+      existentTransactionRequest
+    );
+
+    if (!existentTransactionRequest) {
+      throw new CustomError.TechnicalError(
+        'borrowerApproveTransactionRequest - ERROR_MISSING_ARGS2',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    if (existentTransactionRequest.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'borrowerApproveTransactionRequest - MISSING_PERMISSIONS for Company',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    console.log(
+      'borrowerApproveTransactionRequest - Patch args (' + collectionName + '):',
+      JSON.stringify(body)
+    );
+
+    // Handle both safeTransaction and safeConfirmation
+    if (body.safeMainTransaction) {
+      itemData.safeMainTransaction = body.safeMainTransaction;
+    }
+    if (body.safeConfirmation) {
+      const currentConfirmations = existentTransactionRequest.safeConfirmations || [];
+      itemData.safeConfirmations = [...currentConfirmations, body.safeConfirmation];
+    }
+
+    // Set requestStatus based on current status
+    if (existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED) {
+      itemData.requestStatus = TransactionRequestStatusTypes.PENDING_APPROVE;
+    } else {
+      itemData.requestStatus = TransactionRequestStatusTypes.APPROVED;
+    }
+
+    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+
+    // MRM envío de nueva notificación
+    if (
+      existentTransactionRequest.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE &&
+      itemData.requestStatus == TransactionRequestStatusTypes.APPROVED
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        existentTransactionRequest.requestStatus,
+        ' y ahora es ',
+        itemData.requestStatus,
+        ' - Transacción Firmada y Aprobada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.createdBy,
+      });
+
+      const userActive = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: userId,
+      });
+
+      const userBorrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.userId,
+      });
+
+      // companyId
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: companyId,
+      });
+
+      console.log('userOriginator es ', userOriginator);
+      console.log('userActive es ', userActive);
+      console.log('userBorrower es ', userBorrower);
+      console.log('companyId es ', companyId);
+
+      const message =
+        company.name +
+        '.  Cliente ' +
+        userBorrower.lastName +
+        ' ' +
+        userBorrower.lastName +
+        '.  Bóveda: ' +
+        existentTransactionRequest.vaultId +
+        '. Transacción por ' +
+        existentTransactionRequest.currency +
+        ' ' +
+        existentTransactionRequest.amount +
+        ' firmada y aprobada por ' +
+        userActive.firstName +
+        ' ' +
+        userActive.lastName;
+
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.amount.toFixed(2),
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            transactiontype: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.amount.toFixed(2),
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            transactiontype: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      console.log(message);
+    }
+    // Fin nueva notificación
+
+    return res.status(204).send(doc);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.trustApproveTransactionRequest = async function (req, res) {
+  const { userId } = res.locals;
+  const auditUid = userId;
+
+  const { companyId, id } = req.params;
+  const body = req.body;
+  console.log('trustApproveTransactionRequest - body es ', body);
+
+  // Modified validation to check for either safeTransaction or safeConfirmation
+  if (!body || (!body.safeMainTransaction && !body.safeConfirmation && !body.executionResult)) {
+    throw new CustomError.TechnicalError(
+      'ERROR_MISSING_ARGS',
+      null,
+      'Missing safeMainTransaction or safeConfirmation or executionResult data',
+      null
+    );
+  }
+
+  const collectionName = COLLECTION_NAME;
+  const validationSchema = schemas.update;
+  console.log('trustApproveTransactionRequest args (' + collectionName + '):', body);
+  const itemData = await sanitizeData({ data: body, validationSchema });
+
+  try {
+    if (!companyId || !id) {
+      throw new CustomError.TechnicalError(
+        'trustApproveTransactionRequest - ERROR_MISSING_ARGS',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
+
+    console.log(
+      'trustApproveTransactionRequest - existentTransactionRequest es ',
+      existentTransactionRequest
+    );
+
+    if (!existentTransactionRequest) {
+      throw new CustomError.TechnicalError(
+        'trustApproveTransactionRequest - ERROR_MISSING_ARGS2',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    if (existentTransactionRequest.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'trustApproveTransactionRequest - MISSING_PERMISSIONS for Company',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    console.log(
+      'trustApproveTransactionRequest - Patch args (' + collectionName + '):',
+      JSON.stringify(body)
+    );
+
+    // Handle both safeTransaction and safeConfirmation
+    if (body.safeMainTransaction) {
+      itemData.safeMainTransaction = body.safeMainTransaction;
+    }
+    if (body.safeConfirmation) {
+      const currentConfirmations = existentTransactionRequest.safeConfirmations || [];
+      itemData.safeConfirmations = [...currentConfirmations, body.safeConfirmation];
+    }
+    if (body.executionResult) {
+      itemData.executionResult = body.executionResult;
+    }
+
+    // Set requestStatus based on current status
+    if (existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED) {
+      itemData.requestStatus = TransactionRequestStatusTypes.PENDING_APPROVE;
+    } else {
+      itemData.requestStatus = TransactionRequestStatusTypes.APPROVED;
+    }
+
+    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+
+    // MRM envío de nueva notificación
+    if (
+      existentTransactionRequest.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE &&
+      itemData.requestStatus == TransactionRequestStatusTypes.APPROVED
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        existentTransactionRequest.requestStatus,
+        ' y ahora es ',
+        itemData.requestStatus,
+        ' - Transacción Firmada y Aprobada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.createdBy,
+      });
+
+      const userActive = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: userId,
+      });
+
+      const userBorrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.userId,
+      });
+
+      // companyId
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: companyId,
+      });
+
+      console.log('userOriginator es ', userOriginator);
+      console.log('userActive es ', userActive);
+      console.log('userBorrower es ', userBorrower);
+      console.log('companyId es ', companyId);
+
+      const message =
+        company.name +
+        '.  Cliente ' +
+        userBorrower.lastName +
+        ' ' +
+        userBorrower.lastName +
+        '.  Bóveda: ' +
+        existentTransactionRequest.vaultId +
+        '. Transacción por ' +
+        existentTransactionRequest.currency +
+        ' ' +
+        existentTransactionRequest.amount +
+        ' firmada y aprobada por ' +
+        userActive.firstName +
+        ' ' +
+        userActive.lastName;
+
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.amount.toFixed(2),
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            transactiontype: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      EmailSender.send({
+        to: userOriginator.email,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.amount.toFixed(2),
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            transactiontype: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      console.log(message);
+    }
+    // Fin nueva notificación
 
     return res.status(204).send(doc);
   } catch (err) {
@@ -670,10 +1085,11 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount,
+            value: after.amount.toFixed(2),
             currency: after.currency,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
+            serviceLevel: vault.serviceLevel,
           },
         },
       });
@@ -687,10 +1103,11 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount,
+            value: after.amount.toFixed(2),
             currency: after.currency,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
+            serviceLevel: vault.serviceLevel,
           },
         },
       });
@@ -710,10 +1127,11 @@ exports.onRequestUpdate = functions.firestore
             username: userOriginator.firstName + ' ' + userOriginator.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount,
+            value: after.amount.toFixed(2),
             currency: after.currency,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
+            serviceLevel: vault.serviceLevel,
           },
         },
       });
@@ -751,7 +1169,7 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount,
+            value: after.amount.toFixed(2),
             currency: after.currency,
           },
         },
@@ -766,7 +1184,7 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount,
+            value: after.amount.toFixed(2),
             currency: after.currency,
           },
         },
@@ -787,7 +1205,7 @@ exports.onRequestUpdate = functions.firestore
             username: userSigner.firstName + ' ' + userSigner.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount,
+            value: after.amount.toFixed(2),
             currency: after.currency,
           },
         },
@@ -831,7 +1249,7 @@ exports.onRequestUpdate = functions.firestore
           data: {
             useroriginator: userOriginator.firstName,
             cliente: borrower.firstName + ' ' + borrower.lastName,
-            monto: after.amount,
+            monto: after.amount.toFixed(2),
             current: after.currency,
             lender: company.name,
             vaultid: after.vaultId,
@@ -848,7 +1266,7 @@ exports.onRequestUpdate = functions.firestore
           data: {
             useroriginator: userOriginator.firstName,
             cliente: borrower.firstName + ' ' + borrower.lastName,
-            monto: after.amount,
+            monto: after.amount.toFixed(2),
             current: after.currency,
             lender: company.name,
             vaultid: after.vaultId,
