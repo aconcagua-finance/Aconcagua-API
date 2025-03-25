@@ -131,7 +131,10 @@ async function validateRequest(itemData, vault = null) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
         null,
-        'No hay saldo disponible del token solicitado en la bóveda',
+        'No hay saldo disponible del token solicitado en la bóveda requestCurrency: ' +
+          requestCurrency +
+          ' balance: ' +
+          balance.balance,
         null
       );
     }
@@ -139,7 +142,10 @@ async function validateRequest(itemData, vault = null) {
       throw new CustomError.TechnicalError(
         'ERROR_CREATE_EXCEED_AMOUNT',
         null,
-        'El monto del token solicitado excede el saldo disponible de ese token en la bóveda',
+        'El monto del token solicitado excede el saldo disponible de ese token en la bóveda itemData.amount: ' +
+          itemData.amount +
+          ' balance: ' +
+          balance.balance,
         null
       );
     }
@@ -150,7 +156,7 @@ async function validateRequest(itemData, vault = null) {
     throw new CustomError.TechnicalError(
       'ERROR_CREATE_INVALID_AMOUNT',
       null,
-      'Monto de la transacción no puede ser negativo o cero',
+      'Monto de la transacción no puede ser negativo o cero requestAmount: ' + requestAmount,
       null
     );
   }
@@ -160,7 +166,12 @@ async function validateRequest(itemData, vault = null) {
     throw new CustomError.TechnicalError(
       'ERROR_CREATE_INVALID_AMOUNT',
       null,
-      'Monto de la transacción no puede dejar la bóveda sin colateral',
+      'Monto de la transacción no puede dejar la bóveda sin colateral arsDepositsAmount: ' +
+        arsDepositsAmount +
+        ' requestArsValue: ' +
+        requestArsValue +
+        ' arsCredit: ' +
+        arsCredit,
       null
     );
   }
@@ -688,7 +699,15 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
   console.log('borrowerApproveTransactionRequest - body es ', body);
 
   // Modified validation to check for either safeTransaction or safeConfirmation
-  if (!body || (!body.safeMainTransaction && !body.safeConfirmation && !body.executionResult)) {
+  if (
+    !body ||
+    (!body.safeMainTransaction &&
+      !body.safeConfirmation &&
+      !body.executionResult &&
+      !body.executionResult &&
+      !body.safeATransaction &&
+      !body.isNativeToken)
+  ) {
     throw new CustomError.TechnicalError(
       'ERROR_MISSING_ARGS',
       null,
@@ -867,7 +886,15 @@ exports.trustApproveTransactionRequest = async function (req, res) {
   console.log('trustApproveTransactionRequest - body es ', body);
 
   // Modified validation to check for either safeTransaction or safeConfirmation
-  if (!body || (!body.safeMainTransaction && !body.safeConfirmation && !body.executionResult)) {
+  if (
+    !body ||
+    (!body.safeMainTransaction &&
+      !body.safeConfirmation &&
+      !body.executionResult &&
+      !body.executionResult &&
+      !body.safeATransaction &&
+      !body.isNativeToken)
+  ) {
     throw new CustomError.TechnicalError(
       'ERROR_MISSING_ARGS',
       null,

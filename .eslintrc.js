@@ -12,11 +12,24 @@ module.exports = {
     'google',
     'plugin:@typescript-eslint/recommended',
   ],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: ['tsconfig.json', 'tsconfig.dev.json'],
-    sourceType: 'module',
-  },
+  overrides: [
+    {
+      files: ['*.js'],
+      parser: 'espree',
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+      },
+    },
+    {
+      files: ['*.ts'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: ['tsconfig.json', 'tsconfig.dev.json'],
+        sourceType: 'module',
+      },
+    },
+  ],
   ignorePatterns: [
     '/lib/**/*', // Ignore built files.
   ],
