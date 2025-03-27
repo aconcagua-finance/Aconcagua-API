@@ -57,7 +57,31 @@ exports.remove = async function (req, res) {
 };
 
 exports.create = async function (req, res) {
-  const { userId } = res.locals;
-  const auditUid = userId;
-  await create(req, res, COLLECTION_NAME, schemas.create);
+  try {
+    console.log('TokenRatios Create - Request body:', req.body);
+    console.log('TokenRatios Create - Schema:', schemas.create);
+    console.log('TokenRatios Create - Schema validate:', typeof schemas.create?.validate);
+    console.log('TokenRatios Create - Schema validateAsync:', typeof schemas.create?.validateAsync);
+
+    const { userId } = res.locals;
+    const auditUid = userId;
+
+    // Try creating a test validation before passing to create
+    try {
+      const testValidation = await schemas.create.validateAsync(req.body, {
+        abortEarly: false,
+        allowUnknown: true,
+        stripUnknown: true,
+      });
+      console.log('TokenRatios Create - Test validation passed:', testValidation);
+    } catch (validationError) {
+      console.error('TokenRatios Create - Test validation failed:', validationError);
+      throw validationError;
+    }
+
+    await create(req, res, auditUid, COLLECTION_NAME, schemas.create);
+  } catch (error) {
+    console.error('TokenRatios Create - Error:', error);
+    throw error;
+  }
 };
