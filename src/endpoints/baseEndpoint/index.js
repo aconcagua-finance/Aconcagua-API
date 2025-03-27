@@ -155,7 +155,7 @@ const fetchItems = async function ({
   filterState,
   filters,
   indexedFilters,
-  skipLimit = false // Add new parameter to optionally skip limit
+  skipLimit = false, // Add new parameter to optionally skip limit
 }) {
   try {
     const db = admin.firestore();
@@ -417,14 +417,21 @@ const filterItems = function ({ items, limit = 100, offset = 0, filters, indexed
 };
 
 const sanitizeData = async function ({ data, validationSchema }) {
+  console.log('Sanitize Data - schema:', validationSchema);
+  console.log('Sanitize Data - schema type:', typeof validationSchema);
+  console.log('Sanitize Data - schema methods:', Object.keys(validationSchema || {}));
+
   const _validationOptions = {
-    abortEarly: false, // abort after the last validation error
-    allowUnknown: true, // allow unknown keys that will be ignored
-    stripUnknown: true, // remove unknown keys from the validated data
+    abortEarly: false,
+    allowUnknown: true,
+    stripUnknown: true,
   };
 
-  const itemData = await validationSchema.validateAsync(data, _validationOptions);
+  if (!validationSchema) {
+    throw new Error('Validation schema is undefined');
+  }
 
+  const itemData = await validationSchema.validateAsync(data, _validationOptions);
   return itemData;
 };
 
@@ -1118,6 +1125,10 @@ exports.createInner = async function ({
   documentId,
 }) {
   try {
+    console.log('CreateInner - schema:', validationSchema);
+    console.log('CreateInner - schema type:', typeof validationSchema);
+    console.log('CreateInner - schema methods:', Object.keys(validationSchema || {}));
+
     console.log('Create args (' + collectionName + '):', body);
 
     const itemData = await sanitizeData({ data: body, validationSchema });
@@ -1203,7 +1214,7 @@ exports.listByPropInner = async function ({
     collectionName: listByCollectionName,
     filters,
     indexedFilters,
-    skipLimit: true // Skip limit during initial fetch
+    skipLimit: true, // Skip limit during initial fetch
   });
 
   console.log('OK - all - fetch (' + listByCollectionName + '): ' + items.length);
@@ -1214,7 +1225,7 @@ exports.listByPropInner = async function ({
     limit,
     offset,
     filters,
-    indexedFilters
+    indexedFilters,
   });
 
   if (filteredItems.items) {
