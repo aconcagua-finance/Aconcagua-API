@@ -35,7 +35,6 @@ const {
   sanitizeData,
   find,
   findWithUserRelationship,
-
   get,
   patch,
   patchInner,
@@ -63,6 +62,38 @@ const COMPANY_ENTITY_PROPERTY_NAME = 'companyId';
 const USER_ENTITY_PROPERTY_NAME = 'userId';
 const VAULT_ENTITY_PROPERTY_NAME = 'vaultId';
 const COLLECTION_NAME = Collections.TRANSACTION_REQUESTS;
+
+const getCompanyEmployeeEmails = async (companyId) => {
+  // Get ONLY the employees for this specific company
+  const employees = await fetchItems({
+    collectionName: Collections.COMPANY_EMPLOYEES,
+    filters: {
+      companyId: { $equal: companyId }, // This is the key filter!
+      state: { $equal: Types.StateTypes.STATE_ACTIVE },
+    },
+    indexedFilters: ['companyId', 'state'], // Make sure we use the indexed filters
+  });
+
+  console.log(`Found ${employees.length} employees for company ${companyId}`);
+
+  if (!employees || employees.length === 0) {
+    return [];
+  }
+
+  // Get user information for each employee
+  const userEmails = await Promise.all(
+    employees.map(async (employee) => {
+      const user = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: employee.userId,
+      });
+      return user ? user.email : null;
+    })
+  );
+  console.log('getCompanyEmployeeEmails userEmails', userEmails);
+  // Remove any null values
+  return userEmails.filter(Boolean);
+};
 
 async function validateRequest(itemData, vault = null) {
   if (!vault) {
@@ -665,7 +696,7 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
       });
 
       EmailSender.send({
-        to: userOriginator.email,
+        to: userBorrower.email,
         message: null,
         template: {
           name: 'mail-approved',
@@ -679,6 +710,30 @@ exports.lenderApproveTransactionRequest = async function (req, res) {
           },
         },
       });
+
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
+
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-approved',
+              data: {
+                useroriginator: userOriginator.firstName,
+                cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+                monto: existentTransactionRequest.amount.toFixed(6),
+                lender: company.name,
+                vaultid: existentTransactionRequest.vaultId,
+                transactiontype: existentTransactionRequest.transactionType,
+              },
+            },
+          })
+        )
+      );
 
       console.log(message);
     }
@@ -843,7 +898,7 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.amount.toFixed(2),
+            monto: existentTransactionRequest.amount.toFixed(6),
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
             transactiontype: existentTransactionRequest.transactionType,
@@ -852,20 +907,44 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
       });
 
       EmailSender.send({
-        to: userOriginator.email,
+        to: userBorrower.email,
         message: null,
         template: {
           name: 'mail-approved',
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.amount.toFixed(2),
+            monto: existentTransactionRequest.amount.toFixed(6),
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
             transactiontype: existentTransactionRequest.transactionType,
           },
         },
       });
+
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
+
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-approved',
+              data: {
+                useroriginator: userOriginator.firstName,
+                cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+                monto: existentTransactionRequest.amount.toFixed(6),
+                lender: company.name,
+                vaultid: existentTransactionRequest.vaultId,
+                transactiontype: existentTransactionRequest.transactionType,
+              },
+            },
+          })
+        )
+      );
 
       console.log(message);
     }
@@ -1024,7 +1103,7 @@ exports.trustApproveTransactionRequest = async function (req, res) {
         userActive.firstName +
         ' ' +
         userActive.lastName;
-
+      // Mail a admin
       EmailSender.send({
         to: SYS_ADMIN_EMAIL,
         message: null,
@@ -1033,7 +1112,7 @@ exports.trustApproveTransactionRequest = async function (req, res) {
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.amount.toFixed(2),
+            monto: existentTransactionRequest.amount.toFixed(6),
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
             transactiontype: existentTransactionRequest.transactionType,
@@ -1042,20 +1121,44 @@ exports.trustApproveTransactionRequest = async function (req, res) {
       });
 
       EmailSender.send({
-        to: userOriginator.email,
+        to: userBorrower.email,
         message: null,
         template: {
           name: 'mail-approved',
           data: {
             useroriginator: userOriginator.firstName,
             cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
-            monto: existentTransactionRequest.amount.toFixed(2),
+            monto: existentTransactionRequest.amount.toFixed(6),
             lender: company.name,
             vaultid: existentTransactionRequest.vaultId,
             transactiontype: existentTransactionRequest.transactionType,
           },
         },
       });
+
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
+
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-approved',
+              data: {
+                useroriginator: userOriginator.firstName,
+                cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+                monto: existentTransactionRequest.amount.toFixed(6),
+                lender: company.name,
+                vaultid: existentTransactionRequest.vaultId,
+                transactiontype: existentTransactionRequest.transactionType,
+              },
+            },
+          })
+        )
+      );
 
       console.log(message);
     }
@@ -1112,7 +1215,7 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount.toFixed(2),
+            value: after.amount.toFixed(6),
             currency: after.currency,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
@@ -1130,7 +1233,7 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount.toFixed(2),
+            value: after.amount.toFixed(6),
             currency: after.currency,
             vaultType: vault.vaultType,
             creditType: vault.creditType,
@@ -1139,29 +1242,31 @@ exports.onRequestUpdate = functions.firestore
         },
       });
 
-      // Envio aviso al empleado que pidió la liquidación
-      const userOriginator = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: after.createdBy,
-      });
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
 
-      await EmailSender.send({
-        to: userOriginator.email,
-        message: null,
-        template: {
-          name: 'mail-liquidate',
-          data: {
-            username: userOriginator.firstName + ' ' + userOriginator.lastName,
-            vaultId: vault.id,
-            lender: company.name,
-            value: after.amount.toFixed(2),
-            currency: after.currency,
-            vaultType: vault.vaultType,
-            creditType: vault.creditType,
-            serviceLevel: vault.serviceLevel,
-          },
-        },
-      });
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-liquidate',
+              data: {
+                username: borrower.firstName + ' ' + borrower.lastName,
+                vaultId: vault.id,
+                lender: company.name,
+                value: after.amount.toFixed(6),
+                currency: after.currency,
+                vaultType: vault.vaultType,
+                creditType: vault.creditType,
+                serviceLevel: vault.serviceLevel,
+              },
+            },
+          })
+        )
+      );
     }
 
     if (
@@ -1196,7 +1301,7 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount.toFixed(2),
+            value: after.amount.toFixed(6),
             currency: after.currency,
           },
         },
@@ -1211,32 +1316,34 @@ exports.onRequestUpdate = functions.firestore
             username: borrower.firstName + ' ' + borrower.lastName,
             vaultId: vault.id,
             lender: company.name,
-            value: after.amount.toFixed(2),
+            value: after.amount.toFixed(6),
             currency: after.currency,
           },
         },
       });
 
-      // Envio aviso al empleado que firmó la transacción
-      const userSigner = await fetchSingleItem({
-        collectionName: Collections.USERS,
-        id: after.updatedBy,
-      });
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
 
-      await EmailSender.send({
-        to: userSigner.email,
-        message: null,
-        template: {
-          name: 'mail-rescue',
-          data: {
-            username: userSigner.firstName + ' ' + userSigner.lastName,
-            vaultId: vault.id,
-            lender: company.name,
-            value: after.amount.toFixed(2),
-            currency: after.currency,
-          },
-        },
-      });
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-rescue',
+              data: {
+                username: borrower.firstName + ' ' + borrower.lastName,
+                vaultId: vault.id,
+                lender: company.name,
+                value: after.amount.toFixed(6),
+                currency: after.currency,
+              },
+            },
+          })
+        )
+      );
     }
 
     // Primera firma
@@ -1261,13 +1368,13 @@ exports.onRequestUpdate = functions.firestore
         collectionName: Collections.COMPANIES,
         id: after.companyId,
       });
-
+      // El userId de la transacción es el userId de la vault
       const borrower = await fetchSingleItem({
         collectionName: Collections.USERS,
         id: after.userId,
       });
 
-      // Envío mail a admin y al lender
+      // Envío mail a admin, borrower, y companyEmployees
       EmailSender.send({
         to: SYS_ADMIN_EMAIL,
         message: null,
@@ -1276,7 +1383,7 @@ exports.onRequestUpdate = functions.firestore
           data: {
             useroriginator: userOriginator.firstName,
             cliente: borrower.firstName + ' ' + borrower.lastName,
-            monto: after.amount.toFixed(2),
+            monto: after.amount.toFixed(6),
             current: after.currency,
             lender: company.name,
             vaultid: after.vaultId,
@@ -1284,16 +1391,16 @@ exports.onRequestUpdate = functions.firestore
           },
         },
       });
-      // TODO Esto debe ser al borrower
+
       EmailSender.send({
-        to: userOriginator.email,
+        to: borrower.email,
         message: null,
         template: {
           name: 'mail-signature',
           data: {
             useroriginator: userOriginator.firstName,
             cliente: borrower.firstName + ' ' + borrower.lastName,
-            monto: after.amount.toFixed(2),
+            monto: after.amount.toFixed(6),
             current: after.currency,
             lender: company.name,
             vaultid: after.vaultId,
@@ -1301,6 +1408,31 @@ exports.onRequestUpdate = functions.firestore
           },
         },
       });
+
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
+
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-signature',
+              data: {
+                useroriginator: userOriginator.firstName,
+                cliente: borrower.firstName + ' ' + borrower.lastName,
+                monto: after.amount.toFixed(6),
+                current: after.currency,
+                lender: company.name,
+                vaultid: after.vaultId,
+                tipodetransaccion: after.transactionType,
+              },
+            },
+          })
+        )
+      );
     }
 
     return null;
