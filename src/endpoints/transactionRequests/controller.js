@@ -64,30 +64,35 @@ const VAULT_ENTITY_PROPERTY_NAME = 'vaultId';
 const COLLECTION_NAME = Collections.TRANSACTION_REQUESTS;
 
 const getCompanyEmployeeEmails = async (companyId) => {
-  const employeesResult = await listByPropInner({
-    filters: { state: { $equal: Types.StateTypes.STATE_ACTIVE } },
-    primaryEntityPropName: 'companyId',
-    primaryEntityValue: companyId,
-    primaryEntityCollectionName: Collections.COMPANIES,
-    listByCollectionName: Collections.COMPANY_EMPLOYEES,
-    relationships: [{ collectionName: Collections.USERS, propertyName: 'userId' }],
+  // Get ONLY the employees for this specific company
+  const employees = await fetchItems({
+    collectionName: Collections.COMPANY_EMPLOYEES,
+    filters: {
+      companyId: { $equal: companyId }, // This is the key filter!
+      state: { $equal: Types.StateTypes.STATE_ACTIVE },
+    },
+    indexedFilters: ['companyId', 'state'], // Make sure we use the indexed filters
   });
 
-  if (!employeesResult.items || employeesResult.items.length === 0) {
+  console.log(`Found ${employees.length} employees for company ${companyId}`);
+
+  if (!employees || employees.length === 0) {
     return [];
   }
 
-  // Get user details for these employees
-  const userIds = employeesResult.items.map((employee) => employee.userId);
-  const users = await fetchItems({
-    collectionName: Collections.USERS,
-    filters: {
-      id: { $in: userIds },
-      state: { $equal: Types.StateTypes.STATE_ACTIVE },
-    },
-  });
-
-  return users;
+  // Get user information for each employee
+  const userEmails = await Promise.all(
+    employees.map(async (employee) => {
+      const user = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: employee.userId,
+      });
+      return user ? user.email : null;
+    })
+  );
+  console.log('getCompanyEmployeeEmails userEmails', userEmails);
+  // Remove any null values
+  return userEmails.filter(Boolean);
 };
 
 async function validateRequest(itemData, vault = null) {

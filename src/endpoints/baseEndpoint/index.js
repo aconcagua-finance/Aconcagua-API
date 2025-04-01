@@ -417,10 +417,6 @@ const filterItems = function ({ items, limit = 100, offset = 0, filters, indexed
 };
 
 const sanitizeData = async function ({ data, validationSchema }) {
-  console.log('Sanitize Data - schema:', validationSchema);
-  console.log('Sanitize Data - schema type:', typeof validationSchema);
-  console.log('Sanitize Data - schema methods:', Object.keys(validationSchema || {}));
-
   const _validationOptions = {
     abortEarly: false,
     allowUnknown: true,
