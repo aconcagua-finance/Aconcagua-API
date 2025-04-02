@@ -1,25 +1,22 @@
 const Joi = require('joi');
 
-const basicData = {
+// Define schema directly
+const createSchema = Joi.object({
+  actionType: Joi.string().required(),
+  currency: Joi.string().required(),
+  ratio: Joi.number().required(),
+  swapPriority: Joi.number().optional(),
+}).required(); // Make the entire object required
+
+const updateSchema = Joi.object({
   actionType: Joi.string(),
   currency: Joi.string(),
   ratio: Joi.number(),
   swapPriority: Joi.number(),
-};
-
-const createSchema = Joi.object({
-  ...basicData,
 });
 
-const updateSchema = Joi.object({
-  ...basicData,
-});
-
-const requiredBaseFields = ['actionType', 'currency', 'ratio'];
-
-const schemas = {
-  create: createSchema.fork(requiredBaseFields, (field) => field.required()),
+// Export with explicit property names
+module.exports = {
+  create: createSchema,
   update: updateSchema,
 };
-
-module.exports = schemas;
