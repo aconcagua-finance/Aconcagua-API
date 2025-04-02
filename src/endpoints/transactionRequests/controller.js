@@ -1391,7 +1391,7 @@ exports.onRequestUpdate = functions.firestore
           },
         },
       });
-
+      console.log('onRequest - borrower email is ', borrower.email);
       EmailSender.send({
         to: borrower.email,
         message: null,
