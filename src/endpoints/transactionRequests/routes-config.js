@@ -74,14 +74,14 @@ exports.transactionRequestsRoutesConfig = function (app) {
     createBorrowerTransactionRequest,
   ]);
 
-    // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
-    app.post('/borrower-approve/:companyId/:userId/:id', [
-      Audit.logger,
-      Auth.isAuthenticated,
-      Auth.isAuthorized({
-        hasAppRole: [Types.AppRols.APP_ADMIN],
-        allowSameUser: true,
-      }),
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
+  app.post('/borrower-approve/:companyId/:userId/:id', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      allowSameUser: true,
+    }),
     borrowerApproveTransactionRequest,
   ]);
 
