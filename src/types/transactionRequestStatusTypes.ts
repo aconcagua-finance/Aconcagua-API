@@ -3,4 +3,5 @@ export enum TransactionRequestStatusTypes {
   PENDING_APPROVE = 'pending-approve',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  EXECUTED = 'executed',
 }
