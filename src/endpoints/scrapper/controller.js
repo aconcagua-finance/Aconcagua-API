@@ -35,24 +35,36 @@ exports.scrappDolarHoyDolarCripto = async function (req, res) {
      */
     let valuaciones = await page.evaluate(function () {
       // eslint-disable-next-line no-undef
-      const mainQueryResult = document.querySelectorAll('.tile .is-child');
+      const mainQueryResult = document.querySelectorAll('.title');
 
-      // return mainQueryResult[0].querySelectorAll('.title')[0].innerHTML;
-      return Array.from(mainQueryResult).map((item) => {
-        // medio raro, como que no funciona la sub seleccion pero logra el objetivo
-        const titles = item.querySelectorAll('.title');
-        const buys = item.querySelectorAll('.compra .val');
-        const sells = item.querySelectorAll('.venta .val');
-        let title = '';
+      return Array.from(mainQueryResult).map((titleElement) => {
+        // Get the parent container that holds both title and values
+        const container = titleElement.closest('div[class*="tile"]') || titleElement.parentElement;
+
+        // Get the title text
+        const titleText = titleElement.textContent.trim();
+
+        // Get the values container
+        const valuesContainer = container.querySelector('.values');
+
         let buy = '';
         let sell = '';
-        if (titles && titles.length && buys && buys.length && sells && sells.length) {
-          title = titles[0].innerHTML;
-          buy = parseFloat(buys[0].innerHTML.replace('$', ''));
-          sell = parseFloat(sells[0].innerHTML.replace('$', ''));
+
+        if (valuesContainer) {
+          // Get buy value
+          const buyElement = valuesContainer.querySelector('.compra .val');
+          if (buyElement) {
+            buy = parseFloat(buyElement.textContent.replace('$', '').trim());
+          }
+
+          // Get sell value
+          const sellElement = valuesContainer.querySelector('.venta .val');
+          if (sellElement) {
+            sell = parseFloat(sellElement.textContent.replace('$', '').trim());
+          }
         }
 
-        return { title, buy, sell };
+        return { title: titleText, buy, sell };
       });
     });
 
