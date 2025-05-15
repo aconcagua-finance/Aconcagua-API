@@ -24,7 +24,7 @@ env:
   FIREB_MEASURAMENT_ID: 'G-7X16DSM5BJ'
 
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar Oficial'
-  API_USD_VALUATION: 'http://us-central1-aconcaguapsav.cloudfunctions.net/market/dolarOficial'
+  API_USD_VALUATION: 'https://us-central1-aconcaguapsav.cloudfunctions.net/market/dolarOficial'
   #Token valuations usamos las de producción
   API_TOKENS_VALUATIONS: 'https://us-central1-lanin-6339b.cloudfunctions.net/market/tokensQuotes'
   API_EVALUATE_VAULTS: 'https://us-central1-lanin-6339b.cloudfunctions.net/vaultsPolygon/evaluate'
