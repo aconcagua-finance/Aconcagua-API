@@ -110,7 +110,14 @@ exports.create = async function (req, res) {
 const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
   const apiResponse = await invoke_get_api({ endpoint: API_USD_VALUATION });
 
-  if (!apiResponse || !apiResponse.data || !apiResponse.data.buy) {
+  // Handle the case where API returns a simple value (e.g. "1132.00")
+  let valuation;
+  if (apiResponse && typeof apiResponse.data === 'string') {
+    valuation = parseFloat(apiResponse.data);
+  } else if (apiResponse && apiResponse.data && apiResponse.data.buy) {
+    // Legacy format handling
+    valuation = apiResponse.data.buy;
+  } else {
     throw new CustomError.TechnicalError(
       'ERROR_USD_VALUATION_INVALID_RESPONSE',
       null,
@@ -118,7 +125,7 @@ const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
       null
     );
   }
-  const valuation = apiResponse.data.buy;
+
   // armo los filtros para conseguir el registro de la db correcto
   const filters = { currency: { $equal: 'ars' } };
   const indexedFilters = ['currency'];
