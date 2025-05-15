@@ -34,7 +34,7 @@ env:
   #GOOGLE_CALENDAR_EVENT_WEBHOOK_URL: 'https://us-central1-catedral-fb.cloudfunctions.net/userCalendarEvents/google-event-webhook'
 
   DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY: 'Dólar Oficial'
-  API_USD_VALUATION: 'https://us-central1-aconcaguapsav.cloudfunctions.net/market/dolarOficial'
+  API_USD_VALUATION: 'https://us-central1-catedral-fb.cloudfunctions.net/market/dolarOficial'
   API_TOKENS_VALUATIONS: 'https://us-central1-catedral-fb.cloudfunctions.net/market/tokensQuotes'
   API_EVALUATE_VAULTS: 'https://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/evaluate'
   API_VAULT_ADMIN: 'https://us-central1-catedral-fb.cloudfunctions.net/vaultsPolygon/vaultAdmin'
