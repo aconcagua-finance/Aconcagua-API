@@ -13,6 +13,7 @@ const { Collections } = require('../../types/collectionsTypes');
 
 const { DOLAR_HOY_DOLAR_CRIPTO_DOM_QUERY } = require('../../config/appConfig');
 
+// En desuso, la mantenemos por si es necesario volver atrás
 exports.scrappDolarHoyDolarCripto = async function (req, res) {
   try {
     const { userId } = res.locals; // user id
