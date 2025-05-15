@@ -114,6 +114,25 @@ exports.invoke_get_api = async function ({ endpoint, noTrace }) {
       ...config,
     });
 
+    // Special case: Handle plain text responses for the USD valuation endpoint
+    if (endpoint.includes('dolarOficial') && result) {
+      console.log('Processing dolarOficial response:', typeof result.data, result.data);
+
+      // If result.data is undefined but we have a text response in the result
+      if (result.data === undefined && typeof result === 'string') {
+        console.log('Direct string response detected:', result);
+        result = {
+          data: result.trim(),
+          status: 200,
+        };
+      }
+      // If result.data is a string, trim it to remove any whitespace
+      else if (result.data && typeof result.data === 'string') {
+        console.log('String data response detected:', result.data);
+        result.data = result.data.trim();
+      }
+    }
+
     // Calculate the difference in milliseconds
     const difference_ms = new Date().getTime() - traceStart.getTime();
 
