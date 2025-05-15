@@ -108,62 +108,110 @@ exports.create = async function (req, res) {
 };
 
 const fetchAndUpdateUSDValuation = async function ({ auditUid }) {
-  const apiResponse = await invoke_get_api({ endpoint: API_USD_VALUATION });
+  try {
+    console.log('Calling USD Valuation API:', API_USD_VALUATION);
+    const apiResponse = await invoke_get_api({ endpoint: API_USD_VALUATION });
 
-  // Handle the case where API returns a simple value (e.g. "1132.00")
-  let valuation;
-  if (apiResponse && typeof apiResponse.data === 'string') {
-    valuation = parseFloat(apiResponse.data);
-  } else if (apiResponse && apiResponse.data && apiResponse.data.buy) {
-    // Legacy format handling
-    valuation = apiResponse.data.buy;
-  } else {
+    console.log('USD Valuation API response:', JSON.stringify(apiResponse));
+
+    // Handle different possible response formats
+    let valuation;
+
+    // Case 1: API returns value directly in response (not in data property)
+    if ((apiResponse && typeof apiResponse === 'string') || typeof apiResponse === 'number') {
+      console.log('Direct value response detected');
+      valuation = parseFloat(apiResponse);
+    }
+    // Case 2: API returns value in data as string
+    else if (apiResponse && typeof apiResponse.data === 'string') {
+      console.log('String data response detected:', apiResponse.data);
+      // Try to parse the string, removing any non-numeric characters except decimal point
+      const cleanedString = apiResponse.data.replace(/[^\d.]/g, '');
+      console.log('Cleaned string:', cleanedString);
+      valuation = parseFloat(cleanedString);
+    }
+    // Case 3: Legacy format with buy property
+    else if (apiResponse && apiResponse.data && apiResponse.data.buy) {
+      console.log('Legacy object response detected');
+      valuation = apiResponse.data.buy;
+    }
+    // Case 4: API returns just a number in data
+    else if (
+      apiResponse &&
+      apiResponse.data &&
+      (typeof apiResponse.data === 'number' || !isNaN(parseFloat(apiResponse.data)))
+    ) {
+      console.log('Number data response detected');
+      valuation = parseFloat(apiResponse.data);
+    } else {
+      console.log('ERROR: Invalid response format:', typeof apiResponse, apiResponse);
+      throw new CustomError.TechnicalError(
+        'ERROR_USD_VALUATION_INVALID_RESPONSE',
+        null,
+        'Respuesta inválida del servicio de valuacion de USD',
+        null
+      );
+    }
+
+    console.log('Parsed valuation value:', valuation);
+
+    if (isNaN(valuation)) {
+      console.log('ERROR: Failed to parse valuation as number');
+      throw new CustomError.TechnicalError(
+        'ERROR_USD_VALUATION_INVALID_NUMBER',
+        null,
+        'El valor obtenido no es un número válido',
+        null
+      );
+    }
+
+    // armo los filtros para conseguir el registro de la db correcto
+    const filters = { currency: { $equal: 'ars' } };
+    const indexedFilters = ['currency'];
+
+    // // consulto id de item que como currency = ARS y targetCurrency = USD
+    const items = await fetchItems({
+      collectionName: COLLECTION_NAME,
+
+      filters,
+      indexedFilters,
+    });
+
+    // Loggeo resultados
+
+    console.log('fetchAndUpdateUSDValuation - valuation');
+    console.log(valuation);
+    console.log('fetchAndUpdateUSDValuation - items');
+    console.log(items);
+
+    // Valido que me devuelva solo un elemento
+    if (items.length !== 1) {
+      throw new CustomError.TechnicalError(
+        'fetchAndUpdateUSDValuation - ERROR_USD_VALUATION_INVALID_RESPONSE',
+        null,
+        'fetchAndUpdateUSDValuation - Se encontraron 0 o mas de 1 elemento',
+        null
+      );
+    }
+    // actualizo el valor de value con la nueva valuacion
+    items[0].value = valuation;
+    // // update de la valuation de ese registro
+    await updateSingleItem({
+      collectionName: COLLECTION_NAME,
+      id: items[0].id,
+      auditUid,
+      data: items[0],
+    });
+    return { valuation };
+  } catch (err) {
+    console.log('ERROR in fetchAndUpdateUSDValuation:', err);
     throw new CustomError.TechnicalError(
-      'ERROR_USD_VALUATION_INVALID_RESPONSE',
+      'ERROR_USD_VALUATION_GENERAL_ERROR',
       null,
-      'Respuesta inválida del servicio de valuacion de USD',
-      null
+      'Error general en el servicio de valuacion de USD: ' + err.message,
+      err
     );
   }
-
-  // armo los filtros para conseguir el registro de la db correcto
-  const filters = { currency: { $equal: 'ars' } };
-  const indexedFilters = ['currency'];
-
-  // // consulto id de item que como currency = ARS y targetCurrency = USD
-  const items = await fetchItems({
-    collectionName: COLLECTION_NAME,
-
-    filters,
-    indexedFilters,
-  });
-
-  // Loggeo resultados
-
-  console.log('fetchAndUpdateUSDValuation - valuation');
-  console.log(valuation);
-  console.log('fetchAndUpdateUSDValuation - items');
-  console.log(items);
-
-  // Valido que me devuelva solo un elemento
-  if (items.length !== 1) {
-    throw new CustomError.TechnicalError(
-      'fetchAndUpdateUSDValuation - ERROR_USD_VALUATION_INVALID_RESPONSE',
-      null,
-      'fetchAndUpdateUSDValuation - Se encontraron 0 o mas de 1 elemento',
-      null
-    );
-  }
-  // actualizo el valor de value con la nueva valuacion
-  items[0].value = valuation;
-  // // update de la valuation de ese registro
-  await updateSingleItem({
-    collectionName: COLLECTION_NAME,
-    id: items[0].id,
-    auditUid,
-    data: items[0],
-  });
-  return { valuation };
 };
 
 exports.fetchAndUpdateUSDValuation = async function (req, res) {
