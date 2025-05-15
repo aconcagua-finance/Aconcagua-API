@@ -19,8 +19,6 @@ const schemas = require('./schemas');
 // eslint-disable-next-line camelcase
 const { invoke_get_api } = require('../../helpers/httpInvoker');
 
-const { API_USD_VALUATION } = require('../../config/appConfig');
-
 const {
   find,
   get,
