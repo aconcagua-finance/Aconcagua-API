@@ -1,4 +1,4 @@
-const { getDolarOficial } = require('./controller');
+const { scrappDolarHoyDolarCripto } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
 const { Auth } = require('../../vs-core-firebase');
@@ -11,6 +11,6 @@ exports.scrapperRoutesConfig = function (app) {
     // Auth.isAuthorized({
     //   hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_STAFF],
     // }),
-    getDolarOficial,
+    scrappDolarHoyDolarCripto,
   ]);
 };
