@@ -102,29 +102,42 @@ export const isAuthorized = function ({
         console.log('staff relationship founded');
         // console.log('allowStaffRelationship: ', JSON.stringify(doc));
         return next();
-        // eslint-disable-next-line no-else-return
-      } else {
-        console.log('staff relationship NOT founded');
-        // console.log('allowStaffRelationship: ', JSON.stringify({ userId, paramUserId }));
       }
+      console.log('staff relationship NOT founded');
+      // console.log('allowStaffRelationship: ', JSON.stringify({ userId, paramUserId }));
     }
 
     // Check delegate relationship
-    if (allowDelegateAccess && paramUserId && companyId) {
-      const vaultId = req.params.id;
+    if (allowDelegateAccess) {
+      console.log('Checking delegate access...');
+      console.log('Current user ID:', userId);
+      console.log('Request params:', req.params);
+
+      const delegateId = req.params.delegateId;
+      console.log('Delegate ID from params:', delegateId);
+
       const db = admin.firestore();
+      console.log('Querying delegate relationships collection...');
 
       const querySnapshot = await db
         .collection(DelegateRelationshipTypes.COLLECTION_NAME)
-        .where(DelegateRelationshipTypes.USER_ID_PROP_NAME, '==', paramUserId)
-        .where(DelegateRelationshipTypes.COMPANY_ID_PROP_NAME, '==', companyId)
-        .where(DelegateRelationshipTypes.VAULT_ID_PROP_NAME, '==', vaultId)
-        .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', userId)
+        .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', delegateId)
         .get();
 
+      console.log('Delegate relationships query result:', {
+        empty: querySnapshot.empty,
+        size: querySnapshot.size,
+        docs: querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        })),
+      });
+
       if (querySnapshot.docs && querySnapshot.docs.length) {
+        console.log('Delegate access granted');
         return next();
       }
+      console.log('No delegate relationships found');
     }
 
     // eslint-disable-next-line no-console

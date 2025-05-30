@@ -9,6 +9,7 @@ const { ErrorHelper, EmailSender } = require('../../vs-core-firebase');
 const { LoggerHelper } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const { Auth } = require('../../vs-core-firebase');
+const { DelegateRelationshipTypes } = require('../../vs-core/types/delegateRelationshipTypes');
 
 const { SYS_ADMIN_EMAIL } = require('../../config/appConfig');
 
@@ -1437,3 +1438,275 @@ exports.onRequestUpdate = functions.firestore
 
     return null;
   });
+
+exports.findTransactionRequestsByDelegateId = async function (req, res) {
+  try {
+    const { delegateId } = req.params;
+    const { limit: limitStr, offset: offsetStr } = req.query;
+
+    // Parse limit and offset as integers, with fallback values
+    const limit = limitStr ? parseInt(limitStr, 10) : 1000;
+    const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
+
+    // First, get all vaults where the user is a delegate
+    const db = admin.firestore();
+    const delegatesSnapshot = await db
+      .collection(DelegateRelationshipTypes.COLLECTION_NAME)
+      .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', delegateId)
+      .where('status', '==', 'active')
+      .get();
+
+    const delegatedVaults = delegatesSnapshot.docs.map((doc) => doc.data().vaultId);
+
+    if (!delegatedVaults.length) {
+      return res.status(200).send({ items: [], total: 0 });
+    }
+
+    // Then, get transaction requests for these vaults with specific statuses
+    const transactionRequestsSnapshot = await db
+      .collection(Collections.TRANSACTION_REQUESTS)
+      .where('vaultId', 'in', delegatedVaults)
+      .where('requestStatus', 'in', [
+        TransactionRequestStatusTypes.REQUESTED,
+        TransactionRequestStatusTypes.PENDING_APPROVE,
+      ])
+      .limit(limit)
+      .offset(offset)
+      .get();
+
+    const transactionRequests = transactionRequestsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Get related data for each transaction request using listWithRelationships
+    const result = await listWithRelationships({
+      limit,
+      offset,
+      filters: {
+        id: { $in: transactionRequests.map((tr) => tr.id) },
+      },
+      listByCollectionName: COLLECTION_NAME,
+      indexedFilters: INDEXED_FILTERS,
+      relationships: [
+        { collectionName: Collections.COMPANIES, propertyName: COMPANY_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.VAULTS, propertyName: VAULT_ENTITY_PROPERTY_NAME },
+        { collectionName: Collections.USERS, propertyName: USER_ENTITY_PROPERTY_NAME },
+      ],
+    });
+
+    return res.status(200).send(result);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};
+
+exports.delegateApproveTransactionRequest = async function (req, res) {
+  const { userId } = res.locals;
+  const auditUid = userId;
+
+  const { companyId, id } = req.params;
+  const body = req.body;
+  console.log('delegateApproveTransactionRequest - body es ', body);
+
+  // Modified validation to check for either safeTransaction or safeConfirmation
+  if (
+    !body ||
+    (!body.safeMainTransaction &&
+      !body.safeConfirmation &&
+      !body.executionResult &&
+      !body.safeATransaction &&
+      !body.isNativeToken)
+  ) {
+    throw new CustomError.TechnicalError(
+      'ERROR_MISSING_ARGS',
+      null,
+      'Missing safeMainTransaction or safeConfirmation or executionResult data',
+      null
+    );
+  }
+
+  const collectionName = COLLECTION_NAME;
+  const validationSchema = schemas.update;
+  console.log('delegateApproveTransactionRequest args (' + collectionName + '):', body);
+  const itemData = await sanitizeData({ data: body, validationSchema });
+
+  try {
+    if (!companyId || !id) {
+      throw new CustomError.TechnicalError(
+        'delegateApproveTransactionRequest - ERROR_MISSING_ARGS',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
+
+    console.log(
+      'delegateApproveTransactionRequest - existentTransactionRequest es ',
+      existentTransactionRequest
+    );
+
+    if (!existentTransactionRequest) {
+      throw new CustomError.TechnicalError(
+        'delegateApproveTransactionRequest - ERROR_MISSING_ARGS2',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    if (existentTransactionRequest.companyId !== companyId) {
+      throw new CustomError.TechnicalError(
+        'delegateApproveTransactionRequest - MISSING_PERMISSIONS for Company',
+        null,
+        'Invalid args',
+        null
+      );
+    }
+
+    console.log(
+      'delegateApproveTransactionRequest - Patch args (' + collectionName + '):',
+      JSON.stringify(body)
+    );
+
+    // Handle both safeTransaction and safeConfirmation
+    if (body.safeMainTransaction) {
+      itemData.safeMainTransaction = body.safeMainTransaction;
+    }
+    if (body.safeConfirmation) {
+      const currentConfirmations = existentTransactionRequest.safeConfirmations || [];
+      itemData.safeConfirmations = [...currentConfirmations, body.safeConfirmation];
+    }
+
+    // Set requestStatus based on current status
+    if (existentTransactionRequest.requestStatus === TransactionRequestStatusTypes.REQUESTED) {
+      itemData.requestStatus = TransactionRequestStatusTypes.PENDING_APPROVE;
+    } else {
+      itemData.requestStatus = TransactionRequestStatusTypes.APPROVED;
+    }
+
+    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+
+    // MRM envío de nueva notificación
+    if (
+      existentTransactionRequest.requestStatus == TransactionRequestStatusTypes.PENDING_APPROVE &&
+      itemData.requestStatus == TransactionRequestStatusTypes.APPROVED
+    ) {
+      console.log(
+        'Estado de la transacción era ',
+        existentTransactionRequest.requestStatus,
+        ' y ahora es ',
+        itemData.requestStatus,
+        ' - Transacción Firmada y Aprobada'
+      );
+
+      const userOriginator = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.createdBy,
+      });
+
+      const userActive = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: userId,
+      });
+
+      const userBorrower = await fetchSingleItem({
+        collectionName: Collections.USERS,
+        id: existentTransactionRequest.userId,
+      });
+
+      // companyId
+      const company = await fetchSingleItem({
+        collectionName: Collections.COMPANIES,
+        id: companyId,
+      });
+
+      console.log('userOriginator es ', userOriginator);
+      console.log('userActive es ', userActive);
+      console.log('userBorrower es ', userBorrower);
+      console.log('companyId es ', companyId);
+
+      const message =
+        company.name +
+        '.  Cliente ' +
+        userBorrower.lastName +
+        ' ' +
+        userBorrower.lastName +
+        '.  Bóveda: ' +
+        existentTransactionRequest.vaultId +
+        '. Transacción por ' +
+        existentTransactionRequest.currency +
+        ' ' +
+        existentTransactionRequest.amount +
+        ' firmada y aprobada por ' +
+        userActive.firstName +
+        ' ' +
+        userActive.lastName;
+
+      EmailSender.send({
+        to: SYS_ADMIN_EMAIL,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.amount.toFixed(6),
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            transactiontype: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      EmailSender.send({
+        to: userBorrower.email,
+        message: null,
+        template: {
+          name: 'mail-approved',
+          data: {
+            useroriginator: userOriginator.firstName,
+            cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+            monto: existentTransactionRequest.amount.toFixed(6),
+            lender: company.name,
+            vaultid: existentTransactionRequest.vaultId,
+            transactiontype: existentTransactionRequest.transactionType,
+          },
+        },
+      });
+
+      // Then send to all company employees
+      const companyEmployees = await getCompanyEmployeeEmails(company.id);
+
+      // Send notification to all company employees
+      await Promise.all(
+        companyEmployees.map((employee) =>
+          EmailSender.send({
+            to: employee.email,
+            message: null,
+            template: {
+              name: 'mail-approved',
+              data: {
+                useroriginator: userOriginator.firstName,
+                cliente: userBorrower.firstName + ' ' + userBorrower.lastName,
+                monto: existentTransactionRequest.amount.toFixed(6),
+                lender: company.name,
+                vaultid: existentTransactionRequest.vaultId,
+                transactiontype: existentTransactionRequest.transactionType,
+              },
+            },
+          })
+        )
+      );
+
+      console.log(message);
+    }
+    // Fin nueva notificación
+
+    return res.status(204).send(doc);
+  } catch (err) {
+    return ErrorHelper.handleError(req, res, err);
+  }
+};

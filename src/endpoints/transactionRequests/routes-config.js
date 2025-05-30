@@ -7,10 +7,12 @@ const {
   createLenderTransactionRequest,
   lenderApproveTransactionRequest,
   borrowerApproveTransactionRequest,
+  delegateApproveTransactionRequest,
   find,
   findByCompany,
   findByVault,
   trustApproveTransactionRequest,
+  findTransactionRequestsByDelegateId,
 } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
@@ -51,6 +53,13 @@ exports.transactionRequestsRoutesConfig = function (app) {
     findByVault,
   ]);
 
+  // Get transaction requests for vaults where user is a delegate
+  app.get('/by-delegate/:delegateId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    findTransactionRequestsByDelegateId,
+  ]);
+
   // busca una relacion
   app.get('/:companyId/:id', [
     Audit.logger,
@@ -83,6 +92,29 @@ exports.transactionRequestsRoutesConfig = function (app) {
       allowSameUser: true,
     }),
     borrowerApproveTransactionRequest,
+  ]);
+
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción delegate.
+  app.post('/delegate-approve/:companyId/:userId/:id/:delegateId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+      allowSameUser: true,
+      allowDelegateAccess: true,
+    }),
+    delegateApproveTransactionRequest,
+  ]);
+
+  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción delegate.
+  app.post('/delegate-approve/:companyId/:id', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      allowDelegateAccess: true,
+    }),
+    delegateApproveTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
