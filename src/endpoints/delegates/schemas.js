@@ -9,6 +9,13 @@ const createSchema = Joi.object({
   status: Joi.string().default('inactive'),
 });
 
+const createDelegateRelationshipSchema = Joi.object({
+  delegateId: Joi.string().required(),
+  status: Joi.string().default('active'),
+  state: Joi.number().optional(),
+});
+
 module.exports = {
   create: createSchema,
+  createDelegateRelationship: createDelegateRelationshipSchema,
 };

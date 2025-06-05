@@ -31,8 +31,9 @@ const {
 } = require('../baseEndpoint');
 const schemas = require('./schemas');
 const { Collections } = require('../../types/collectionsTypes');
+const { CustomError } = require('../../vs-core-firebase');
 
-exports.createDelegate = async function (req, res) {
+exports.createDelegateRelationship = async function (req, res) {
   try {
     const { userId: auditUid } = res.locals; // Current user
     const { vaultId } = req.params;
@@ -44,7 +45,7 @@ exports.createDelegate = async function (req, res) {
     // Validate request body
     const itemData = await sanitizeData({
       data: req.body,
-      validationSchema: schemas.create,
+      validationSchema: schemas.createDelegateRelationship,
     });
     const { delegateId } = itemData;
 
@@ -186,28 +187,41 @@ exports.createDelegateFromUser = async function (req, res) {
 
 exports.removeDelegate = async function (req, res) {
   try {
-    const { vaultId, delegateId } = req.params;
+    const { companyId, userId, id } = req.params;
+    console.log('[removeDelegate] Params:', { companyId, userId, id });
 
-    const db = admin.firestore();
-    const querySnapshot = await db
-      .collection(DelegateRelationshipTypes.COLLECTION_NAME)
-      .where(DelegateRelationshipTypes.VAULT_ID_PROP_NAME, '==', vaultId)
-      .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', delegateId)
-      .get();
+    if (!id) {
+      throw new Error('Delegate relationship id is required');
+    }
 
-    if (querySnapshot.empty) {
+    if (!companyId || !userId) {
+      throw new CustomError.TechnicalError(
+        'ERROR_REMOVE_DELEGATE',
+        null,
+        'Error removing delegate. Missing required parameters',
+        null
+      );
+    }
+
+    // First verify the delegate relationship exists and belongs to the correct user/company
+    const delegate = await fetchSingleItem({
+      collectionName: DelegateRelationshipTypes.COLLECTION_NAME,
+      id,
+    });
+
+    if (!delegate) {
       throw new Error('Delegate relationship not found');
     }
 
-    // Delete the relationship
-    const batch = db.batch();
-    querySnapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
-    await batch.commit();
+    if (delegate.userId !== userId || delegate.companyId !== companyId) {
+      throw new Error('Unauthorized to remove this delegate relationship');
+    }
 
-    return res.status(200).send({ message: 'Delegate access removed' });
+    // Use the base endpoint's remove function with proper parameters
+    // The base endpoint's remove function will handle sending the response
+    await remove(req, res, DelegateRelationshipTypes.COLLECTION_NAME);
   } catch (err) {
+    console.error('[removeDelegate] Error:', err);
     return ErrorHelper.handleError(req, res, err);
   }
 };
@@ -289,25 +303,24 @@ exports.findDelegatesByUser = async function (req, res) {
       ...doc.data(),
     }));
 
-    // Fetch user details for each delegate
-    console.log('[findDelegatesByUser] Fetching user details for delegates...');
-    const delegateIds = delegates.map((delegate) => delegate.delegateId);
-    const usersSnapshot = await db
-      .collection(Collections.USERS)
-      .where('id', 'in', delegateIds)
-      .get();
-
+    // Manual enrichment: fetch user info for each delegateId using fetchItemsByIds
+    const delegateIds = delegates.map((delegate) => delegate.delegateId).filter(Boolean);
     const usersMap = {};
-    usersSnapshot.docs.forEach((doc) => {
-      const userData = doc.data();
-      usersMap[userData.id] = {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
-        identificationNumber: userData.identificationNumber,
-        phoneNumber: userData.phoneNumber,
-      };
-    });
+    if (delegateIds.length > 0) {
+      const userRecords = await fetchItemsByIds({
+        collectionName: Collections.USERS,
+        ids: delegateIds,
+      });
+      userRecords.forEach((userData) => {
+        usersMap[userData.id] = {
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          identificationNumber: userData.identificationNumber,
+          phoneNumber: userData.phoneNumber,
+        };
+      });
+    }
 
     // Combine delegate data with user details
     const enrichedDelegates = delegates.map((delegate) => ({
@@ -343,29 +356,113 @@ exports.findDelegatesByUser = async function (req, res) {
 
 exports.findDelegatesByCompany = async function (req, res) {
   try {
+    console.log('[findDelegatesByCompany] Starting with params:', req.params);
+    console.log('[findDelegatesByCompany] Query params:', req.query);
+
     const { companyId } = req.params;
-    const { limit: limitStr, offset: offsetStr } = req.query;
+    const { limit, offset } = req.query;
+    let { filters } = req.query;
 
-    // Parse limit and offset as integers, with fallback values
-    const limit = limitStr ? parseInt(limitStr, 10) : 1000;
-    const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
+    console.log('[findDelegatesByCompany] Processing request for companyId:', companyId);
 
-    const db = admin.firestore();
-    const querySnapshot = await db
-      .collection(DelegateRelationshipTypes.COLLECTION_NAME)
-      .where(DelegateRelationshipTypes.COMPANY_ID_PROP_NAME, '==', companyId)
-      .where('status', '==', 'active')
-      .limit(limit)
-      .offset(offset)
-      .get();
+    if (!filters) {
+      console.log(
+        '[findDelegatesByCompany] No filters provided, initializing empty filters object'
+      );
+      filters = {};
+    }
 
-    const delegates = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    // Convert state to number if it exists
+    if (filters.state && filters.state.$equal) {
+      console.log(
+        '[findDelegatesByCompany] Converting state filter to number:',
+        filters.state.$equal
+      );
+      filters.state.$equal = parseInt(filters.state.$equal, 10);
+    }
+
+    if (!filters.status) {
+      console.log('[findDelegatesByCompany] No status filter, setting default to active');
+      filters.status = { $equal: 'active' };
+    }
+
+    console.log('[findDelegatesByCompany] Final filters:', filters);
+    console.log('[findDelegatesByCompany] Pagination params - limit:', limit, 'offset:', offset);
+
+    console.log('[findDelegatesByCompany] Calling listByPropInner with companyId:', companyId);
+    const result = await listByPropInner({
+      limit,
+      offset,
+      filters,
+      primaryEntityPropName: DelegateRelationshipTypes.COMPANY_ID_PROP_NAME,
+      primaryEntityValue: companyId,
+      primaryEntityCollectionName: Collections.COMPANIES,
+      listByCollectionName: DelegateRelationshipTypes.COLLECTION_NAME,
+      indexedFilters: ['userId', 'companyId', 'vaultId', 'delegateId', 'status'],
+      relationships: [
+        {
+          collectionName: Collections.USERS,
+          propertyName: DelegateRelationshipTypes.USER_ID_PROP_NAME,
+        },
+        {
+          collectionName: Collections.USERS,
+          propertyName: DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME,
+        },
+        {
+          collectionName: Collections.VAULTS,
+          propertyName: DelegateRelationshipTypes.VAULT_ID_PROP_NAME,
+        },
+      ],
+    });
+
+    // Manual enrichment: fetch user info for each delegateId using fetchItemsByIds
+    const delegates = result.items || [];
+    const delegateIds = delegates.map((delegate) => delegate.delegateId).filter(Boolean);
+    const usersMap = {};
+    if (delegateIds.length > 0) {
+      const userRecords = await fetchItemsByIds({
+        collectionName: Collections.USERS,
+        ids: delegateIds,
+      });
+      userRecords.forEach((userData) => {
+        usersMap[userData.id] = {
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          identificationNumber: userData.identificationNumber,
+          phoneNumber: userData.phoneNumber,
+        };
+      });
+    }
+    // Combine delegate data with user details
+    const enrichedDelegates = delegates.map((delegate) => ({
+      ...delegate,
+      delegate: usersMap[delegate.delegateId] || {
+        firstName: 'Unknown',
+        lastName: 'User',
+        email: null,
+        identificationNumber: null,
+        phoneNumber: null,
+      },
     }));
+    // Return enriched result
+    const enrichedResult = {
+      ...result,
+      items: enrichedDelegates,
+    };
 
-    return res.status(200).send(delegates);
+    console.log(
+      '[findDelegatesByCompany] Successfully enriched and returning delegates. Count:',
+      enrichedDelegates.length
+    );
+    return res.send(enrichedResult);
   } catch (err) {
+    console.error('[findDelegatesByCompany] Error:', {
+      message: err.message,
+      stack: err.stack,
+      params: req.params,
+      query: req.query,
+    });
     return ErrorHelper.handleError(req, res, err);
   }
 };

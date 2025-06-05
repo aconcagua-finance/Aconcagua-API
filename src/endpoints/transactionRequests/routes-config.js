@@ -54,9 +54,13 @@ exports.transactionRequestsRoutesConfig = function (app) {
   ]);
 
   // Get transaction requests for vaults where user is a delegate
-  app.get('/by-delegate/:delegateId', [
+  app.get('/by-delegate/:userId', [
     Audit.logger,
     Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      allowSameUser: true,
+    }),
     findTransactionRequestsByDelegateId,
   ]);
 
@@ -73,48 +77,27 @@ exports.transactionRequestsRoutesConfig = function (app) {
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
-  app.post('/borrower/:companyId/:userId/:vaultId', [
+  app.post('/borrower/:companyId/:userId/:id/:transactionId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
+      allowDelegateAccess: true,
     }),
     createBorrowerTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
-  app.post('/borrower-approve/:companyId/:userId/:id', [
+  app.post('/borrower-approve/:companyId/:userId/:id/:transactionId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
+      allowDelegateAccess: true,
     }),
     borrowerApproveTransactionRequest,
-  ]);
-
-  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción delegate.
-  app.post('/delegate-approve/:companyId/:userId/:id/:delegateId', [
-    Audit.logger,
-    Auth.isAuthenticated,
-    Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN],
-      allowSameUser: true,
-      allowDelegateAccess: true,
-    }),
-    delegateApproveTransactionRequest,
-  ]);
-
-  // crea un elemento relacionado a la empresa, usuario y vault enviados de acción delegate.
-  app.post('/delegate-approve/:companyId/:id', [
-    Audit.logger,
-    Auth.isAuthenticated,
-    Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
-      allowDelegateAccess: true,
-    }),
-    delegateApproveTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.

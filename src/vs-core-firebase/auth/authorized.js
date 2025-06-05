@@ -111,17 +111,17 @@ export const isAuthorized = function ({
     if (allowDelegateAccess) {
       console.log('Checking delegate access...');
       console.log('Current user ID:', userId);
-      console.log('Request params:', req.params);
-
-      const delegateId = req.params.delegateId;
-      console.log('Delegate ID from params:', delegateId);
+      console.log('Company ID:', companyId);
+      console.log('Vault ID:', req.params.id);
 
       const db = admin.firestore();
       console.log('Querying delegate relationships collection...');
 
       const querySnapshot = await db
         .collection(DelegateRelationshipTypes.COLLECTION_NAME)
-        .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', delegateId)
+        .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', userId)
+        .where(DelegateRelationshipTypes.COMPANY_ID_PROP_NAME, '==', companyId)
+        .where(DelegateRelationshipTypes.VAULT_ID_PROP_NAME, '==', req.params.id)
         .get();
 
       console.log('Delegate relationships query result:', {

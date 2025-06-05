@@ -3,6 +3,7 @@ const { Auth } = require('../../vs-core-firebase');
 const { Types } = require('../../vs-core');
 const {
   createDelegateFromUser,
+  createDelegateRelationship,
   removeDelegate,
   listDelegates,
   find,
@@ -19,7 +20,7 @@ exports.delegatesRoutesConfig = function (app) {
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
     }),
     findDelegatesByCompany,
@@ -103,12 +104,22 @@ exports.delegatesRoutesConfig = function (app) {
     createDelegateFromUser,
   ]);
 
-  // Remove delegate access
-  app.delete('/:companyId/:userId/:vaultId/:delegateId', [
+  // Create delegate from user information
+  app.post('/:companyId/:userId/:vaultId/create-delegate-relationship', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
-      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      hasAppRole: [Types.AppRols.APP_ADMIN],
+    }),
+    createDelegateRelationship,
+  ]);
+
+  // Remove delegate access
+  app.delete('/:companyId/:userId/:id', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
       allowSameUser: true,
     }),

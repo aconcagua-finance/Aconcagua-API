@@ -478,8 +478,8 @@ exports.createLenderTransactionRequest = async function (req, res) {
 exports.createBorrowerTransactionRequest = async function (req, res) {
   const { userId: auditUid } = res.locals;
 
-  const { companyId, userId, vaultId } = req.params;
-  if (!companyId || !userId || !vaultId) {
+  const { companyId, userId, id: vaultId, transactionId } = req.params;
+  if (!companyId || !userId || !vaultId || !transactionId) {
     throw new CustomError.TechnicalError(
       'ERROR_CREATE',
       null,
@@ -508,6 +508,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     body.companyId = companyId;
     body.userId = vault.userId;
     body.vaultId = vaultId;
+    body.id = transactionId; // Set the transaction ID from the parameter
     body.requestStatus = TransactionRequestStatusTypes.REQUESTED;
 
     const collectionName = COLLECTION_NAME;
@@ -525,10 +526,7 @@ exports.createBorrowerTransactionRequest = async function (req, res) {
     console.log('Create data: (' + collectionName + ') ' + JSON.stringify(dbItemData));
 
     const mailResponse = await EmailSender.send({
-      // from: '"TrendArt" <' + GMAIL_EMAIL + '>',
       to: SYS_ADMIN_EMAIL,
-
-      // bcc: SYS_ADMIN_EMAIL,
       message: { subject: 'Se creo una solicitud', text: null, html: 'Vault: ' + itemData.vaultId },
     });
 
@@ -750,7 +748,7 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
   const { userId } = res.locals;
   const auditUid = userId;
 
-  const { companyId, id } = req.params;
+  const { companyId, transactionId } = req.params;
   const body = req.body;
   console.log('borrowerApproveTransactionRequest - body es ', body);
 
@@ -778,7 +776,7 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
   const itemData = await sanitizeData({ data: body, validationSchema });
 
   try {
-    if (!companyId || !id) {
+    if (!companyId || !transactionId) {
       throw new CustomError.TechnicalError(
         'borrowerApproveTransactionRequest - ERROR_MISSING_ARGS',
         null,
@@ -787,7 +785,7 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
       );
     }
 
-    const existentTransactionRequest = await fetchSingleItem({ collectionName, id });
+    const existentTransactionRequest = await fetchSingleItem({ collectionName, id: transactionId });
 
     console.log(
       'borrowerApproveTransactionRequest - existentTransactionRequest es ',
@@ -833,7 +831,12 @@ exports.borrowerApproveTransactionRequest = async function (req, res) {
       itemData.requestStatus = TransactionRequestStatusTypes.APPROVED;
     }
 
-    const doc = await updateSingleItem({ collectionName, id, auditUid, data: itemData });
+    const doc = await updateSingleItem({
+      collectionName,
+      id: transactionId,
+      auditUid,
+      data: itemData,
+    });
 
     // MRM envío de nueva notificación
     if (
@@ -1441,7 +1444,7 @@ exports.onRequestUpdate = functions.firestore
 
 exports.findTransactionRequestsByDelegateId = async function (req, res) {
   try {
-    const { delegateId } = req.params;
+    const { userId } = res.locals;
     const { limit: limitStr, offset: offsetStr } = req.query;
 
     // Parse limit and offset as integers, with fallback values
@@ -1452,7 +1455,7 @@ exports.findTransactionRequestsByDelegateId = async function (req, res) {
     const db = admin.firestore();
     const delegatesSnapshot = await db
       .collection(DelegateRelationshipTypes.COLLECTION_NAME)
-      .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', delegateId)
+      .where(DelegateRelationshipTypes.DELEGATE_ID_PROP_NAME, '==', userId)
       .where('status', '==', 'active')
       .get();
 
