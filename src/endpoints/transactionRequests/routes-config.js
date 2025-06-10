@@ -4,7 +4,7 @@ const {
   remove,
 
   createBorrowerTransactionRequest,
-  createLenderTransactionRequest,
+  createTransactionRequest,
   lenderApproveTransactionRequest,
   borrowerApproveTransactionRequest,
   delegateApproveTransactionRequest,
@@ -101,14 +101,15 @@ exports.transactionRequestsRoutesConfig = function (app) {
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
-  app.post('/lender/:companyId/:userId/:vaultId', [
+  app.post('/:companyId/:userId/:vaultId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
+      allowSameUser: true,
     }),
-    createLenderTransactionRequest,
+    createTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.

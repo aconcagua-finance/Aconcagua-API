@@ -412,7 +412,7 @@ exports.remove = async function (req, res) {
   await remove(req, res, COLLECTION_NAME);
 };
 
-exports.createLenderTransactionRequest = async function (req, res) {
+exports.createTransactionRequest = async function (req, res) {
   const { userId: auditUid } = res.locals;
 
   const { companyId, userId, vaultId } = req.params;
