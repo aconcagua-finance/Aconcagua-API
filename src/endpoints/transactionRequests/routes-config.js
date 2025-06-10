@@ -4,13 +4,15 @@ const {
   remove,
 
   createBorrowerTransactionRequest,
-  createLenderTransactionRequest,
+  createTransactionRequest,
   lenderApproveTransactionRequest,
   borrowerApproveTransactionRequest,
+  delegateApproveTransactionRequest,
   find,
   findByCompany,
   findByVault,
   trustApproveTransactionRequest,
+  findTransactionRequestsByDelegateId,
 } = require('./controller');
 
 const { Audit } = require('../../vs-core-firebase');
@@ -51,6 +53,17 @@ exports.transactionRequestsRoutesConfig = function (app) {
     findByVault,
   ]);
 
+  // Get transaction requests for vaults where user is a delegate
+  app.get('/by-delegate/:userId', [
+    Audit.logger,
+    Auth.isAuthenticated,
+    Auth.isAuthorized({
+      hasAppRole: [Types.AppRols.APP_ADMIN, Types.AppRols.APP_VIEWER],
+      allowSameUser: true,
+    }),
+    findTransactionRequestsByDelegateId,
+  ]);
+
   // busca una relacion
   app.get('/:companyId/:id', [
     Audit.logger,
@@ -64,36 +77,39 @@ exports.transactionRequestsRoutesConfig = function (app) {
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
-  app.post('/borrower/:companyId/:userId/:vaultId', [
+  app.post('/borrower/:companyId/:userId/:id/:transactionId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
+      allowDelegateAccess: true,
     }),
     createBorrowerTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción borrower.
-  app.post('/borrower-approve/:companyId/:userId/:id', [
+  app.post('/borrower-approve/:companyId/:userId/:id/:transactionId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       allowSameUser: true,
+      allowDelegateAccess: true,
     }),
     borrowerApproveTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
-  app.post('/lender/:companyId/:userId/:vaultId', [
+  app.post('/:companyId/:userId/:vaultId', [
     Audit.logger,
     Auth.isAuthenticated,
     Auth.isAuthorized({
       hasAppRole: [Types.AppRols.APP_ADMIN],
       isEnterpriseEmployee: true,
+      allowSameUser: true,
     }),
-    createLenderTransactionRequest,
+    createTransactionRequest,
   ]);
 
   // crea un elemento relacionado a la empresa, usuario y vault enviados de acción lender.
