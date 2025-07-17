@@ -1,3 +1,6 @@
+
+# THIS REPO IS UNDER ACTIVE DEVELOPMENT.  DO NOT USE/FORK !
+
 # vs-core
 
 GCP application framework.
